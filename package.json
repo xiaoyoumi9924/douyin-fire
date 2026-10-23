@@ -43,7 +43,7 @@
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "target": ["dmg", "zip"]
+      "target": ["dmg"]
     },
     "win": {
       "target": ["nsis"]
@@ -55,7 +55,7 @@
     "linux": {
       "category": "Utility",
       "maintainer": "Douyin Fire Maintainers <311762328+xiaoyoumi9924@users.noreply.github.com>",
-      "target": ["AppImage", "deb"]
+      "target": ["AppImage"]
     }
   }
 }
