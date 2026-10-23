@@ -1,6 +1,10 @@
 {
   "name": "douyin-fire",
   "version": "0.1.0",
+  "author": {
+    "name": "小悠米",
+    "email": "311762328+xiaoyoumi9924@users.noreply.github.com"
+  },
   "private": true,
   "description": "抖音自动续火花本地桌面应用",
   "main": "desktop/main.cjs",
@@ -50,6 +54,7 @@
     },
     "linux": {
       "category": "Utility",
+      "maintainer": "Douyin Fire Maintainers <311762328+xiaoyoumi9924@users.noreply.github.com>",
       "target": ["AppImage", "deb"]
     }
   }
