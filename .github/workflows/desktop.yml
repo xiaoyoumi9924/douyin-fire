@@ -1,0 +1,103 @@
+name: Desktop installers
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-2025
+            platform: win
+            arch: x64
+          - name: linux-x64
+            runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - name: macos-arm64
+            runner: macos-latest
+            platform: mac
+            arch: arm64
+          - name: macos-x64
+            runner: macos-15-intel
+            platform: mac
+            arch: x64
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Python build dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt -r requirements-desktop.txt
+
+      - name: Install Chromium and Linux libraries
+        if: runner.os == 'Linux'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/douyin-fire-browsers
+        run: python -m playwright install --with-deps chromium
+
+      - name: Install Chromium
+        if: runner.os != 'Linux'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/douyin-fire-browsers
+        run: python -m playwright install chromium
+
+      - name: Build Python backend
+        run: python desktop/build_backend.py
+
+      - name: Bundle Playwright browser
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/douyin-fire-browsers
+        run: python desktop/prepare_browsers.py
+
+      - name: Install Electron dependencies
+        run: npm ci
+
+      - name: Build installer
+        run: npx electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: douyin-fire-${{ matrix.name }}
+          path: dist/installers/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: douyin-fire-*
+          path: release-assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Douyin Fire ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-assets/*

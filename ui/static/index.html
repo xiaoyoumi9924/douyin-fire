@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F5F5F7">
+<title>抖音自动续火花 · 控制面板</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='9' fill='%230066CC'/%3E%3Cpath d='M16 6l2.5 7.5L26 16l-7.5 2.5L16 26l-2.5-7.5L6 16l7.5-2.5z' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --desk:#F5F5F7;
+    --ink:#1D1D1F;
+    --ink-soft:#636366;
+    --ink-faint:#6E6E73;
+    --mark:#D70015;
+    --accent:#0066CC;
+    --success:#34C759;
+  }
+
+  *{box-sizing:border-box}
+
+  html{-webkit-text-size-adjust:100%}
+
+  body{
+    margin:0;
+    background:var(--desk);
+    color:var(--ink);
+    font:400 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{background:rgba(0,102,204,.16)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ---------- 苹果风格本地控制台 ---------- */
+  .sheet{max-width:1160px; margin:16px auto 48px; padding:0 28px 36px; background:transparent; box-shadow:none}
+  .brand{display:flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none; font-size:14px; font-weight:650; white-space:nowrap}
+  .brand__icon{width:28px; height:28px; display:grid; place-items:center; border-radius:9px; background:#EAF3FF; color:var(--accent); font-size:17px; line-height:1}
+  .app-nav{display:flex; align-items:center; gap:6px}
+  .app-nav a{padding:7px 11px; border-radius:8px; color:var(--ink-soft); text-decoration:none; font-size:12px; transition:background .15s ease,color .15s ease}
+  .app-nav a:hover,.app-nav a[aria-current="page"]{background:#F2F2F7; color:var(--ink);}
+
+
+  .masthead{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding:0 3px; margin-bottom:20px; border:0}
+  .masthead__intro{min-width:0}
+  .masthead__date{color:var(--ink-soft); font-size:12px; font-weight:500; letter-spacing:0}
+  .masthead__date span{margin-left:7px; color:var(--ink-soft); font-size:12px; font-weight:500; letter-spacing:0}
+  .masthead h1{margin:5px 0 0; font-size:30px; line-height:1.2; font-weight:700; letter-spacing:-.8px}
+  .masthead__subtitle{margin:6px 0 0; color:var(--ink-soft); font-size:13px}
+  .masthead__count{min-width:142px; padding:12px 16px; border:1px solid rgba(60,60,67,.08); border-radius:14px; background:#fff; text-align:left; box-shadow:0 2px 10px rgba(28,31,39,.035)}
+  .masthead__count b{display:block; font-size:19px; line-height:1.25; font-weight:680; letter-spacing:-.3px}
+  .masthead__count em{display:block; margin-top:4px; color:var(--ink-soft); font-size:11px; font-style:normal; letter-spacing:0}
+  .masthead__count[data-complete="true"] b{color:#248A3D}
+
+  .label{color:var(--ink); font-size:13px; font-weight:650; letter-spacing:0}
+  .quiet{color:var(--ink-soft)}
+  .hint{margin:10px 0 0; color:var(--ink-soft); font-size:11px; line-height:1.6}
+  .num{font-variant-numeric:tabular-nums}
+  .visually-hidden{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+
+  .actions{display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; margin:0 0 18px; padding:19px 21px; border:1px solid rgba(60,60,67,.08); border-radius:16px; background:#fff; box-shadow:0 2px 10px rgba(28,31,39,.035)}
+  .actions__status{display:flex; align-items:center; gap:10px; min-height:36px; color:var(--ink); font-size:12px}
+  .actions__status .dot{flex:0 0 auto; width:8px; height:8px; border-radius:50%; background:#C7C7CC}
+  .actions__status .dot[data-live="true"]{background:var(--accent); animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .actions__buttons{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+  .btn{appearance:none; min-height:36px; padding:0 14px; border:1px solid #D2D2D7; border-radius:9px; background:#fff; color:#24242A; font:600 12px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; letter-spacing:0; cursor:pointer; transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease,box-shadow .15s ease}
+  .btn:hover:not(:disabled){background:#F5F5F7; border-color:#C5C5CC}
+  .btn:active:not(:disabled){transform:scale(.98)}
+  .btn:disabled{opacity:.42; cursor:not-allowed}
+  .btn--primary{background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 1px 2px rgba(0,65,155,.16)}
+  .btn--primary:hover:not(:disabled){background:#006BE6; border-color:#006BE6; color:#fff}
+  .btn--quiet{background:#F2F2F7; border-color:#F2F2F7; color:#34343A}
+  .btn--quiet:hover:not(:disabled){background:#E8E8ED; border-color:#E8E8ED; color:#1D1D1F}
+  .btn--danger{background:#fff; border-color:#FFD4D1; color:#D70015}
+  .btn--danger:hover:not(:disabled){background:#FFF2F1; border-color:#FFB8B2; color:#C00012}
+
+  .flash{margin:-4px 2px 14px; color:#D70015; font-size:12px; font-weight:550; letter-spacing:0}
+  .flash[hidden]{display:none}
+  .send-preview{width:min(560px,calc(100vw - 32px)); max-width:none; max-height:min(760px,calc(100dvh - 32px)); padding:0; overflow:hidden; border:1px solid rgba(60,60,67,.12); border-radius:20px; background:#fff; color:var(--ink); box-shadow:0 24px 70px rgba(20,25,35,.22)}
+  .send-preview::backdrop{background:rgba(20,24,32,.42); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px)}
+  .send-preview__content{display:flex; flex-direction:column; max-height:min(760px,calc(100dvh - 32px))}
+  .send-preview__header{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:22px 24px 16px; border-bottom:1px solid #F0F0F3}
+  .send-preview__eyebrow{margin:0 0 4px; color:var(--ink-soft); font-size:11px; font-weight:550}
+  .send-preview__header h2{margin:0; font-size:20px; font-weight:680; letter-spacing:-.35px}
+  .send-preview__close{display:grid; place-items:center; flex:0 0 32px; width:32px; height:32px; padding:0; border:0; border-radius:50%; background:#F2F2F7; color:#55555B; font:400 21px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer}
+  .send-preview__close:hover{background:#E8E8ED}
+  .send-preview__body{display:grid; gap:16px; padding:18px 24px 22px; overflow:auto}
+  .send-preview__section{min-width:0}
+  .send-preview__label{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 8px; color:var(--ink); font-size:12px; font-weight:650}
+  .send-preview__label span{color:var(--ink-soft); font-size:10px; font-weight:450}
+  .send-preview__recipients{display:flex; flex-wrap:wrap; gap:6px; max-height:126px; margin:0; padding:0; overflow:auto; list-style:none}
+  .send-preview__recipients li{max-width:100%; padding:5px 9px; overflow:hidden; border:1px solid #E8E8ED; border-radius:999px; background:#F7F7F9; color:#37373D; font-size:11px; text-overflow:ellipsis; white-space:nowrap}
+  .send-preview__messages{display:grid; gap:7px; max-height:184px; margin:0; padding:0; overflow:auto; list-style:none}
+  .send-preview__messages li{padding:9px 11px; border:1px solid #E8E8ED; border-radius:10px; background:#F7F7F9; color:#303036; font-size:12px; line-height:1.55; overflow-wrap:anywhere; white-space:pre-wrap}
+  .send-preview__images{display:flex; flex-wrap:wrap; gap:8px}
+  .send-preview__images[hidden]{display:none}
+  .send-preview__images img{width:88px; height:88px; object-fit:cover; border:1px solid #E8E8ED; border-radius:10px; background:#F7F7F9}
+  .send-preview__images span{align-self:center; color:var(--ink-soft); font-size:10px}
+  .send-preview__note{margin:0; padding:10px 12px; border:1px solid #F1E2B8; border-radius:10px; background:#FFF9E9; color:#725B1F; font-size:11px; line-height:1.55}
+  .send-preview__note[hidden]{display:none}
+  .send-preview__empty{padding:12px; border:1px dashed #D8D8DE; border-radius:10px; color:var(--ink-soft); font-size:11px; line-height:1.55}
+  .send-preview__queue-note{margin:0;padding:10px 12px;border:1px solid #F1E2B8;border-radius:10px;background:#FFF9E9;color:#725B1F;font-size:11px;line-height:1.55}
+  .send-preview__queue-note[hidden]{display:none}
+  .send-preview__footer{display:flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:9px; margin-top:0; padding:14px 24px 20px; border-top:1px solid #F0F0F3; color:var(--ink); font-size:inherit}
+  @media(max-width:640px){.send-preview{border-radius:16px}.send-preview__header{padding:18px 17px 14px}.send-preview__body{padding:16px 17px 18px}.send-preview__footer{padding:12px 17px 16px}.send-preview__footer .btn{flex:1}}
+  .dashboard-grid{display:grid; grid-template-columns:minmax(0,1.45fr) minmax(290px,.9fr); align-items:start; gap:16px}
+  .album{min-width:0; padding:18px 19px 16px; border:1px solid rgba(60,60,67,.08); border-radius:16px; background:#fff; box-shadow:0 2px 10px rgba(28,31,39,.035)}
+  .album__head{display:flex; justify-content:space-between; align-items:center; gap:14px; padding:0 0 14px}
+  .album__heading{display:flex; align-items:baseline; gap:8px; white-space:nowrap}
+  .album__heading .label{font-size:14px}
+  .album__heading .quiet{font-size:11px}
+  .ticket{display:flex; align-items:center; min-width:245px; padding:2px 8px 2px 11px; border:1px solid transparent; border-radius:9px; background:#F2F2F7}
+  .ticket:focus-within{border-color:#8AB8F5; box-shadow:0 0 0 3px rgba(0,102,204,.12)}
+  .ticket input{min-width:0; padding:6px 2px; border:0; outline:0; background:transparent; color:var(--ink); font-family:inherit; font-size:12px; font-weight:400; line-height:1.4}
+  .ticket input::placeholder{color:var(--ink-faint)}
+  .ticket button{padding:6px 2px 6px 10px; border:0; background:transparent; color:var(--accent); font-family:inherit; font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap; cursor:pointer}
+  .ticket button:hover{color:#006BE6}
+  .album__grid{display:grid; grid-template-columns:1fr; gap:7px; min-height:60px}
+  .album__empty{grid-column:1/-1; padding:24px 14px; border:1px dashed #D1D1D6; border-radius:12px; color:var(--ink-soft); text-align:center; font-size:12px}
+  .stamp{position:relative; display:flex; align-items:center; gap:11px; min-height:58px; aspect-ratio:auto; padding:8px 43px 8px 11px; overflow:visible; border:1px solid #ECECF0; border-radius:12px; background:#fff; transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
+  .stamp::before,.stamp::after{display:none}
+  .stamp:hover{transform:none; border-color:#D7D7DE; background:#FCFCFD; box-shadow:0 2px 8px rgba(28,31,39,.045)}
+  .stamp__no{position:static; display:grid; place-items:center; flex:0 0 30px; width:30px; height:30px; border-radius:50%; background:#F2F2F7; color:#68686F; font-size:10px; font-weight:600; letter-spacing:0}
+  .stamp__name{z-index:1; flex:1; max-height:none; overflow:hidden; color:#2B2B30; font-size:12px; font-weight:570; line-height:1.4; text-align:left; text-overflow:ellipsis; white-space:nowrap; cursor:pointer}
+  .stamp__name[contenteditable="true"]{padding:3px 5px; outline:2px solid #8AB8F5; outline-offset:1px; border-radius:4px; background:#F5F9FF; cursor:text}
+  .stamp__del{position:absolute; inset:50% 8px auto auto; display:grid; place-items:center; width:27px; height:27px; padding:0; transform:translateY(-50%); border:0; border-radius:8px; background:transparent; color:var(--ink-faint); font-family:inherit; font-size:18px; font-weight:400; line-height:1; cursor:pointer; opacity:.6; transition:opacity .15s ease,background .15s ease,color .15s ease}
+  .stamp:hover .stamp__del,.stamp:focus-within .stamp__del{opacity:1}
+  .stamp__del:hover{background:#FFF2F1; color:#D70015}
+  .stamp__del[data-armed="true"]{inset:50% 7px auto auto; width:auto; height:28px; padding:0 8px; transform:translateY(-50%); border:1px solid #FFD4D1; background:#FFF2F1; color:#D70015; font-size:11px; white-space:nowrap}
+  .mark{position:static; display:flex; align-items:center; justify-content:center; gap:4px; flex:none; width:auto; height:24px; margin-left:auto; padding:0 8px; transform:none; border:0; border-radius:999px; background:#EAF7EE; color:#248A3D; text-align:center; opacity:1; mix-blend-mode:normal; animation:none}
+  .mark::after{display:none}
+  .mark b{font-size:10px; font-weight:650; letter-spacing:0; line-height:1}
+  .mark i{font-size:9px; line-height:1; letter-spacing:0; opacity:.8}
+  .mark--fail{background:#F2F2F7; color:#6E6E73; opacity:1}
+  .stamp[style*="outline"]{outline-color:var(--accent)!important}
+
+  .side-column{display:grid; gap:12px; min-width:0}
+  .block{min-width:0; padding:16px; border:1px solid rgba(60,60,67,.08); border-radius:15px; background:#fff; box-shadow:0 2px 10px rgba(28,31,39,.035)}
+  .block h2{margin:0 0 11px; color:var(--ink); font-size:13px; font-weight:650; letter-spacing:0}
+  .block textarea{display:block; width:100%; min-height:100px; padding:11px 12px; border:1px solid #E5E5EA; border-radius:10px; background:#F5F5F7; color:var(--ink); font:400 12px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; resize:vertical}
+  .block textarea:focus-visible{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent}
+  .message-image{display:grid; gap:9px; margin-top:12px}
+  .message-image__gallery{display:flex; flex-wrap:wrap; gap:8px}
+  .message-image__gallery[hidden]{display:none}
+  .message-image__item{position:relative; width:66px; height:66px}
+  .message-image__item img{width:100%; height:100%; object-fit:cover; border:1px solid #E8E8ED; border-radius:9px; background:#F7F7F9}
+  .message-image__remove{position:absolute; top:-5px; right:-5px; display:grid; place-items:center; width:21px; height:21px; padding:0; border:1px solid #fff; border-radius:50%; background:#3A3A3C; color:#fff; font:500 14px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.18)}
+  .message-image__count{color:var(--ink-soft); font-size:10px}
+  .block .actions-inline{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:12px}
+  .block .actions-inline .quiet{font-size:11px}
+  .field-row{display:flex; align-items:center; gap:7px}
+  .field-row select{appearance:none; -webkit-appearance:none; min-width:64px; padding:8px 26px 8px 10px; border:1px solid #D8D8DE; border-radius:9px; background-color:#fff; background-image:linear-gradient(45deg,transparent 50%,#73737A 50%),linear-gradient(135deg,#73737A 50%,transparent 50%); background-position:right 11px center,right 7px center; background-size:4px 4px,4px 4px; background-repeat:no-repeat; color:var(--ink); font-family:inherit; font-size:12px; font-weight:500; line-height:1.2; cursor:pointer}
+  .field-row .unit{color:var(--ink-soft); font-size:11px}
+  .credential__state{margin:0 0 4px; color:#34343A; font-size:12px}
+  .credential__state b{font-weight:650}
+  .credential__buttons{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+  .credential__buttons .btn{min-height:34px; padding:0 11px; font-size:11px}
+  .schedule-card .hint,.credential-card .hint{margin-top:8px}
+  .schedule-card .actions-inline .quiet{font-size:10px}
+
+  .history{margin-top:16px; padding:16px; border:1px solid rgba(60,60,67,.08); border-radius:15px; background:#fff; box-shadow:0 2px 10px rgba(28,31,39,.035)}
+  .history__head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
+  .history__head .label{font-size:12px}
+  .history__head .quiet{font-size:10px}
+  .history__list{display:grid; gap:7px}
+  .history__empty{margin:0; padding:16px 12px; border:1px dashed #D1D1D6; border-radius:10px; color:var(--ink-soft); text-align:center; font-size:11px}
+  .history__item{overflow:hidden; border:1px solid #ECECF0; border-radius:11px; background:#fff}
+  .history__summary{display:flex; align-items:center; gap:10px; min-height:48px; padding:9px 12px; cursor:pointer; list-style:none}
+  .history__summary::-webkit-details-marker{display:none}
+  .history__summary::before{content:"›"; width:12px; color:var(--ink-faint); font-size:16px; line-height:1; transition:transform .15s ease}
+  .history__item[open] .history__summary::before{transform:rotate(90deg)}
+  .history__date{min-width:0; flex:1; color:#303036; font-size:11px; font-weight:600}
+  .history__kind{padding:4px 7px; border-radius:999px; background:#F2F2F7; color:#5F5F66; font-size:9px; white-space:nowrap}
+  .history__kind--send{background:#EAF3FF; color:#0056B3}
+  .history__counts{color:var(--ink-soft); font-size:10px; white-space:nowrap}
+  .history__rows{display:grid; gap:6px; margin:0; padding:0 12px 12px 34px; list-style:none}
+  .history__row{display:grid; grid-template-columns:minmax(80px,.8fr) minmax(0,1.2fr); align-items:start; gap:10px; padding:8px 9px; border-radius:8px; background:#F7F7F9; font-size:10px}
+  .history__target{color:#39393F; font-weight:600; overflow-wrap:anywhere}
+  .history__detail{color:var(--ink-soft); overflow-wrap:anywhere}
+  .history__status{display:inline-block; margin-right:5px; color:#248A3D; font-weight:650}
+  .history__status--failed,.history__status--unknown{color:#D70015}
+  .history__status--skipped,.history__status--duplicate{color:#8A6500}
+  @media(max-width:640px){.history{padding:13px}.history__summary{gap:7px;padding:9px}.history__counts{font-size:9px}.history__rows{padding-left:25px}.history__row{grid-template-columns:1fr;gap:3px}}
+  footer{margin-top:19px; padding:13px 2px 0; border-top:1px solid #E5E5EA; color:var(--ink-faint); font-size:10px}
+
+  @media(max-width:980px){
+    .sheet{margin:12px auto 36px; padding:0 20px 30px}
+    .dashboard-grid{grid-template-columns:1fr}
+    .side-column{grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start}
+    .credential-card{grid-column:1/-1}
+  }
+  @media(max-width:640px){
+    .sheet{margin:0 auto 28px; padding:8px 14px 24px}
+    .brand{font-size:12px}
+    .brand__icon{width:26px; height:26px}
+    .app-nav{gap:1px}
+    .app-nav a{padding:6px 7px; font-size:10px}
+
+    .masthead{align-items:flex-start; flex-direction:column; gap:13px; margin-bottom:14px}
+    .masthead h1{font-size:26px}
+    .masthead__count{width:100%; min-width:0; display:flex; align-items:center; justify-content:space-between; padding:10px 13px}
+    .masthead__count b{font-size:16px}
+    .masthead__count em{margin-top:0}
+    .actions{align-items:stretch; gap:10px; padding:14px}
+    .actions__status{min-height:28px}
+    .actions__buttons{width:100%}
+    .actions__buttons .btn{flex:1; padding:0 9px}
+    .album{padding:14px}
+    .album__head{align-items:stretch; flex-direction:column; gap:10px}
+    .ticket{width:100%; min-width:0}
+    .side-column{grid-template-columns:1fr}
+    .credential-card{grid-column:auto}
+    .stamp{min-height:56px}
+    footer{align-items:flex-start; flex-direction:column}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important}
+  }
+</style>
+<style id="status-first-redesign">
+  :root{
+    --desk:#F5F5F7;--ink:#1D1D1F;--ink-soft:#636366;--ink-faint:#6E6E73;
+    --mark:#D70015;--accent:#0066CC;--success:#34C759;--line:#E5E5EA;--surface:#FFFFFF;--field:#F5F5F7;
+  }
+  html{scroll-behavior:smooth;scrollbar-color:#C7C7CC transparent;scrollbar-width:thin}
+  body{background:var(--desk);color:var(--ink);font-size:14px;line-height:1.55}
+  ::selection{background:rgba(0,102,204,.18);color:var(--ink)}
+  button,input,textarea,select{font:inherit}
+  :focus-visible{outline:3px solid rgba(0,102,204,.45);outline-offset:2px}
+  .sheet{width:min(calc(100% - 48px),1240px);max-width:1240px;margin:18px auto 48px;padding:0 0 36px}
+  .brand{gap:10px;font-size:13px;font-weight:650;letter-spacing:-.1px}
+  .brand__icon{width:26px;height:26px;border-radius:8px;background:#EAF3FF;color:transparent;font-size:0}
+  .brand__icon::before{content:"";display:block;width:9px;height:9px;margin:auto;border-radius:50%;background:var(--accent)}
+
+  .masthead{align-items:center;margin:0 0 18px;padding:0 2px}
+  .masthead__date{color:var(--ink-soft);font-size:12px;font-weight:500}
+  .masthead__date span{margin-left:8px;color:var(--ink-soft);font-size:12px}
+  .masthead h1{margin-top:5px;font-size:28px;font-weight:680;letter-spacing:-.55px;line-height:1.2}
+  .masthead__subtitle{margin-top:6px;color:var(--ink-soft);font-size:13px}
+  .masthead__count{min-width:0;padding:6px 12px 6px 20px;border:0;border-left:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;text-align:right}
+  .masthead__count b{font-size:17px;font-weight:650;letter-spacing:-.2px}
+  .masthead__count em{margin-top:2px;color:var(--ink-soft);font-size:12px}
+  .masthead__count[data-complete="true"] b{color:var(--success)}
+  .label{color:var(--ink);font-size:14px;font-weight:650}
+  .quiet{color:var(--ink-soft)}
+  .hint{margin-top:8px;color:var(--ink-soft);font-size:12px;line-height:1.55}
+  .actions{min-height:68px;gap:18px;padding:13px 16px;margin:0 0 16px;border:1px solid rgba(60,60,67,.12);border-radius:13px;background:var(--surface);box-shadow:0 2px 8px rgba(20,25,35,.035)}
+  .actions__status{min-height:38px;gap:11px;font-size:12px}
+  .actions__status .dot{width:9px;height:9px;background:#F5A623}
+  .actions__status .dot[data-live="true"]{background:var(--accent);animation:pulse 1.5s ease-in-out infinite}
+  .actions__buttons{gap:8px}
+  .btn{min-height:36px;padding:0 14px;border-color:#D5D5DC;border-radius:9px;background:#fff;color:#25252B;font-size:12px;font-weight:600;letter-spacing:0;box-shadow:none}
+  .btn:hover:not(:disabled){background:#F4F4F7;border-color:#BFC0C7}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .btn:disabled{opacity:.52}
+  .btn--primary{border-color:var(--accent);background:var(--accent);color:#fff}
+  .btn--primary:hover:not(:disabled){border-color:#0059B8;background:#0059B8}
+  .btn--quiet{border-color:#E8E8ED;background:#F2F2F7;color:#34343A}
+  .btn--quiet:hover:not(:disabled){border-color:#E0E0E6;background:#E9E9EF}
+  .btn--danger{border-color:#F1C9C8;background:#fff;color:#B4232C}
+  .btn--danger:hover:not(:disabled){border-color:#E8ACAA;background:#FFF5F4;color:#9E1D25}
+  .flash{margin:-2px 2px 14px;color:var(--mark);font-size:12px;font-weight:550}
+  .dashboard-grid{grid-template-columns:minmax(0,1.55fr) minmax(300px,.82fr);gap:16px;align-items:start}
+  .album,.block,.history{min-width:0;border:1px solid var(--line);border-radius:15px;background:var(--surface);box-shadow:0 2px 8px rgba(20,25,35,.035)}
+  .album{padding:18px 19px 15px}
+  .album__head{align-items:center;gap:12px;padding-bottom:12px}
+  .album__heading{gap:8px}
+  .album__heading .label{font-size:14px}
+  .album__heading .quiet{font-size:11px}
+  .ticket{min-width:228px;padding:2px 9px 2px 11px;border:1px solid #E8E8ED;border-radius:9px;background:var(--field)}
+  .ticket:focus-within{border-color:#75A9E8;box-shadow:0 0 0 3px rgba(0,102,204,.11)}
+  .ticket input{padding:6px 2px;font-size:12px}
+  .ticket input::placeholder{color:#6E6E73;opacity:1}
+  .ticket button{color:#005EB8;font-size:12px}
+  .album__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;min-height:72px}
+  .album__empty,.history__empty{padding:20px 12px;border:1px dashed #C8C8D0;border-radius:10px;color:var(--ink-soft);font-size:12px}
+  .stamp{min-height:54px;gap:10px;padding:7px 34px 7px 2px;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
+  .stamp:hover{border-color:#ECECF0;background:#FAFAFC;box-shadow:none}
+  .stamp__no{flex-basis:28px;width:28px;height:28px;background:#F2F2F7;color:var(--ink-soft);font-size:11px;font-weight:600}
+  .stamp__name{color:#25252B;font-size:12px;font-weight:560;cursor:text}
+  .stamp__name:hover{color:var(--accent)}
+  .stamp__name[contenteditable="true"]{outline:2px solid #75A9E8;outline-offset:1px;border-radius:4px;background:#F5F9FF}
+  .stamp__del{right:0;width:26px;height:26px;border-radius:7px;color:#6E6E73;opacity:.7}
+  .stamp__del:hover{background:#FFF1F0;color:#B4232C}
+  .stamp__del[data-armed="true"]{right:0;border:1px solid #F1C9C8;background:#FFF5F4;color:#A52229}
+  .mark{height:22px;padding:0 7px;background:#E9F8ED;color:var(--ink)}
+  .mark b{font-size:11px}
+  .mark i{font-size:9px}
+  .mark--fail{background:#FFF0EF;color:#B4232C}
+  .side-column{gap:12px}
+  .block{padding:16px}
+  .block h2{margin-bottom:10px;font-size:13px;font-weight:650}
+  .block textarea{min-height:94px;padding:10px 11px;border-color:#E0E0E6;border-radius:9px;background:#F7F7F9;font-size:12px;line-height:1.6}
+  .block textarea::placeholder{color:#6E6E73;opacity:1}
+  .message-image{gap:8px;margin-top:10px}
+  .message-image__count{color:var(--ink-soft);font-size:11px}
+  .message-image__item{width:62px;height:62px}
+  .message-image__item img{border-radius:8px}
+  .message-image__remove{width:22px;height:22px;background:#34343A}
+  .block .actions-inline{gap:9px;margin-top:11px}
+  .block .actions-inline .quiet{font-size:11px}
+  .field-row{gap:8px}
+  .field-row select{min-height:36px;border-color:#D7D7DE;border-radius:8px;font-size:12px}
+  .field-row .unit{color:var(--ink-soft);font-size:12px}
+  .credential__state{margin-bottom:4px;color:#303036;font-size:12px}
+  .credential__buttons{gap:8px;margin-top:11px}
+  .credential__buttons .btn{min-height:34px;font-size:11px}
+  .schedule-card .hint,.credential-card .hint{margin-top:7px}
+  .history{padding:15px 16px;margin-top:14px}
+  .history__head{margin-bottom:10px}
+  .history__head .label{font-size:13px}
+  .history__head .quiet{font-size:11px}
+  .history__list{gap:7px}
+  .history__item{border:1px solid #E7E7EC;border-radius:10px;background:#fff}
+  .history__summary{min-height:46px;gap:10px;padding:8px 11px}
+  .history__date{color:#303036;font-size:11px}
+  .history__kind{padding:4px 7px;background:#F0F0F4;color:#4E4E55;font-size:11px}
+  .history__kind--send{background:#EAF3FF;color:#0056B3}
+  .history__counts{color:var(--ink-soft);font-size:11px}
+  .history__rows{gap:5px;padding:0 11px 11px 31px}
+  .history__row{border-radius:7px;background:#F7F7F9;font-size:11px}
+  .history__target{color:#303036}
+  .history__detail{color:var(--ink-soft)}
+  footer{display:flex;justify-content:space-between;gap:12px;margin-top:20px;padding:13px 2px 0;border-color:var(--line);color:var(--ink-soft);font-size:11px}
+  .history__empty{margin:0}
+  @media(max-width:900px){.sheet{width:min(calc(100% - 36px),1240px)}.dashboard-grid{grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:12px}.side-column{grid-template-columns:1fr}.credential-card{grid-column:auto}}
+  @media(max-width:680px){.sheet{width:calc(100% - 28px);margin:10px auto 28px;padding-bottom:24px}.brand{font-size:11px}.brand__icon{width:24px;height:24px}.masthead{align-items:flex-start;flex-direction:row;gap:12px;margin-bottom:14px}.masthead h1{font-size:25px}.masthead__subtitle{max-width:34ch;font-size:12px}.masthead__count{align-self:center;padding-left:12px}.masthead__count b{font-size:15px}.masthead__count em{font-size:11px}.actions{align-items:flex-start;flex-direction:column;gap:9px;padding:12px}.actions__status{min-height:29px}.actions__buttons{width:100%}.actions__buttons .btn{flex:1;padding:0 8px}.dashboard-grid{grid-template-columns:1fr}.album{padding:14px}.album__head{align-items:stretch;flex-direction:column;gap:9px}.ticket{width:100%;min-width:0}.album__grid{grid-template-columns:1fr}.side-column{grid-template-columns:1fr}.stamp{min-height:50px}.history{padding:13px}.history__summary{gap:7px;padding:8px}.history__counts{font-size:11px}.history__rows{padding-left:24px}.history__row{grid-template-columns:1fr;gap:3px}footer{align-items:flex-start;flex-direction:column}}
+  /* A clearer task surface: the daily state becomes the visual anchor. */
+  .today-hero{position:relative;isolation:isolate;overflow:hidden;padding:28px 32px 22px;margin:2px 0 22px;border:1px solid #27364B;border-radius:22px;background:linear-gradient(112deg,#182130 0%,#202C40 57%,#233B58 100%);color:#F8FAFF;box-shadow:0 15px 34px rgba(25,36,54,.15)}
+  .today-hero::after{position:absolute;z-index:-1;right:130px;top:-135px;width:330px;height:330px;border:1px solid rgba(158,192,237,.12);border-radius:50%;background:radial-gradient(circle,rgba(61,127,213,.25),rgba(61,127,213,0) 68%);content:"";pointer-events:none}
+  .today-hero::before{position:absolute;z-index:-1;right:48px;top:-80px;width:280px;height:280px;border:1px solid rgba(158,192,237,.1);border-radius:50%;content:"";pointer-events:none}
+  .today-hero .masthead{position:relative;align-items:flex-start;margin:0 0 22px;padding:0}
+  .today-hero .masthead__date,.today-hero .masthead__date span{color:#AFBED2;font-size:13px;letter-spacing:.02em}
+  .today-hero .masthead h1{margin-top:8px;color:#fff;font-size:38px;font-weight:680;letter-spacing:-1.1px}
+  .today-hero .masthead__subtitle{margin-top:9px;color:#C1CDDC;font-size:14px}
+  .today-hero .masthead__count{width:218px;min-width:218px;padding:14px 16px 13px;border:1px solid rgba(227,237,251,.19);border-radius:15px;background:rgba(255,255,255,.075);text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+  .today-hero .masthead__count b{color:#fff;font-size:34px;line-height:1.05;letter-spacing:-1.1px}
+  .today-hero .masthead__count[data-complete="true"] b{color:#81E0A0}
+  .today-hero .masthead__count em{margin-top:7px;color:#C1CDDC;font-size:12px}
+  .today-progress{display:block;height:5px;margin-top:13px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.18)}
+  .today-progress i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7DB7FF,#8FE6B0);transition:width .35s ease}
+  .today-hero .actions{position:relative;min-height:48px;gap:20px;padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+  .today-hero .actions__status{min-height:40px;gap:12px;color:#E4EBF5;font-size:14px}
+  .today-hero .actions__status .dot{width:9px;height:9px;background:#F7C66A;box-shadow:0 0 0 4px rgba(247,198,106,.14)}
+  .today-hero .actions__status .dot[data-live="true"]{background:#79B6FF;box-shadow:0 0 0 4px rgba(121,182,255,.16)}
+  .today-hero .actions__buttons{gap:9px}
+  .today-hero .btn{min-height:40px;padding:0 17px;border-radius:10px;font-size:13px}
+  .today-hero .btn--primary{border-color:#fff;background:#fff;color:#1E2B3F}
+  .today-hero .btn--primary:hover:not(:disabled){border-color:#E8F0FA;background:#E8F0FA}
+  .today-hero .btn--quiet{border-color:rgba(225,236,250,.22);background:rgba(255,255,255,.08);color:#F4F7FB}
+  .today-hero .btn--quiet:hover:not(:disabled){border-color:rgba(225,236,250,.34);background:rgba(255,255,255,.14)}
+  .dashboard-grid{grid-template-columns:minmax(0,1.7fr) minmax(330px,.85fr);gap:16px 18px;align-items:start}
+  .album{padding:24px 24px 19px;border-radius:20px;box-shadow:0 8px 26px rgba(29,39,54,.055)}
+  .history{margin:0}
+  .album__head{padding-bottom:17px}
+  .album__heading .label{font-size:17px;font-weight:680;letter-spacing:-.2px}
+  .album__heading .quiet{font-size:13px}
+  .ticket{min-width:268px;padding:4px 11px 4px 13px;border-color:#E3E7EE;border-radius:11px;background:#F7F9FC}
+  .ticket input{padding:8px 2px;font-size:13px}
+  .ticket button{font-size:13px;font-weight:620}
+  .album__grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-height:80px}
+  .stamp{position:relative;min-height:64px;gap:10px;padding:10px 38px 10px 11px;border:1px solid #E8ECF2;border-radius:13px;background:linear-gradient(180deg,#fff,#FAFBFD);box-shadow:0 2px 5px rgba(29,39,54,.025);transition:border-color .16s,background .16s,transform .16s,box-shadow .16s}
+  .stamp:hover{border-color:#C7D8ED;background:#F7FAFF;box-shadow:0 5px 13px rgba(40,87,145,.08);transform:translateY(-1px)}
+  .stamp__no{flex-basis:31px;width:31px;height:31px;border:1px solid #DEE8F4;background:#EEF4FB;color:#46627F;font-size:10px}
+  .stamp__name{min-width:0;color:#202A37;font-size:14px;font-weight:620}
+  .stamp__del{right:7px;width:25px;height:25px;border:1px solid transparent;border-radius:8px;color:#8B96A5;opacity:.72}
+  .stamp__del:hover{border-color:#F1D5D4;background:#FFF5F4;color:#B4232C}
+  .stamp__del[data-armed="true"]{right:7px}
+  .mark{position:absolute;right:35px;bottom:8px;height:19px;padding:0 6px;border-radius:6px;background:#E8F8EE;color:#245C38}
+  .mark b{font-size:10px}
+  .album>.hint{margin-top:15px;font-size:12px}
+  .side-column{gap:14px;align-content:start;grid-auto-rows:max-content}
+  .block{padding:19px;border-radius:17px;box-shadow:0 7px 20px rgba(29,39,54,.045)}
+  .block h2{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:15px;font-weight:680;letter-spacing:-.15px}
+  .block h2::before{width:7px;height:19px;border-radius:9px;background:linear-gradient(180deg,#3987E8,#77A9EF);content:""}
+  .block textarea{min-height:110px;padding:12px 13px;border-color:#E0E6ED;border-radius:11px;background:#FAFBFD;font-size:13px}
+  .message-image{margin-top:12px}
+  .block .actions-inline{margin-top:13px}
+  .field-row select{min-height:40px;padding:0 12px;border-color:#DEE4EC;border-radius:10px;background:#FAFBFD;font-size:13px}
+  .credential__state{padding:10px 12px;border:1px solid #E4EEE6;border-radius:10px;background:#F4FAF5;font-size:13px}
+  @media(max-width:1040px){.dashboard-grid{grid-template-columns:minmax(0,1.35fr) minmax(290px,.9fr);gap:14px}.album{padding:20px}.album__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:780px){.sheet{width:min(calc(100% - 32px),1240px)}.today-hero{padding:22px 23px 18px;border-radius:19px}.today-hero .masthead h1{font-size:33px}.today-hero .masthead__count{width:180px;min-width:180px}.dashboard-grid{grid-template-columns:1fr}.album__grid{grid-template-columns:repeat(2,minmax(0,1fr))}.side-column{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.credential-card{grid-column:1/-1}}
+  @media(max-width:560px){.sheet{width:calc(100% - 24px);margin:8px auto 24px}.today-hero{padding:19px 17px 16px;margin-bottom:14px;border-radius:17px}.today-hero .masthead{gap:12px;margin-bottom:17px}.today-hero .masthead h1{font-size:28px;letter-spacing:-.7px}.today-hero .masthead__subtitle{max-width:25ch;font-size:12px}.today-hero .masthead__count{width:126px;min-width:126px;padding:12px 10px}.today-hero .masthead__count b{font-size:25px}.today-hero .masthead__count em{font-size:10px}.today-progress{margin-top:10px}.today-hero .actions{align-items:flex-start;flex-direction:column;gap:11px}.today-hero .actions__status{min-height:26px;font-size:12px}.today-hero .actions__buttons{width:100%}.today-hero .btn{flex:1;min-height:40px;padding:0 9px;font-size:12px}.album{padding:16px 14px 14px;border-radius:16px}.album__head{align-items:stretch;gap:11px}.album__heading .label{font-size:16px}.ticket{width:100%;min-width:0}.album__grid{gap:8px}.stamp{min-height:58px;gap:7px;padding:8px 31px 8px 8px;border-radius:11px}.stamp__no{flex-basis:26px;width:26px;height:26px;font-size:9px}.stamp__name{font-size:12px}.stamp__del{right:4px;width:23px;height:23px}.mark{right:29px;bottom:4px;height:17px}.mark i{display:none}.side-column{grid-template-columns:1fr}.credential-card{grid-column:auto}.block{padding:16px;border-radius:14px}}
+  @media(max-width:370px){.today-hero .masthead{flex-direction:column}.today-hero .masthead__count{width:100%;min-width:0}.album__grid{grid-template-columns:1fr}}
+  /* Refined macOS light surface: one clear accent, quieter internal dividers. */
+  .today-hero{border:1px solid #DCE8F7;border-left:4px solid #0A84FF;background:linear-gradient(115deg,#F5F9FF 0%,#EAF2FC 72%,#E6F0FC 100%);color:#1D1D1F;box-shadow:0 10px 28px rgba(46,95,157,.075)}
+  .today-hero::after{right:60px;top:-155px;width:360px;height:360px;border:0;background:radial-gradient(circle,rgba(10,132,255,.11),rgba(10,132,255,0) 70%)}
+  .today-hero::before{display:none}
+  .today-hero .masthead__date,.today-hero .masthead__date span{color:#6E7785}
+  .today-hero .masthead h1{color:#1D1D1F}
+  .today-hero .masthead__subtitle{color:#596273}
+  .today-hero .masthead__count{border:1px solid rgba(255,255,255,.92);background:rgba(255,255,255,.82);box-shadow:0 3px 12px rgba(30,61,103,.055);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .today-hero .masthead__count b{color:#1D1D1F}
+  .today-hero .masthead__count[data-complete="true"] b{color:#248A3D}
+  .today-hero .masthead__count em{color:#6E7785}
+  .today-progress{background:#DFE6EF}
+  .today-progress i{background:#0A84FF}
+  .today-hero .actions__status{color:#515B6B}
+  .today-hero .actions__status .dot{background:#E5A21A;box-shadow:0 0 0 4px rgba(229,162,26,.12)}
+  .today-hero .actions__status .dot[data-live="true"]{background:#0A84FF;box-shadow:0 0 0 4px rgba(10,132,255,.13)}
+  .today-hero .btn--primary{border-color:#0A84FF;background:#0A84FF;color:#fff;box-shadow:0 2px 5px rgba(10,132,255,.19)}
+  .today-hero .btn--primary:hover:not(:disabled){border-color:#006EDB;background:#006EDB}
+  .today-hero .btn--quiet{border-color:#D7E0EC;background:rgba(255,255,255,.7);color:#263449}
+  .today-hero .btn--quiet:hover:not(:disabled){border-color:#C5D5E9;background:#fff}
+  .album__grid{gap:0 20px}
+  .stamp{min-height:58px;padding:8px 36px 8px 3px;border:0;border-bottom:1px solid #E9ECF1;border-radius:0;background:transparent;box-shadow:none;transition:background .15s}
+  .stamp:hover{border-color:#E9ECF1;background:#F5F8FC;box-shadow:none;transform:none}
+  .stamp__no{flex-basis:29px;width:29px;height:29px;border:0;background:#F0F2F5;color:#636A75}
+  .stamp__name{color:#25282D;font-size:13px;font-weight:600}
+  .stamp__del{right:2px;border:0;border-radius:50%;background:transparent;color:#8B9098;opacity:.5}
+  .stamp:hover .stamp__del,.stamp__del:focus-visible{background:#E9EDF3;opacity:1}
+  .stamp__del:hover{border-color:transparent;background:#FFF0EF;color:#B4232C}
+  .stamp__del[data-armed="true"]{right:2px;border:1px solid #F1C9C8;background:#FFF5F4}
+  .mark{right:34px;bottom:7px;background:#E8F5EC;color:#24623A}
+  .block h2{padding-bottom:10px;border-bottom:1px solid #F0F1F4;color:#24272D}
+  .block h2::before{width:5px;height:16px;border-radius:4px;background:#0A84FF}
+  .block textarea{border-color:#E3E6EB;background:#FBFBFC}
+  .credential__state{border-color:#E5EEE7;background:#F6FAF7}
+  @media(max-width:560px){.today-hero{padding:19px 17px 16px;border-left-width:3px}.album__grid{gap:0 10px}.stamp{min-height:56px;padding-right:29px}.stamp__no{flex-basis:25px;width:25px;height:25px}.stamp__name{font-size:12px}}
+  /* Details beneath the hero: larger reading sizes, fewer visual interruptions. */
+  .album__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;min-height:0}
+  .album{padding:26px 28px 22px}
+  .album__head{padding-bottom:17px}
+  .album__heading .label{font-size:18px}
+  .album__heading .quiet{font-size:13px}
+  .ticket{min-height:44px;min-width:290px;padding:3px 12px 3px 14px}
+  .ticket input{font-size:14px}
+  .ticket button{font-size:14px}
+  .stamp{min-height:64px;padding:10px 42px 10px 4px}
+  .stamp{min-height:60px}
+  .stamp__no{flex-basis:31px;width:31px;height:31px;font-size:11px}
+  .stamp__name{font-size:14px;font-weight:590}
+  .stamp__del{right:4px;width:27px;height:27px}
+  .mark{right:39px;bottom:8px;height:20px}
+  .album>.hint{margin-top:16px;font-size:13px;line-height:1.6}
+  .side-column{gap:14px}
+  .block{padding:21px 22px;border-radius:17px}
+  .block h2{margin-bottom:15px;padding-bottom:12px;font-size:16px}
+  .block h2::before{width:4px;height:18px}
+  .block textarea{min-height:145px;padding:14px;font-size:14px;line-height:1.65}
+  .message-image{gap:10px;margin-top:13px}
+  .message-image label.btn{min-height:40px;padding:0 14px;border:1px dashed #B9CEE8;border-radius:10px;background:#F4F8FD;color:#0969DA;font-size:13px}
+  .message-image label.btn:hover{border-color:#83AADD;background:#EDF5FF}
+  .message-image__count{font-size:12px}
+  .block .hint{font-size:12px;line-height:1.65}
+  .block .actions-inline{gap:11px;margin-top:15px}
+  .actions-inline .btn{min-height:38px;padding:0 15px;border-color:#0A84FF;border-radius:9px;background:#0A84FF;color:#fff;font-size:13px;font-weight:600}
+  .actions-inline .btn:hover:not(:disabled){border-color:#006EDB;background:#006EDB}
+  .actions-inline .quiet{font-size:12px}
+  .field-row{gap:10px}
+  .field-row select{min-width:78px;min-height:42px;font-size:14px}
+  .field-row .unit{font-size:13px}
+  .schedule-card .hint{margin-top:11px;font-size:13px}
+  .credential__state{margin:0 0 9px;padding:12px 14px;font-size:14px;line-height:1.5}
+  .credential-card .hint{font-size:13px}
+  .credential__buttons{gap:9px;margin-top:14px}
+  .credential__buttons .btn{min-height:38px;padding:0 13px;border-radius:9px;font-size:13px}
+  .credential__buttons label.btn{display:inline-flex;align-items:center;justify-content:center}
+  .history{padding:20px 22px;border-radius:17px}
+  .history__head{margin-bottom:13px}
+  .history__head .label{font-size:16px}
+  .history__head .quiet{font-size:12px}
+  .history__list{gap:9px}
+  .history__item{border-color:#E7EAF0;border-radius:11px}
+  .history__summary{min-height:52px;gap:12px;padding:10px 13px}
+  .history__date{font-size:13px;font-weight:560}
+  .history__kind{padding:5px 8px;font-size:12px}
+  .history__counts{font-size:12px}
+  .history__rows{gap:6px;padding:0 13px 13px 35px}
+  .history__row{padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5}
+  .history__empty{padding:20px 14px;font-size:13px}
+  @media(max-width:780px){.dashboard-grid{grid-template-columns:1fr;grid-template-rows:none;align-items:start;gap:14px}.credential-card{grid-column:auto}.block textarea{min-height:126px}}
+  @media(max-width:560px){.album{padding:18px 16px}.album__grid{gap:0 12px}.ticket{min-width:0}.stamp{min-height:60px;padding:9px 34px 9px 2px}.stamp__no{flex-basis:27px;width:27px;height:27px}.stamp__name{font-size:13px}.stamp__del{right:1px;width:24px;height:24px}.mark{right:31px;bottom:6px}.album>.hint{font-size:12px}.block{padding:17px}.block h2{font-size:15px}.block textarea{min-height:112px;font-size:13px}.history{padding:16px}.history__summary{flex-wrap:wrap}}
+  @media(max-width:420px){.album__grid{grid-template-columns:1fr}}
+  /* Account dashboard: one stable desktop grid, with deliberate single-column fallbacks. */
+  #accountWorkspace{--line:#E2EAF4;--line-soft:#EDF1F7;--ink:#172B48;--muted:#6E829F;--blue:#0879F9;--green:#218653;--red:#D64A45;width:min(calc(100% - 64px),1440px);max-width:1440px;margin:14px auto 38px;padding:0 0 28px;color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;font-size:13px;line-height:1.5;font-kerning:normal;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+  #accountWorkspace[hidden]{display:none}
+  #accountWorkspace .brand{display:flex;align-items:center;gap:9px;color:#10213B;font-size:17px;font-weight:700;letter-spacing:-.02em;text-decoration:none;white-space:nowrap}
+  #accountWorkspace .brand__icon{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#FFF0E9;color:#FF674A;line-height:1}
+  #accountWorkspace .brand__icon::before{display:none;content:none}
+  #accountWorkspace .brand__icon svg{width:23px;height:23px;fill:currentColor}
+  #accountWorkspace .brand small{margin-left:5px;color:#788AA4;font-size:12px;font-weight:450}
+  #accountWorkspace .dashboard-grid{display:grid;grid-template-columns:minmax(0,1.67fr) minmax(0,1fr);grid-template-areas:"primary side" "history history";align-items:start;column-gap:14px;row-gap:14px}
+  #accountWorkspace .primary-column{grid-area:primary}
+  #accountWorkspace .side-column{grid-area:side}
+  #accountWorkspace .dashboard-grid>.history{grid-area:history;width:auto;min-width:0;padding:20px 22px}
+  #accountWorkspace .primary-column,#accountWorkspace .side-column{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;align-content:start;gap:14px}
+  #accountWorkspace .today-hero,#accountWorkspace .album,#accountWorkspace .history,#accountWorkspace .block{min-width:0;margin:0;padding:17px 19px;border:1px solid #E0E9F5;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(48,83,133,.045)}
+  #accountWorkspace .today-hero{padding:18px 19px 17px;overflow:hidden}
+  #accountWorkspace .today-hero::before,#accountWorkspace .today-hero::after{display:none;content:none}
+  #accountWorkspace .hero-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:13px;border-bottom:1px solid var(--line-soft)}
+  #accountWorkspace .hero-title{display:flex;align-items:center;gap:11px;min-width:0}
+  #accountWorkspace .hero-icon,#accountWorkspace .card-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:#ECF5FF;color:var(--blue)}
+  #accountWorkspace .hero-title h1{margin:0;color:#142A46;font-size:20px;font-weight:700;letter-spacing:-.02em}
+  #accountWorkspace .hero-title p,#accountWorkspace .card-heading p{display:none}
+  #accountWorkspace .ui-icon{display:block;width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  #accountWorkspace .ui-icon--filled{fill:currentColor;stroke-width:1.5}
+  #accountWorkspace .hero-icon .ui-icon{width:25px;height:25px}
+  #accountWorkspace .hero-state{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:9px;background:#EFF9F3;color:#176B43;white-space:nowrap}
+  #accountWorkspace .hero-state[data-running="true"]{background:#EEF5FF;color:#095BAA}
+  #accountWorkspace .hero-state[data-failed="true"]{background:#FFF1F0;color:#C8403B}
+  #accountWorkspace .state-check{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#21AE67;color:#fff;font-size:0}
+  #accountWorkspace .state-check::before{content:"";width:8px;height:4px;transform:rotate(-45deg) translate(1px,-1px);border-left:2px solid #fff;border-bottom:2px solid #fff}
+  #accountWorkspace .hero-state[data-running="true"] .state-check{background:#2685EA}
+  #accountWorkspace .hero-state[data-failed="true"] .state-check{background:#E04D4B}
+  #accountWorkspace .hero-state[data-failed="true"] .state-check::before{width:9px;height:9px;transform:none;border:0;background:linear-gradient(45deg,transparent 44%,#fff 45%,#fff 55%,transparent 56%),linear-gradient(-45deg,transparent 44%,#fff 45%,#fff 55%,transparent 56%)}
+  #accountWorkspace .hero-state b,#accountWorkspace .hero-state small{display:block}
+  #accountWorkspace .hero-state b{font-size:12px}
+  #accountWorkspace .hero-state small{margin-top:2px;color:#61758F;font-size:11px}
+  #accountWorkspace .hero-progress-copy{display:flex;align-items:baseline;gap:12px;margin:11px 4px 5px}
+  #accountWorkspace .hero-progress-copy b{color:#167245;font-size:36px;line-height:1;font-weight:750;letter-spacing:-.9px}
+  #accountWorkspace .hero-progress-copy span{color:#526984;font-size:13px}
+  #accountWorkspace .hero-progress-copy strong{margin-left:auto;color:#176ED0;font-size:12px;font-weight:600}
+  #accountWorkspace .today-progress{display:block;height:9px;margin:0 4px 14px;overflow:hidden;border-radius:99px;background:#E7F0FC}
+  #accountWorkspace .today-progress i{display:block;width:0;height:100%;border-radius:inherit;background:#1685FF;transition:width .25s ease-out}
+  #accountWorkspace .hero-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:stretch;gap:8px}
+  #accountWorkspace .hero-stat{display:flex;align-items:flex-start;gap:8px;min-width:0;padding:9px;border:1px solid #E8EDF5;border-radius:9px;background:#FCFDFF}
+  #accountWorkspace .hero-stat>span:last-child{min-width:0}
+  #accountWorkspace .hero-stat__icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#EAF4FF;color:#1978E7}
+  #accountWorkspace .hero-stat__icon .ui-icon{width:17px;height:17px}
+  #accountWorkspace .hero-stat__icon.is-good{background:#E7F8EF;color:#1CA765}
+  #accountWorkspace .hero-stat__icon.is-bad{background:#FFF0EF;color:#E14D4B}
+  #accountWorkspace .hero-stat small,#accountWorkspace .hero-stat b,#accountWorkspace .hero-stat em{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #accountWorkspace .hero-stat small{color:#5D718C;font-size:11px}
+  #accountWorkspace .hero-stat b{margin-top:1px;color:#1B2B45;font-size:14px;font-weight:700}
+  #accountWorkspace .hero-stat em,#accountWorkspace .hero-stat #statusText{display:block;margin-top:1px;overflow:hidden;color:#64758D;font-size:11px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}
+  #accountWorkspace .hero-actions{display:flex;align-items:center;gap:7px;padding-left:2px}
+  #accountWorkspace .hero-actions .btn{min-height:46px;padding:0 18px;border-radius:10px;font-size:14px;white-space:nowrap}
+  #accountWorkspace #sendBtn{min-width:156px}
+  #accountWorkspace .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:0 13px;border:1px solid #D9E3F0;border-radius:8px;background:#fff;color:#314A69;font-size:13px;font-weight:650;line-height:1;cursor:pointer;white-space:nowrap}
+  #accountWorkspace .btn .ui-icon{width:16px;height:16px}
+  #accountWorkspace .btn:hover:not(:disabled){border-color:#BDD4F0;background:#F4F8FE}
+  #accountWorkspace .btn:active:not(:disabled){transform:translateY(1px)}
+  #accountWorkspace .btn--primary,#accountWorkspace .message-rules__action #saveMessage,#accountWorkspace .schedule-layout>.btn{border-color:#0066CC;background:#0066CC;color:#fff;box-shadow:0 2px 5px rgba(0,102,204,.13)}
+  #accountWorkspace .btn--primary:hover:not(:disabled),#accountWorkspace .message-rules__action #saveMessage:hover:not(:disabled),#accountWorkspace .schedule-layout>.btn:hover:not(:disabled){border-color:#0056B3;background:#0056B3;color:#fff}
+  #accountWorkspace .btn--danger{border-color:#FFCACA;background:#fff;color:#B4232C}
+  #accountWorkspace .btn:disabled{opacity:.5;cursor:not-allowed}
+  #accountWorkspace .album{padding:16px 18px 14px}
+  #accountWorkspace .album__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 12px}
+  #accountWorkspace .album__heading{display:flex;align-items:center;gap:10px;min-width:0;white-space:normal}
+  #accountWorkspace .album__heading>div{min-width:0}
+  #accountWorkspace .section-icon-wrap{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:#ECF5FF;color:#0879F9}
+  #accountWorkspace .section-icon-wrap .ui-icon{width:22px;height:22px}
+  #accountWorkspace .album__heading .label{display:block;color:#152A48;font-size:17px;font-weight:700}
+  #accountWorkspace .album__heading .quiet{padding:4px 8px;border-radius:999px;background:#F2F6FC;color:#526782;font-size:12px;font-weight:600;white-space:nowrap}
+  #accountWorkspace .album__tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+  #accountWorkspace .friend-summary{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  #accountWorkspace .friend-summary button{height:31px;padding:0 9px;border:1px solid #E6EBF2;border-radius:9px;background:#F8FAFD;color:#61738D;font:500 11px/1 inherit;cursor:pointer;white-space:nowrap}
+  #accountWorkspace .friend-summary button[aria-pressed="true"]{border-color:#C9DFFF;background:#EEF6FF;color:#126DD0}
+  #accountWorkspace .friend-summary b{margin-left:5px;color:#1D2B42;font-size:12px;font-weight:650}
+  #accountWorkspace #toggleAddFriend{min-height:36px;padding:0 11px}
+  #accountWorkspace .friend-toolbar{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+  #accountWorkspace .search-box{display:flex;align-items:center;flex:1;min-width:130px;height:38px;gap:8px;padding:0 11px;border:1px solid #DDE6F1;border-radius:8px;color:#8294AE;background:#fff}
+  #accountWorkspace .search-box .ui-icon{width:17px;height:17px}
+  #accountWorkspace .search-box input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#233650;font-family:inherit;font-size:12px}
+  #accountWorkspace .search-box input::placeholder{color:#8798B0}
+  #accountWorkspace .status-filter{height:38px;min-width:112px;padding:0 27px 0 10px;border:1px solid #DDE6F1;border-radius:8px;background-color:#fff;color:#304763;font-family:inherit;font-size:11px;font-weight:500}
+  #accountWorkspace .ticket{display:flex;align-items:center;flex:0 1 240px;min-width:210px;height:38px;padding:2px 3px 2px 10px;border:1px solid #DDE6F1;border-radius:8px;background:#fff}
+  #accountWorkspace .ticket[hidden]{display:none}
+  #accountWorkspace .ticket input{width:130px;min-width:0;padding:5px 0;border:0;outline:0;background:transparent;color:#243650;font-family:inherit;font-size:11px}
+  #accountWorkspace .ticket input::placeholder{color:#8294AE}
+  #accountWorkspace .ticket button{height:32px;margin-left:auto;padding:0 10px;border:0;border-radius:6px;background:#0066CC;color:#fff;font-size:11px;font-weight:650;white-space:nowrap;cursor:pointer}
+  #accountWorkspace .friend-table-wrap,#accountWorkspace .history-table-wrap{width:100%;overflow-x:auto}
+  #accountWorkspace .friend-table,#accountWorkspace .history-table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}
+  #accountWorkspace .friend-table{min-width:650px;table-layout:fixed}
+  #accountWorkspace .friend-table th:nth-child(1){width:68px}
+  #accountWorkspace .friend-table th:nth-child(2){width:26%}
+  #accountWorkspace .friend-table th:nth-child(3){width:24%}
+  #accountWorkspace .friend-table th:nth-child(4){width:30%}
+  #accountWorkspace .friend-table th:nth-child(5){width:60px}
+  #accountWorkspace .history__list{display:table-row-group}
+  #accountWorkspace .history-table{min-width:650px;table-layout:fixed}
+  #accountWorkspace .history-table th:nth-child(1){width:27%}
+  #accountWorkspace .history-table th:nth-child(2){width:17%}
+  #accountWorkspace .history-table th:nth-child(3){width:25%}
+  #accountWorkspace .history-table th:nth-child(4){width:13%}
+  #accountWorkspace .history-table th:nth-child(5){width:18%}
+  #accountWorkspace .friend-table th,#accountWorkspace .history-table th{height:38px;padding:0 12px;border-top:1px solid #E9EEF5;border-bottom:1px solid #E9EEF5;background:#F7F9FC;color:#405775;font-size:12px;font-weight:650}
+  #accountWorkspace .friend-table td,#accountWorkspace .history-table td{height:44px;padding:4px 12px;border-bottom:1px solid #E9EEF5;color:#263D5B;font-size:13px}
+  #accountWorkspace .friend-table tr:last-child td,#accountWorkspace .history-table tr:last-child td{border-bottom:0}
+  #accountWorkspace .friend-table td:nth-child(2){overflow:hidden;text-overflow:ellipsis}
+  #accountWorkspace .friend-no{display:grid;place-items:center;width:32px;height:25px;border-radius:99px;background:#EAF4FF;color:#0066CC;font-size:11px;font-weight:650}
+  #accountWorkspace .friend-name{color:#192B46;font-size:13px;font-weight:600;cursor:text}
+  #accountWorkspace .friend-name:hover{color:#0066CC}
+  #accountWorkspace .friend-name[contenteditable="true"]{padding:2px 4px;border-radius:4px;background:#F1F7FF;outline:2px solid #92BFFF}
+  #accountWorkspace .friend-state{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:99px;background:#EAF8F0;color:#176B43;font-size:11px}
+  #accountWorkspace .friend-state::before{width:7px;height:7px;border-radius:50%;background:#22AD68;content:""}
+  #accountWorkspace .friend-state.is-pending{background:#F2F5F9;color:#718198}
+  #accountWorkspace .friend-state.is-pending::before{background:#A4B0BF}
+  #accountWorkspace .friend-state.is-failed{background:#FFF0EF;color:#CB4945}
+  #accountWorkspace .friend-state.is-failed::before{background:#E04D4B}
+  #accountWorkspace .friend-state.is-unknown{background:#FFF8E8;color:#89651C}
+  #accountWorkspace .friend-state.is-unknown::before{background:#D9A63A}
+  #accountWorkspace #stopBtn[hidden]{display:none}
+  #accountWorkspace .friend-delete{width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#8495AC;font-size:17px;cursor:pointer}
+  #accountWorkspace .friend-delete:hover{background:#FFF0EF;color:#D84043}
+  #accountWorkspace .friend-delete[data-armed="true"]{width:auto;padding:0 8px;border:1px solid #FFCACA;background:#FFF3F2;color:#9E1D25;font-size:11px}
+  #accountWorkspace .friend-empty,#accountWorkspace .history-empty-cell{padding:18px 12px!important;color:#7C8DA4!important;text-align:center}
+  #accountWorkspace .album>.hint{margin:12px 0 0;color:#536984;font-size:12px;font-weight:500;line-height:1.5}
+  #accountWorkspace .history{padding:16px 18px}
+  #accountWorkspace .history__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid #E6ECF4}
+  #accountWorkspace .history__title{display:flex;align-items:center;gap:10px;min-width:0}
+  #accountWorkspace .history__title .label{display:block;color:#172B48;font-size:18px;font-weight:700;letter-spacing:-.02em}
+  #accountWorkspace .history__tools{display:flex;align-items:center;gap:12px}
+  #accountWorkspace .history__head>.history__tools>.quiet{color:#5F718A;font-size:12px;white-space:nowrap}
+  #accountWorkspace .history__toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:104px;min-height:44px;padding:0 14px;border:1px solid #D7E2F0;border-radius:10px;background:#F7FAFE;color:#23415F;font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;transition:background .16s,border-color .16s,color .16s}
+  #accountWorkspace .history__toggle:hover{border-color:#B9D2F0;background:#EDF5FF;color:#075EBB}
+  #accountWorkspace .history__toggle:focus-visible{outline:3px solid rgba(8,121,249,.32);outline-offset:2px}
+  #accountWorkspace .history__toggle .ui-icon{width:17px;height:17px;transition:transform .16s ease}
+  #accountWorkspace .history__toggle[aria-expanded="true"] .ui-icon{transform:rotate(180deg)}
+  #accountWorkspace .history__content[hidden]{display:none}
+  #accountWorkspace .history-table th{height:40px}
+  #accountWorkspace .history-table td{height:48px}
+  #accountWorkspace .history__kind{display:inline-block;padding:4px 8px;border-radius:99px;background:#EEF5FF;color:#005EB8;font-size:11px}
+  #accountWorkspace .history__kind.is-dry{background:#F0F2F6;color:#66778E}
+  #accountWorkspace .history__counts{color:#54708E;font-size:11px}
+  #accountWorkspace .history__counts .good{color:#218653}
+  #accountWorkspace .history__counts .bad{color:#D64A45}
+  #accountWorkspace .history__details{position:relative;display:inline-block}
+  #accountWorkspace .history__details summary{color:#0066CC;font-size:11px;cursor:pointer;list-style:none}
+  #accountWorkspace .history__details summary::-webkit-details-marker{display:none}
+  #accountWorkspace .history__rows{position:absolute;z-index:5;right:0;top:22px;display:grid;gap:5px;width:min(340px,70vw);max-height:260px;margin:0;padding:9px;overflow:auto;border:1px solid #DCE6F2;border-radius:10px;background:#fff;box-shadow:0 8px 22px rgba(35,61,96,.12);list-style:none}
+  #accountWorkspace .history__row{display:grid;grid-template-columns:90px 1fr;gap:8px;padding:6px 8px;border-radius:6px;background:#F7F9FC;font-size:11px;white-space:normal}
+  #accountWorkspace .history__target{color:#304662;font-weight:600;overflow-wrap:anywhere}
+  #accountWorkspace .history__detail{color:#71839B;overflow-wrap:anywhere}
+  #accountWorkspace .history__status{margin-right:4px;color:#176B43;font-weight:650}
+  #accountWorkspace .history__status--failed,#accountWorkspace .history__status--unknown{color:#D64A45}
+  #accountWorkspace .history__status--skipped,#accountWorkspace .history__status--duplicate{color:#9A7417}
+  #accountWorkspace .block{padding:17px 19px}
+  #accountWorkspace .card-heading{display:flex;align-items:center;gap:11px;min-width:0;min-height:52px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid #EBF0F6}
+  #accountWorkspace .card-icon{flex-basis:40px;width:40px;height:40px;border-radius:11px}
+  #accountWorkspace .card-icon .ui-icon{width:21px;height:21px}
+  #accountWorkspace .card-heading>div{min-width:0;flex:1}
+  #accountWorkspace .card-heading h2{margin:0;padding:0;border:0;color:#142A46;font-size:18px;font-weight:700;letter-spacing:-.025em;line-height:1.25}
+  #accountWorkspace .block h2::before{display:none;content:none}
+  #accountWorkspace .card-heading p{display:none}
+  #accountWorkspace .saved-badge,#accountWorkspace .schedule-enabled{margin-left:auto;padding:7px 10px;border-radius:9px;background:#ECF8F1;color:#176A3D;font-size:11px;font-weight:650;white-space:nowrap}
+  #accountWorkspace .saved-badge{position:relative;display:flex;align-items:center;gap:7px;padding-left:9px}
+  #accountWorkspace .saved-badge::before{width:17px;height:17px;border-radius:50%;background:#21AE67;content:""}
+  #accountWorkspace .saved-badge::after{position:absolute;left:14px;top:12px;width:6px;height:3px;transform:rotate(-45deg);border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;content:""}
+  #accountWorkspace .saved-badge[data-unsaved="true"]::before{background:#D9A43B}
+  #accountWorkspace .saved-badge[data-unsaved="true"]::after{left:16px;top:12px;width:2px;height:6px;transform:none;border:0;border-radius:2px;background:#fff;box-shadow:0 7px 0 -0.5px #fff}
+  #accountWorkspace .saved-badge[data-unsaved="true"]{background:#FFF7E7;color:#7A4F00}
+  #accountWorkspace .schedule-enabled[data-enabled="false"]{background:#F1F3F6;color:#74839A}
+  #accountWorkspace .field-label{display:flex;align-items:baseline;gap:5px;margin:0 0 7px;color:#243954;font-size:13px;font-weight:650}
+  #accountWorkspace .field-label span,#accountWorkspace .field-label small{color:#5F718A;font-size:12px;font-weight:450}
+  #accountWorkspace .field-label small{margin-left:auto;white-space:nowrap}
+  #accountWorkspace .block textarea{display:block;width:100%;min-height:76px;padding:10px 11px;border:1px solid #DCE5F0;border-radius:9px;background:#FBFCFE;color:#172B48;font-family:inherit;font-size:13px;line-height:1.55;resize:vertical}
+  #accountWorkspace .block textarea:focus-visible{outline:2px solid rgba(8,121,249,.35);outline-offset:1px;border-color:#8FC0FB}
+  #accountWorkspace .message-image{display:grid;grid-template-columns:1fr auto;gap:7px 10px;margin-top:10px}
+  #accountWorkspace .upload-drop{display:flex;min-height:68px;grid-column:1/-1;align-items:center;justify-content:center;flex-direction:column;gap:4px;border:1px dashed #A8CFFF;border-radius:8px;background:#F8FBFF;color:#005EB8;text-align:center;cursor:pointer}
+  #accountWorkspace .upload-drop:hover,#accountWorkspace .upload-drop:focus-within{border-color:#5FA5F5;background:#F0F7FF}
+  #accountWorkspace .upload-drop[data-dragging="true"]{border-color:#1679E8;background:#EAF4FF}
+  #accountWorkspace .upload-drop b{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650}
+  #accountWorkspace .upload-drop b .ui-icon{width:19px;height:19px}
+  #accountWorkspace .upload-drop small{color:#5F718A;font-size:11px}
+  #accountWorkspace .message-image__count{grid-column:1/-1;color:#5F718A;font-size:11px}
+  #accountWorkspace .message-image__gallery{display:flex;grid-column:1/-1;flex-wrap:wrap;gap:8px}
+  #accountWorkspace .message-image__gallery[hidden]{display:none}
+  #accountWorkspace .message-image__item,#accountWorkspace .message-image__add{position:relative;width:60px;height:60px}
+  #accountWorkspace .message-image__item img{width:100%;height:100%;object-fit:cover;border:1px solid #E0E8F2;border-radius:8px}
+  #accountWorkspace .message-image__remove{position:absolute;top:-5px;right:-5px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:1px solid #fff;border-radius:50%;background:#314762;color:#fff;cursor:pointer}
+  #accountWorkspace .message-image__add{display:grid;place-items:center;border:1px dashed #A8CFFF;border-radius:8px;background:#FBFDFF;color:#0879F9;cursor:pointer}
+  #accountWorkspace .message-image__add:hover{background:#F0F7FF}
+  #accountWorkspace .message-image__add .ui-icon{width:21px;height:21px}
+  #accountWorkspace .message-rules{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:11px;padding:9px 10px;border:1px solid #DCEBFC;border-radius:8px;background:#F5F9FE;color:#687F9C}
+  #accountWorkspace .message-rules__copy{display:grid;gap:3px;min-width:0;color:#586C87;font-size:11px;line-height:1.45}
+  #accountWorkspace .message-rules__copy b{display:flex;align-items:center;gap:6px;margin-bottom:1px;color:#0066CC;font-size:11px}
+  #accountWorkspace .message-rules__copy .ui-icon{width:16px;height:16px}
+  #accountWorkspace .message-rules__action{display:grid;justify-items:end;gap:4px}
+  #accountWorkspace .message-rules__action #saveMessage{min-height:36px;padding:0 13px}
+  #accountWorkspace .message-rules__action .quiet{max-width:120px;color:#586C87;font-size:11px;text-align:right}
+  #accountWorkspace .schedule-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 96px;align-items:stretch;gap:9px}
+  #accountWorkspace .schedule-time,#accountWorkspace .schedule-next{min-width:0;min-height:74px;padding:9px 10px;border:1px solid #E7EDF5;border-radius:9px;background:#FCFDFF}
+  #accountWorkspace .schedule-time>label,#accountWorkspace .schedule-next>label{display:block;margin-bottom:6px;color:#5E728D;font-size:11px}
+  #accountWorkspace .field-row{display:flex;align-items:center;gap:6px}
+  #accountWorkspace .field-row select{min-width:56px;height:34px;padding:0 20px 0 8px;border:1px solid #D7E2F0;border-radius:7px;background:#fff;color:#20334F;font-family:inherit;font-size:13px}
+  #accountWorkspace .field-row .unit{color:#6D819D;font-size:12px}
+  #accountWorkspace .schedule-next b,#accountWorkspace .schedule-next small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #accountWorkspace .schedule-next b{color:#20334F;font-size:13px}
+  #accountWorkspace .schedule-next small{margin-top:2px;color:#5F718A;font-size:11px}
+  #accountWorkspace .schedule-layout>.btn{width:100%;min-height:36px;align-self:center;padding:0 8px}
+  #accountWorkspace .schedule-card .hint{display:none}
+  #accountWorkspace .credential__state{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:9px 11px;border:1px solid #D7EFDF;border-radius:8px;background:#F1F9F4;color:#1F7047;font-size:11px}
+  #accountWorkspace .credential__state::before{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:#21AE67;content:""}
+  #accountWorkspace .credential__state::after{position:absolute;left:17px;top:50%;width:6px;height:3px;transform:translateY(-1px) rotate(-45deg);border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;content:""}
+  #accountWorkspace .credential__state[data-present="false"]{border-color:#F2DCD5;background:#FFF8F5;color:#AD5A3A}
+  #accountWorkspace .credential__state[data-present="false"]::before{background:#D99A52}
+  #accountWorkspace .credential__state[data-present="false"]::after{left:17px;top:50%;content:"!";width:auto;height:auto;transform:translateY(-55%);border:0;color:#fff;font-size:12px;font-weight:700}
+  #accountWorkspace .credential-card .hint{display:none}
+  #accountWorkspace .credential__buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:8px;margin-top:11px}
+  #accountWorkspace .credential__buttons .btn{width:100%;min-width:0;min-height:42px;padding:0 8px;font-size:12px;white-space:normal;line-height:1.25;text-align:center}
+  #accountWorkspace .credential__buttons label.btn{display:inline-flex;align-items:center;justify-content:center}
+  #accountWorkspace>footer{display:flex;justify-content:space-between;gap:12px;margin-top:16px;padding:13px 2px 0;border-top:1px solid #DFE8F3;color:#64758D;font-size:11px}
+  @media(max-width:1120px){#accountWorkspace{width:min(calc(100% - 44px),1000px)}#accountWorkspace .dashboard-grid{grid-template-columns:minmax(0,1fr);gap:14px}#accountWorkspace .hero-bottom{grid-template-columns:repeat(2,minmax(110px,1fr)) auto}#accountWorkspace .hero-actions{grid-column:1/-1;justify-content:flex-end;padding-top:1px}#accountWorkspace .side-column{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}#accountWorkspace .message-card{grid-column:1/-1}}
+  @media(max-width:760px){#accountWorkspace{width:min(calc(100% - 32px),680px);margin:10px auto 28px;padding-bottom:22px}#accountWorkspace .brand{gap:7px;font-size:13px}#accountWorkspace .brand small{display:none}#accountWorkspace .side-column{grid-template-columns:minmax(0,1fr)}#accountWorkspace .message-card{grid-column:auto}#accountWorkspace .album__head{align-items:flex-start;flex-direction:column;gap:10px}#accountWorkspace .album__tools{width:100%;justify-content:space-between}#accountWorkspace .friend-summary{gap:5px}#accountWorkspace .friend-summary button{height:30px;padding:0 8px}#accountWorkspace .friend-toolbar{flex-wrap:wrap}#accountWorkspace .ticket{flex:1 1 220px;min-width:0}}
+  @media(max-width:540px){#accountWorkspace{width:calc(100% - 24px);margin:8px auto 24px}#accountWorkspace .today-hero,#accountWorkspace .album,#accountWorkspace .history,#accountWorkspace .block{padding:14px;border-radius:12px}#accountWorkspace .dashboard-grid>.history{padding:14px}#accountWorkspace .hero-heading{align-items:flex-start;gap:8px;padding-bottom:11px}#accountWorkspace .hero-icon{flex-basis:35px;width:35px;height:35px}#accountWorkspace .hero-icon .ui-icon{width:21px;height:21px}#accountWorkspace .hero-title{gap:8px}#accountWorkspace .hero-title h1{font-size:16px}#accountWorkspace .hero-title p{font-size:11px}#accountWorkspace .hero-state{gap:6px;padding:5px 7px}#accountWorkspace .hero-state small{display:none}#accountWorkspace .state-check{width:20px;height:20px}#accountWorkspace .hero-state b{font-size:11px}#accountWorkspace .hero-progress-copy b{font-size:29px}#accountWorkspace .today-progress{height:7px;margin-bottom:10px}#accountWorkspace .hero-bottom{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#accountWorkspace .hero-stat{padding:7px;gap:7px}#accountWorkspace .hero-stat__icon{flex-basis:26px;width:26px;height:26px}#accountWorkspace .hero-stat__icon .ui-icon{width:15px;height:15px}#accountWorkspace .hero-stat b{font-size:12px}#accountWorkspace .hero-actions{grid-column:1/-1;justify-content:stretch;padding-top:4px}#accountWorkspace .hero-actions .btn{flex:1;min-height:36px;padding:0 7px;font-size:11px}#accountWorkspace .album__heading .label{font-size:16px}#accountWorkspace .friend-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:1}#accountWorkspace .friend-summary button{width:100%;text-align:left}#accountWorkspace #toggleAddFriend{padding:0 9px}#accountWorkspace .friend-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}#accountWorkspace .search-box{grid-column:1/-1;height:36px}#accountWorkspace .status-filter{height:36px}#accountWorkspace .ticket{grid-column:1/-1;width:100%;height:36px}#accountWorkspace .ticket button{height:30px;padding:0 9px}#accountWorkspace .history__head{align-items:flex-start}#accountWorkspace .history__title{gap:8px}#accountWorkspace .section-icon-wrap{flex-basis:34px;width:34px;height:34px}#accountWorkspace .history__title .label{font-size:14px}#accountWorkspace .schedule-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#accountWorkspace .schedule-layout>.btn{grid-column:1/-1}#accountWorkspace .credential__buttons{grid-template-columns:repeat(3,minmax(0,1fr))}#accountWorkspace .credential__buttons .btn{min-height:42px;padding:5px 4px;font-size:11px}#accountWorkspace .message-rules{grid-template-columns:minmax(0,1fr);gap:8px}#accountWorkspace .message-rules__action{display:flex;align-items:center;justify-content:space-between}#accountWorkspace .history__rows{width:min(300px,76vw)}#accountWorkspace>footer{align-items:flex-start;flex-direction:column}}
+  @media(max-width:1120px){#accountWorkspace .dashboard-grid{grid-template-areas:"primary" "side" "history"}}
+  @media(max-width:540px){#accountWorkspace .hero-icon,#accountWorkspace .card-icon,#accountWorkspace .section-icon-wrap{flex-basis:36px;width:36px;height:36px;border-radius:10px}#accountWorkspace .hero-title h1{font-size:17px}#accountWorkspace .hero-actions .btn{flex:1;min-height:46px;padding:0 12px;font-size:13px}#accountWorkspace .card-heading h2,#accountWorkspace .history__title .label{font-size:16px}#accountWorkspace .history__head{flex-wrap:wrap;align-items:center}#accountWorkspace .history__title{width:100%}#accountWorkspace .history__tools{width:100%;justify-content:space-between}}
+  @media(max-width:540px){
+    #accountWorkspace .history-table{min-width:0;table-layout:auto;white-space:normal}
+    #accountWorkspace .history-table thead{display:none}
+    #accountWorkspace .history-table tbody{display:grid;gap:8px}
+    #accountWorkspace .history-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:10px 11px;border:1px solid #E8EDF5;border-radius:10px;background:#fff}
+    #accountWorkspace .history-table tbody td{display:flex;align-items:flex-start;gap:6px;min-width:0;height:auto;padding:0;border:0;color:#263D5B;font-size:11px;line-height:1.4;white-space:normal}
+    #accountWorkspace .history-table tbody td::before{flex:0 0 auto;color:#72839B;font-size:10px;font-weight:600;content:attr(data-label)}
+    #accountWorkspace .history-table tbody td:nth-child(1){grid-column:1;grid-row:1}
+    #accountWorkspace .history-table tbody td:nth-child(2){grid-column:2;grid-row:1;justify-content:flex-end}
+    #accountWorkspace .history-table tbody td:nth-child(3){grid-column:1/-1;grid-row:2}
+    #accountWorkspace .history-table tbody td:nth-child(4){grid-column:1;grid-row:3}
+    #accountWorkspace .history-table tbody td:nth-child(5){grid-column:2;grid-row:3;justify-content:flex-end}
+    #accountWorkspace .history-table tbody td.history-empty-cell{display:block;grid-column:1/-1;padding:16px 8px!important;text-align:center}
+    #accountWorkspace .history-table tbody td.history-empty-cell::before{content:none}
+  }
+  @media(prefers-reduced-motion:reduce){#accountWorkspace *,#accountWorkspace *::before,#accountWorkspace *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+  /* Section navigation shell: one task per page, with the existing Mac-like palette. */
+  #accountWorkspace{width:100%;max-width:none;min-height:100vh;margin:0;padding:18px 20px 20px;background:#F5F5F7;color:#1D1D1F;font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  #accountWorkspace[hidden]{display:none}
+  #accountWorkspace .app-frame{display:grid;grid-template-columns:224px minmax(0,1fr);gap:16px;width:min(100%,1680px);min-height:calc(100vh - 38px);margin:0 auto}
+  #accountWorkspace .sidebar{position:sticky;top:18px;display:flex;flex-direction:column;align-self:start;min-height:calc(100vh - 38px);padding:18px 13px 14px;border:1px solid #E3E7ED;border-radius:14px;background:#FFF;box-shadow:0 3px 12px rgba(30,45,67,.045)}
+  #accountWorkspace .brand{display:flex;align-items:center;gap:10px;min-width:0;padding:1px 8px 22px;color:#1D1D1F;font-size:15px;font-weight:680;letter-spacing:-.2px;text-decoration:none;white-space:nowrap}
+  #accountWorkspace .brand__icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#EAF3FF;color:#0066CC}
+  #accountWorkspace .brand__icon svg{width:22px;height:22px;fill:#0879F9}
+  #accountWorkspace .brand__icon svg path+path{fill:#EAF3FF}
+  #accountWorkspace .sidebar__label{margin:0 9px 8px;color:#686D76;font-size:11px;font-weight:600;letter-spacing:.02em}
+  #accountWorkspace .app-nav{display:grid;gap:3px}
+  #accountWorkspace .app-nav a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:9px;color:#55555D;font-size:13px;font-weight:500;text-decoration:none;transition:background .16s ease,color .16s ease}
+  #accountWorkspace .app-nav a:hover{background:#F5F7FA;color:#1D1D1F}
+  #accountWorkspace .app-nav a[aria-current="page"]{background:#EAF3FF;color:#005EB8;font-weight:650}
+  #accountWorkspace .app-nav .ui-icon{width:18px;height:18px;color:currentColor}
+  #accountWorkspace .sidebar-status{display:flex;align-items:flex-start;gap:10px;margin-top:auto;padding:12px 10px;border:1px solid #E5E9EF;border-radius:10px;background:#F8F9FB}
+  #accountWorkspace .sidebar-status__dot{flex:0 0 8px;width:8px;height:8px;margin-top:5px;border-radius:50%;background:#34A96B}
+  #accountWorkspace .sidebar-status[data-running="true"] .sidebar-status__dot{background:#0879F9}
+  #accountWorkspace .sidebar-status[data-attention="true"] .sidebar-status__dot{background:#D68A19}
+  #accountWorkspace .sidebar-status b,#accountWorkspace .sidebar-status small{display:block}
+  #accountWorkspace .sidebar-status b{color:#30343B;font-size:12px;font-weight:620}
+  #accountWorkspace .sidebar-status small{margin-top:3px;color:#686D76;font-size:11px;line-height:1.4}
+  #accountWorkspace .app-content{display:flex;flex-direction:column;min-width:0;max-width:1320px;width:100%;margin:0 auto}
+  #accountWorkspace .page-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 2px 18px}
+  #accountWorkspace .page-heading h1{margin:0;color:#1D1D1F;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-.55px}
+  #accountWorkspace .page-heading__context{color:#696D75;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
+  #accountWorkspace .page-view{display:grid;align-content:start;gap:16px;min-width:0}
+  #accountWorkspace .page-view[hidden]{display:none}
+  #accountWorkspace .home-page{gap:16px}
+  #accountWorkspace .today-hero,#accountWorkspace .home-section,#accountWorkspace .album,#accountWorkspace .block,#accountWorkspace .history{min-width:0;margin:0;padding:19px 20px;border:1px solid #E3E7ED;border-radius:14px;background:#FFF;box-shadow:0 3px 12px rgba(30,45,67,.045)}
+  #accountWorkspace .today-hero{padding:20px 22px 18px}
+  #accountWorkspace .hero-heading{padding-bottom:14px}
+  #accountWorkspace .hero-title h2{margin:0;color:#1D1D1F;font-size:16px;font-weight:650;letter-spacing:-.15px}
+  #accountWorkspace .hero-icon,#accountWorkspace .card-icon,#accountWorkspace .section-icon-wrap{background:#EDF4FD;color:#0879F9}
+  #accountWorkspace .hero-state{border-radius:9px}
+  #accountWorkspace .hero-state small{color:#4F617A}
+  #accountWorkspace .hero-progress-copy{margin-top:16px}
+  #accountWorkspace .today-progress{height:8px;margin-bottom:16px}
+  #accountWorkspace .hero-bottom{grid-template-columns:minmax(170px,.8fr) minmax(180px,.8fr) auto;gap:10px}
+  #accountWorkspace .hero-stat{align-items:center;min-height:68px;padding:10px 12px;border-radius:10px;background:#FAFBFD}
+  #accountWorkspace .hero-actions{justify-content:flex-end}
+  #accountWorkspace .hero-actions .btn{min-height:46px}
+  #accountWorkspace .hero-actions .btn--primary{min-width:168px}
+  #accountWorkspace #stopBtn{display:none!important}
+  #accountWorkspace .home-lower{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:16px;min-width:0}
+  #accountWorkspace .home-section{padding:17px 19px}
+  #accountWorkspace .home-section__head{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:10px;padding-bottom:11px;border-bottom:1px solid #ECEFF3}
+  #accountWorkspace .home-section__head h2{margin:0;color:#20242B;font-size:15px;font-weight:650;letter-spacing:-.1px}
+  #accountWorkspace .home-section__head .quiet{margin-right:auto;color:#6B7079;font-size:12px;white-space:nowrap}
+  #accountWorkspace .text-link{display:inline-flex;align-items:center;gap:5px;color:#0066CC;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
+  #accountWorkspace .text-link:hover{text-decoration:underline;text-underline-offset:3px}
+  #accountWorkspace .home-friend-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;margin:0;padding:0;list-style:none}
+  #accountWorkspace .home-friend-item{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:44px;border-bottom:1px solid #EEF0F3}
+  #accountWorkspace .home-friend-item:nth-last-child(-n+2){border-bottom:0}
+  #accountWorkspace .home-friend-no{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#F0F5FC;color:#537193;font-size:10px;font-weight:650}
+  #accountWorkspace .home-friend-no{font-size:11px}
+  #accountWorkspace .search-box input::placeholder{color:#6E6E73}
+  #accountWorkspace .home-friend-name{overflow:hidden;color:#30343B;font-size:12px;font-weight:550;text-overflow:ellipsis;white-space:nowrap}
+  #accountWorkspace .home-friend-status{display:inline-flex;align-items:center;gap:5px;color:#28784D;font-size:11px;white-space:nowrap}
+  #accountWorkspace .home-friend-status::before{width:6px;height:6px;border-radius:50%;background:#34A96B;content:""}
+  #accountWorkspace .home-friend-status.is-pending{color:#69717D}
+  #accountWorkspace .home-friend-status.is-pending::before{background:#A9B0B9}
+  #accountWorkspace .home-friend-status.is-failed,#accountWorkspace .home-friend-status.is-unknown{color:#A56511}
+  #accountWorkspace .home-friend-status.is-failed::before,#accountWorkspace .home-friend-status.is-unknown::before{background:#D68A19}
+  #accountWorkspace .home-friend-empty{grid-column:1/-1;padding:18px 0;color:#686D76;font-size:12px}
+  #accountWorkspace .home-recent-summary{display:grid;gap:12px;min-height:110px;align-content:center}
+  #accountWorkspace .home-recent-main{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  #accountWorkspace .home-recent-date{color:#313741;font-size:13px;font-weight:600}
+  #accountWorkspace .home-recent-kind{padding:4px 8px;border-radius:999px;background:#EDF4FD;color:#1769B5;font-size:11px;white-space:nowrap}
+  #accountWorkspace .home-recent-kind.is-dry{background:#F1F2F4;color:#656B75}
+  #accountWorkspace .home-recent-result{display:flex;align-items:center;gap:14px;color:#525A65;font-size:12px}
+  #accountWorkspace .home-recent-result .good{color:#28784D}
+  #accountWorkspace .home-recent-result .bad{color:#B94343}
+  #accountWorkspace .home-recent-empty{color:#6B7079;font-size:12px;line-height:1.6}
+  #accountWorkspace .album{padding:19px 20px}
+  #accountWorkspace .album__head{padding-bottom:14px}
+  #accountWorkspace .album__heading .label{font-size:17px}
+  #accountWorkspace .album>.hint{margin-top:12px;color:#676D77;font-size:12px;font-weight:450}
+  #accountWorkspace .block{padding:20px 21px}
+  #accountWorkspace .schedule-card{max-width:820px}
+  #accountWorkspace .schedule-layout{grid-template-columns:minmax(190px,.8fr) minmax(220px,1fr) 112px;gap:12px}
+  #accountWorkspace .schedule-time,#accountWorkspace .schedule-next{min-height:88px;padding:12px 13px}
+  #accountWorkspace .field-row select{min-width:70px;height:38px;font-size:14px}
+  #accountWorkspace .schedule-layout>.btn{min-height:42px}
+  #accountWorkspace .schedule-card .hint{display:block;margin-top:13px;color:#656D78;font-size:12px}
+  #accountWorkspace .message-card{max-width:900px}
+  #accountWorkspace .block textarea{min-height:150px;padding:13px 14px;background:#FAFBFD;font-size:14px}
+  #accountWorkspace .message-image{margin-top:16px}
+  #accountWorkspace .upload-drop{min-height:90px}
+  #accountWorkspace .message-image__item,#accountWorkspace .message-image__add{width:68px;height:68px}
+  #accountWorkspace .message-rules{margin-top:16px;padding:12px 13px}
+  #accountWorkspace .credential-card{max-width:900px}
+  #accountWorkspace .credential-card .hint{display:block;margin-top:10px;color:#656D78;font-size:12px}
+  #accountWorkspace .credential__buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  #accountWorkspace .credential__buttons .btn{width:auto;min-width:150px;min-height:42px;padding:0 14px;font-size:12px}
+  #accountWorkspace .system-page .history{padding:18px 20px}
+  #accountWorkspace .system-page .history__head{margin-bottom:12px}
+  #accountWorkspace .system-page .history__toggle{min-width:90px;min-height:38px;font-size:12px}
+  #accountWorkspace .system-page .history-table{min-width:700px}
+  #accountWorkspace .flash{margin:0 0 14px;padding:10px 13px;border:1px solid #F1D9D7;border-radius:9px;background:#FFF7F6;color:#9E3535;font-size:12px}
+  #accountWorkspace .app-content>footer{display:flex;justify-content:space-between;gap:14px;margin-top:auto;padding:18px 2px 2px;border:0;color:#6B7079;font-size:11px}
+  #accountWorkspace .send-preview{font-family:inherit}
+  @media(max-width:1050px){#accountWorkspace{padding:14px}#accountWorkspace .app-frame{grid-template-columns:205px minmax(0,1fr);gap:12px}#accountWorkspace .hero-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}#accountWorkspace .hero-actions{grid-column:1/-1;justify-content:flex-start;padding-top:2px}#accountWorkspace .hero-actions .btn--primary{flex:1}#accountWorkspace .home-lower{grid-template-columns:minmax(0,1fr)}#accountWorkspace .home-friend-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:760px){#accountWorkspace{padding:10px}#accountWorkspace .app-frame{grid-template-columns:minmax(0,1fr);gap:10px;min-height:calc(100vh - 20px)}#accountWorkspace .sidebar{position:static;min-height:0;padding:11px 12px 10px}#accountWorkspace .brand{padding:0 5px 10px;font-size:14px}#accountWorkspace .sidebar__label,#accountWorkspace .sidebar-status{display:none}#accountWorkspace .app-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin}#accountWorkspace .app-nav a{flex:0 0 auto;min-height:38px;padding:0 10px;font-size:12px}#accountWorkspace .app-nav .ui-icon{width:16px;height:16px}#accountWorkspace .page-heading{margin-bottom:14px}#accountWorkspace .page-heading h1{font-size:24px}#accountWorkspace .home-lower{gap:12px}#accountWorkspace .today-hero,#accountWorkspace .home-section,#accountWorkspace .album,#accountWorkspace .block,#accountWorkspace .history{padding:16px;border-radius:12px}#accountWorkspace .schedule-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#accountWorkspace .schedule-layout>.btn{grid-column:1/-1}#accountWorkspace .message-card{max-width:none}}
+  @media(max-width:540px){#accountWorkspace{padding:8px}#accountWorkspace .app-frame{gap:8px}#accountWorkspace .sidebar{padding:9px 9px 8px;border-radius:12px}#accountWorkspace .brand{padding-bottom:8px}#accountWorkspace .brand__icon{flex-basis:27px;width:27px;height:27px}#accountWorkspace .app-nav a{gap:6px;min-height:35px;padding:0 8px;font-size:11px}#accountWorkspace .page-heading{margin:0 1px 12px}#accountWorkspace .page-heading h1{font-size:22px}#accountWorkspace .page-heading__context{font-size:11px}#accountWorkspace .hero-heading{align-items:flex-start;gap:8px;padding-bottom:11px}#accountWorkspace .hero-icon{flex-basis:35px;width:35px;height:35px}#accountWorkspace .hero-title{gap:8px}#accountWorkspace .hero-title h2{font-size:14px}#accountWorkspace .hero-state{gap:6px;padding:5px 7px}#accountWorkspace .hero-state small{display:none}#accountWorkspace .state-check{width:20px;height:20px}#accountWorkspace .hero-state b{font-size:11px}#accountWorkspace .hero-progress-copy b{font-size:29px}#accountWorkspace .hero-progress-copy{gap:8px;margin:12px 2px 5px}#accountWorkspace .hero-progress-copy span{font-size:12px}#accountWorkspace .today-progress{height:7px;margin:0 2px 10px}#accountWorkspace .hero-bottom{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#accountWorkspace .hero-stat{padding:8px;gap:7px}#accountWorkspace .hero-stat__icon{flex-basis:26px;width:26px;height:26px}#accountWorkspace .hero-stat__icon .ui-icon{width:15px;height:15px}#accountWorkspace .hero-stat b{font-size:12px}#accountWorkspace .hero-stat small,#accountWorkspace .hero-stat em{font-size:11px}#accountWorkspace .hero-actions{grid-column:1/-1;justify-content:stretch;padding-top:3px}#accountWorkspace .hero-actions .btn{flex:1;min-height:44px;padding:0 10px;font-size:13px}#accountWorkspace .home-section__head{gap:8px;flex-wrap:wrap}#accountWorkspace .home-section__head h2{font-size:14px}#accountWorkspace .home-friend-list{grid-template-columns:minmax(0,1fr)}#accountWorkspace .home-friend-item:nth-last-child(-n+2){border-bottom:1px solid #EEF0F3}#accountWorkspace .home-friend-item:last-child{border-bottom:0}#accountWorkspace .home-recent-main{align-items:flex-start;flex-direction:column;gap:6px}#accountWorkspace .home-recent-result{flex-wrap:wrap;gap:8px}#accountWorkspace .album__head{align-items:flex-start;flex-direction:column;gap:10px}#accountWorkspace .album__tools{width:100%;justify-content:space-between}#accountWorkspace .friend-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:1}#accountWorkspace .friend-summary button{width:100%;text-align:left}#accountWorkspace #toggleAddFriend{padding:0 9px}#accountWorkspace .friend-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}#accountWorkspace .search-box{grid-column:1/-1;height:38px}#accountWorkspace .status-filter{height:38px}#accountWorkspace .ticket{grid-column:1/-1;width:100%;height:38px}#accountWorkspace .ticket button{height:32px;padding:0 9px}#accountWorkspace .schedule-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#accountWorkspace .credential__buttons{display:grid;grid-template-columns:1fr}#accountWorkspace .credential__buttons .btn{width:100%}#accountWorkspace .history__head{flex-wrap:wrap;align-items:center}#accountWorkspace .history__tools{width:100%;justify-content:space-between}#accountWorkspace .history-table{min-width:0;table-layout:auto;white-space:normal}#accountWorkspace .app-content>footer{align-items:flex-start;flex-direction:column}}
+
+  /* Final finish: consistent alignment, quiet surfaces, and clearer controls. */
+  #accountWorkspace{--line:#E3E7ED;--line-soft:#EDF0F4;--ink:#1D1D1F;--ink-soft:#626873;--ink-faint:#6E737B;width:100%;max-width:none;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55;caret-color:#0879F9}
+  #accountWorkspace .app-frame{width:min(100%,1720px);grid-template-columns:224px minmax(0,1fr);gap:20px}
+  #accountWorkspace .sidebar{border-color:#E3E7ED;border-radius:16px;box-shadow:none;padding:20px 14px 14px}
+  #accountWorkspace .brand{padding:2px 8px 26px;font-size:15px;letter-spacing:-.25px}
+  #accountWorkspace .app-nav{gap:4px}
+  #accountWorkspace .app-nav a{min-height:44px;padding:0 11px;border-radius:10px;font-size:13px}
+  #accountWorkspace .app-nav a[aria-current="page"]{background:#EEF5FF;color:#005EB8;box-shadow:inset 0 0 0 1px #D8E8FC}
+  #accountWorkspace .sidebar-status{padding:13px 11px;border-color:#E6E9EE;border-radius:12px;background:#F8F9FB}
+  #accountWorkspace .app-content{max-width:none}
+  #accountWorkspace .page-heading{margin:0 2px 20px}
+  #accountWorkspace .page-heading h1{font-size:30px;letter-spacing:-.7px}
+  #accountWorkspace .page-heading__context{color:#636A74;font-size:13px}
+  #accountWorkspace .page-view,#accountWorkspace .home-page{gap:18px}
+  #accountWorkspace .home-lower{gap:18px}
+  #accountWorkspace .today-hero,#accountWorkspace .home-section,#accountWorkspace .album,#accountWorkspace .block,#accountWorkspace .history{border-color:#E3E7ED;border-radius:16px;box-shadow:none}
+  #accountWorkspace .home-section{padding:20px 21px}
+  #accountWorkspace .home-section__head{margin-bottom:12px;padding-bottom:12px;border-color:#ECEFF3}
+  #accountWorkspace .home-section__head h2,#accountWorkspace .hero-title h2{font-size:16px;font-weight:680;letter-spacing:-.2px}
+  #accountWorkspace .hero-stat{min-height:72px;border-color:#E8EBF0;border-radius:11px;background:#F9FAFC}
+  #accountWorkspace .btn{min-height:42px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;line-height:1}
+  #accountWorkspace .btn:focus-visible,#accountWorkspace .app-nav a:focus-visible,#accountWorkspace .text-link:focus-visible{outline:3px solid rgba(8,121,249,.32);outline-offset:2px}
+  #accountWorkspace .friend-summary button,#accountWorkspace .search-box,#accountWorkspace .status-filter,#accountWorkspace .ticket{border-radius:10px}
+  #accountWorkspace .search-box,#accountWorkspace .status-filter,#accountWorkspace .ticket{border-color:#DFE4EB;background:#fff}
+  #accountWorkspace .friend-table th,#accountWorkspace .history-table th{height:42px;border-color:#E7EBF1;background:#F7F8FA;color:#566273;font-size:12px}
+  #accountWorkspace .friend-table td,#accountWorkspace .history-table td{height:49px;border-color:#ECEFF3;color:#30343A;font-size:13px}
+  #accountWorkspace .friend-table tbody tr:hover td,#accountWorkspace .history-table tbody tr:hover td{background:#FAFBFD}
+  #accountWorkspace .friend-state{font-weight:600}
+  #accountWorkspace .block textarea{border-color:#E1E5EB;border-radius:11px;background:#FBFBFC;font-size:14px;line-height:1.65}
+  #accountWorkspace .schedule-time,#accountWorkspace .schedule-next{border-color:#E6E9EE;border-radius:11px;background:#FAFBFC}
+  #accountWorkspace .field-row select{min-height:40px;border-color:#DDE2E9;border-radius:9px;font-family:inherit;font-size:14px;font-weight:500;line-height:1}
+  #accountWorkspace .history__head{border-color:#E9ECF1}
+  #accountWorkspace .history__toggle{min-height:40px;border-radius:9px}
+  #accountWorkspace>footer{color:#636A74}
+  #accountWorkspace ::selection{background:rgba(8,121,249,.18)}
+  #accountWorkspace *{scrollbar-color:#C7CCD4 transparent;scrollbar-width:thin}
+  #accountWorkspace *::-webkit-scrollbar{width:10px;height:10px}
+  #accountWorkspace *::-webkit-scrollbar-thumb{border:3px solid transparent;border-radius:99px;background:#C7CCD4;background-clip:content-box}
+  @media(max-width:1050px){#accountWorkspace .app-frame{grid-template-columns:205px minmax(0,1fr);gap:14px}}
+  @media(max-width:760px){#accountWorkspace{width:min(calc(100% - 32px),680px)}#accountWorkspace .app-frame{grid-template-columns:minmax(0,1fr);gap:10px}#accountWorkspace .sidebar{position:static;min-height:0;padding:11px 12px 10px;border-radius:14px}#accountWorkspace .brand{padding:0 5px 10px;font-size:14px}#accountWorkspace .sidebar__label,#accountWorkspace .sidebar-status{display:none}#accountWorkspace .app-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}#accountWorkspace .app-nav::-webkit-scrollbar{display:none}#accountWorkspace .app-nav a{flex:0 0 auto;min-height:40px;padding:0 10px;font-size:12px}#accountWorkspace .page-heading{margin-bottom:16px}#accountWorkspace .page-heading h1{font-size:25px}#accountWorkspace .home-section{padding:16px}#accountWorkspace .today-hero,#accountWorkspace .album,#accountWorkspace .block,#accountWorkspace .history{padding:16px;border-radius:14px}#accountWorkspace .schedule-layout{grid-template-columns:repeat(2,minmax(0,1fr))}#accountWorkspace .schedule-layout>.btn{grid-column:1/-1}}
+  @media(max-width:540px){#accountWorkspace{width:calc(100% - 24px)}#accountWorkspace .page-heading{margin-bottom:13px}#accountWorkspace .page-heading h1{font-size:23px}#accountWorkspace .today-hero,#accountWorkspace .album,#accountWorkspace .block,#accountWorkspace .history{padding:14px;border-radius:13px}#accountWorkspace .home-section{padding:14px}#accountWorkspace .hero-state{gap:6px;padding:5px 7px}#accountWorkspace .hero-state small{display:none}#accountWorkspace .hero-bottom{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#accountWorkspace .hero-actions{grid-column:1/-1;justify-content:stretch}#accountWorkspace .hero-actions .btn{flex:1;min-height:44px}#accountWorkspace .home-friend-list{grid-template-columns:minmax(0,1fr)}#accountWorkspace .home-friend-item:nth-last-child(-n+2){border-bottom:1px solid #EEF0F3}#accountWorkspace .home-friend-item:last-child{border-bottom:0}#accountWorkspace .home-recent-main{align-items:flex-start;flex-direction:column;gap:6px}#accountWorkspace .friend-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}#accountWorkspace .search-box{grid-column:1/-1;height:40px}#accountWorkspace .status-filter{height:40px}#accountWorkspace .ticket{grid-column:1/-1;width:100%;height:40px}#accountWorkspace .credential__buttons{grid-template-columns:1fr}#accountWorkspace .credential__buttons .btn{min-height:44px}#accountWorkspace>footer{align-items:flex-start;flex-direction:column}}
+</style>
+
+</head>
+<body>
+<main class="sheet" id="accountWorkspace">
+  <div class="app-frame">
+    <aside class="sidebar" aria-label="应用导航">
+      <a class="brand" href="#/accounts/main/home" aria-label="抖音自动续火花首页"><span class="brand__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12.4 2.5c.4 3.2-1.1 5.1-3.1 7C7.4 11.4 6 13.2 6 15.5a6 6 0 0 0 12 0c0-2.8-1.3-5.3-4.6-8.4.1 2.2-.5 3.3-1.4 4.4C12 7.8 10.7 4.9 12.4 2.5Z"/><path d="M12 20.2a3.1 3.1 0 0 1-3.1-3.1c0-1.2.7-2.2 1.8-3.2.7-.6 1.1-1.2 1.3-2 .6.8.8 1.6.8 2.4.9-.6 1.2-1.2 1.2-1.9.8.9 1.2 1.9 1.2 3.1a3.2 3.2 0 0 1-3.2 3.2Z" fill="#FFF0E9" stroke="none"/></svg></span><span>抖音自动续火花</span></a>
+      <div class="sidebar__label">工作区</div>
+      <nav class="app-nav" aria-label="主导航">
+        <a href="#/accounts/main/home" data-page-link="home" aria-current="page"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>首页</span></a>
+        <a href="#/accounts/main/friends" data-page-link="friends"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.5"/><path d="M20 20v-1.5a4 4 0 0 0-3-3.9M16 3.2a3.5 3.5 0 0 1 0 6.8"/></svg><span>好友管理</span></a>
+        <a href="#/accounts/main/tasks" data-page-link="tasks"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>自动任务</span></a>
+        <a href="#/accounts/main/messages" data-page-link="messages"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6a7.5 7.5 0 0 1-.5-3.5A7.5 7.5 0 0 1 10 4h2.5a7.5 7.5 0 0 1 7.5 7.5Z"/><path d="M8 10h8m-8 4h5"/></svg><span>消息管理</span></a>
+        <a href="#/accounts/main/system" data-page-link="system"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg><span>登录与记录</span></a>
+      </nav>
+      <div class="sidebar-status" aria-live="polite"><span class="sidebar-status__dot" aria-hidden="true"></span><div><b id="sidebarRunStatus">运行就绪</b><small id="sidebarNextRun">下次执行：—</small></div></div>
+    </aside>
+
+    <div class="app-content">
+      <p class="flash" id="flash" hidden role="alert"></p>
+
+      <dialog class="send-preview" id="sendPreviewDialog" aria-labelledby="sendPreviewTitle" aria-describedby="sendPreviewDescription">
+        <div class="send-preview__content">
+          <header class="send-preview__header"><div><p class="send-preview__eyebrow">正式发送前确认</p><h2 id="sendPreviewTitle">检查这次投递</h2></div><button class="send-preview__close" id="closeSendPreview" type="button" aria-label="关闭发送预览">×</button></header>
+          <div class="send-preview__body" id="sendPreviewDescription">
+            <section class="send-preview__section" aria-labelledby="previewRecipientsLabel"><h3 class="send-preview__label" id="previewRecipientsLabel">发送对象 <span id="sendPreviewCount"></span></h3><ul class="send-preview__recipients" id="sendPreviewRecipients"></ul><p class="send-preview__queue-note" id="sendPreviewQueueNote" hidden></p></section>
+            <section class="send-preview__section" aria-labelledby="previewMessagesLabel"><h3 class="send-preview__label" id="previewMessagesLabel">消息预览 <span id="sendPreviewMode"></span></h3><ul class="send-preview__messages" id="sendPreviewMessages"></ul><div class="send-preview__images" id="sendPreviewImages" hidden></div><p class="send-preview__empty" id="sendPreviewUnsupported" hidden></p></section>
+            <p class="send-preview__note" id="sendPreviewUnsaved" hidden>消息输入框有尚未保存的修改。本次发送会使用已保存的配置；如需发送新内容，请先关闭此窗口并保存消息。</p>
+          </div>
+          <footer class="send-preview__footer"><button class="btn btn--quiet" id="cancelSendPreview" type="button">返回修改</button><button class="btn btn--primary" id="confirmSend" type="button">确认并立即发送</button></footer>
+        </div>
+      </dialog>
+
+      <div class="page-heading"><h1 id="pageTitle">首页</h1><div class="page-heading__context" id="pageContext">主账号</div></div>
+
+      <section class="page-view home-page" data-page-view="home" aria-labelledby="pageTitle">
+        <section class="today-hero" aria-label="今日运行概览">
+          <div class="hero-heading"><div class="hero-title"><span class="hero-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.7 5.7l1.4 1.4m9.8 9.8 1.4 1.4m0-12.6-1.4 1.4m-9.8 9.8-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></span><div><h2 id="accountHeading">今日发送进度</h2></div></div><div class="hero-state" id="runBadge"><span class="state-check">✓</span><span><b id="runBadgeTitle">准备就绪</b><small id="runBadgeDetail">好友列表已加载</small></span></div></div>
+          <div class="hero-progress-copy"><b id="todayCount">—</b><span>今日已发送</span><strong id="progressPercent">0%</strong></div>
+          <div class="today-progress" role="progressbar" aria-label="今日好友发送进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><i id="todayProgressBar"></i></div>
+          <div class="hero-bottom"><div class="hero-stat"><span class="hero-stat__icon"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><small>最近运行</small><b id="lastRunStat">暂无记录</b><em id="statusText" aria-live="polite">正在读取…</em></span></div><div class="hero-stat"><span class="hero-stat__icon"><svg class="ui-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-9 4h3v3h-3z"/></svg></span><span><small>下次执行</small><b id="nextRunStat">—</b><em>每日自动运行</em></span></div><div class="hero-actions"><button class="btn btn--primary" id="sendBtn"><svg class="ui-icon" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg><span>立即发送</span></button><button class="btn btn--quiet" id="stopBtn" hidden>停下</button></div></div>
+        </section>
+        <div class="home-lower">
+          <section class="home-section" aria-labelledby="homeFriendsTitle"><div class="home-section__head"><h2 id="homeFriendsTitle">好友进度</h2><span id="homeFriendMeta" class="quiet"></span><a class="text-link" href="#/accounts/main/friends">管理好友 <span aria-hidden="true">→</span></a></div><ul class="home-friend-list" id="homeFriendList"></ul></section>
+          <section class="home-section" aria-labelledby="homeRecentTitle"><div class="home-section__head"><h2 id="homeRecentTitle">最近运行</h2><a class="text-link" href="#/accounts/main/system">查看记录 <span aria-hidden="true">→</span></a></div><div class="home-recent-summary" id="homeRecentSummary"></div></section>
+        </div>
+      </section>
+
+      <section class="page-view" data-page-view="friends" aria-labelledby="pageTitle">
+        <section class="album" id="friends" aria-labelledby="albumLabel">
+          <div class="album__head"><div class="album__heading"><span class="section-icon-wrap" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.5"/><path d="M20 20v-1.5a4 4 0 0 0-3-3.9M16 3.2a3.5 3.5 0 0 1 0 6.8"/></svg></span><span class="label" id="albumLabel">好友管理</span><span class="quiet" id="albumCount"></span></div><div class="album__tools"><div class="friend-summary" id="friendSummary" aria-label="好友发送状态"></div><button class="btn btn--primary" id="toggleAddFriend" type="button" aria-expanded="false" aria-controls="addForm"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>添加好友</span></button></div></div>
+          <div class="friend-toolbar"><label class="search-box"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><input id="friendSearch" type="search" placeholder="搜索好友昵称" autocomplete="off"></label><label class="visually-hidden" for="friendStatusFilter">筛选好友状态</label><select id="friendStatusFilter" class="status-filter"><option value="all">全部状态</option><option value="sent">已发送</option><option value="pending">待发送</option><option value="failed">失败</option><option value="unknown">待核对</option></select><form class="ticket" id="addForm" autocomplete="off" hidden><label class="visually-hidden" for="newFriend">添加抖音好友昵称</label><input id="newFriend" maxlength="32" placeholder="输入好友昵称" required><button type="submit">添加</button></form></div>
+          <div class="friend-table-wrap"><table class="friend-table"><thead><tr><th scope="col">序号</th><th scope="col">昵称</th><th scope="col">状态</th><th scope="col">最近发送时间</th><th scope="col">操作</th></tr></thead><tbody id="albumGrid" aria-live="polite"></tbody></table></div>
+          <p class="hint">双击昵称可改名。删除好友需要再次确认。</p>
+        </section>
+      </section>
+
+      <section class="page-view" data-page-view="tasks" aria-labelledby="pageTitle">
+        <section class="block schedule-card" id="accountSettings" aria-labelledby="scheduleCardTitle">
+          <div class="card-heading"><span class="card-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h2 id="scheduleCardTitle">自动运行时间</h2></div><span class="schedule-enabled" id="scheduleEnabled">已启用</span></div>
+          <div class="schedule-layout"><div class="schedule-time"><label for="scheduleHour">每日运行时间</label><div class="field-row"><select id="scheduleHour" aria-label="每天发送的小时"></select><span class="unit">:</span><select id="scheduleMinute" aria-label="每天发送的分钟"></select></div></div><div class="schedule-next"><label>下次执行时间</label><b id="scheduleNextCard">—</b><small>每日自动运行</small></div><button class="btn" id="saveSchedule">保存时间</button></div>
+          <p class="hint" id="scheduleHint">下一次投递：—</p><span class="visually-hidden" id="scheduleState"></span>
+        </section>
+      </section>
+
+      <section class="page-view" data-page-view="messages" aria-labelledby="pageTitle">
+        <section class="block message-card" aria-labelledby="messageCardTitle">
+          <div class="card-heading"><span class="card-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6a7.5 7.5 0 0 1-.5-3.5A7.5 7.5 0 0 1 10 4h2.5a7.5 7.5 0 0 1 7.5 7.5Z"/><path d="M8 10h8m-8 4h5"/></svg></span><div><h2 id="messageCardTitle">每日消息</h2></div><span class="saved-badge" id="messageSavedBadge">已保存</span></div>
+          <label class="field-label" for="messageBox">文字消息 <span>（多行候选，随机发送一条）</span><small id="messageCharCount"></small></label><textarea id="messageBox" spellcheck="false" placeholder="写下每天要发送的话"></textarea>
+          <div class="message-image"><input class="visually-hidden" id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple><label class="upload-drop" for="imageInput"><b><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg>点击上传图片或拖拽到此处</b><small>支持 PNG、JPG、GIF、WebP，单张不超过 8 MB</small></label><span class="message-image__count" id="messageImageCount">0 / 10 张</span><div class="message-image__gallery" id="messageImageGallery" hidden aria-label="已选择的图片"></div></div>
+          <div class="message-rules"><div class="message-rules__copy"><b><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>发送规则</b><span>1. 从文字候选中随机选择一条消息发送</span><span>2. 有图片时，再随机选择一张发送</span></div><div class="message-rules__action"><button class="btn" id="saveMessage">保存消息</button><span class="quiet" id="messageState"></span></div></div>
+        </section>
+      </section>
+
+      <section class="page-view system-page" data-page-view="system" aria-labelledby="pageTitle">
+        <section class="block credential-card" aria-labelledby="credentialCardTitle">
+          <div class="card-heading"><span class="card-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="m12 3 8 3v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h2 id="credentialCardTitle">登录凭证</h2></div></div>
+          <p class="credential__state" id="credState">—</p><div class="credential__buttons"><input class="visually-hidden credential__file" id="credentialFile" type="file" accept=".json,application/json" aria-label="选择 Cookie JSON 文件"><label class="btn btn--quiet" for="credentialFile">导入 Cookie JSON</label><button class="btn btn--quiet" id="loginBtn">重新扫码</button><button class="btn btn--danger" id="clearCred">清除凭证</button></div>
+        </section>
+        <section class="history" aria-label="运行历史">
+          <div class="history__head"><div class="history__title"><span class="section-icon-wrap" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.7-6.4L3 8"/><path d="M3 3v5h5m4-1v5l3 2"/></svg></span><div><span class="label">运行历史</span></div></div><div class="history__tools"><span class="quiet" id="historyMeta"></span><button class="history__toggle" id="toggleHistory" type="button" aria-expanded="true" aria-controls="historyContent"><span id="historyToggleLabel">收起</span><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+          <div class="history__content" id="historyContent"><div class="history-table-wrap"><table class="history-table"><thead><tr><th scope="col">完成时间</th><th scope="col">运行方式</th><th scope="col">运行结果</th><th scope="col">好友数</th><th scope="col">操作</th></tr></thead><tbody class="history__list" id="historyList" aria-live="polite"></tbody></table></div></div>
+        </section>
+      </section>
+
+      <footer><span>本地应用 · 账号与登录凭证保存在此设备</span><span class="num" id="buildInfo">正在连接本机</span></footer>
+    </div>
+  </div>
+</main>
+
+
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  $("buildInfo").textContent = window.location.host;
+  const el = {
+    accountWorkspace: $("accountWorkspace"), accountHeading: $("accountHeading"),
+    pageTitle: $("pageTitle"), pageContext: $("pageContext"),
+    sidebarStatus: document.querySelector(".sidebar-status"), sidebarRunStatus: $("sidebarRunStatus"), sidebarNextRun: $("sidebarNextRun"),
+    homeFriendMeta: $("homeFriendMeta"), homeFriendList: $("homeFriendList"), homeRecentSummary: $("homeRecentSummary"),
+    todayCount: $("todayCount"), todayProgressBar: $("todayProgressBar"), progressPercent: $("progressPercent"),
+    lastRunStat: $("lastRunStat"), nextRunStat: $("nextRunStat"), runBadge: $("runBadge"), runBadgeTitle: $("runBadgeTitle"), runBadgeDetail: $("runBadgeDetail"),
+    albumGrid: $("albumGrid"), addForm: $("addForm"), toggleAddFriend: $("toggleAddFriend"), newFriend: $("newFriend"), friendSummary: $("friendSummary"), friendSearch: $("friendSearch"), friendStatusFilter: $("friendStatusFilter"),
+    statusText: $("statusText"),
+    sendBtn: $("sendBtn"), stopBtn: $("stopBtn"),
+    sendPreviewDialog: $("sendPreviewDialog"), closeSendPreview: $("closeSendPreview"),
+    cancelSendPreview: $("cancelSendPreview"), confirmSend: $("confirmSend"),
+    sendPreviewCount: $("sendPreviewCount"), sendPreviewRecipients: $("sendPreviewRecipients"),
+    sendPreviewQueueNote: $("sendPreviewQueueNote"),
+    sendPreviewMode: $("sendPreviewMode"), sendPreviewMessages: $("sendPreviewMessages"),
+    sendPreviewImages: $("sendPreviewImages"),
+    sendPreviewUnsupported: $("sendPreviewUnsupported"), sendPreviewUnsaved: $("sendPreviewUnsaved"),
+    flash: $("flash"),
+    messageBox: $("messageBox"), imageInput: $("imageInput"), messageImageGallery: $("messageImageGallery"),
+    messageImageCount: $("messageImageCount"),
+    saveMessage: $("saveMessage"), messageState: $("messageState"),
+    scheduleHour: $("scheduleHour"), scheduleMinute: $("scheduleMinute"), saveSchedule: $("saveSchedule"),
+    albumCount: $("albumCount"),
+    scheduleHint: $("scheduleHint"), scheduleState: $("scheduleState"), scheduleNextCard: $("scheduleNextCard"), scheduleEnabled: $("scheduleEnabled"), messageSavedBadge: $("messageSavedBadge"), messageCharCount: $("messageCharCount"),
+    credState: $("credState"), credentialFile: $("credentialFile"), loginBtn: $("loginBtn"), clearCred: $("clearCred"),
+    historyList: $("historyList"), historyMeta: $("historyMeta"), historyContent: $("historyContent"), toggleHistory: $("toggleHistory"), historyToggleLabel: $("historyToggleLabel")
+  };
+
+  const live = { stamped: new Set(), failed: new Set(), done: new Set(), current: null, action: null, total: 0 };
+  let state = null;
+  let source = null;
+  let editIndex = null;   // 正在改名的好友
+  let armedDelete = null; // 二次确认中的删除按钮
+  let friendFilter = "all";
+  let imageItems = [];
+  let imageTouched = false;
+  let messageDirty = false;
+  let activeAccountId = "main";
+  let activePage = "home";
+  let routeSequence = 0;
+
+  const ALIAS_RE = /^好友(\d+)$/;
+  const PAGE_TITLES = { home: "首页", friends: "好友管理", tasks: "自动任务", messages: "消息管理", system: "登录与记录" };
+  const PAGE_KEYS = new Set(Object.keys(PAGE_TITLES));
+
+  // ---------------------------------------------------------------- 请求
+  async function api(path, body) {
+    const scopedPaths = new Set(["/api/friends", "/api/message", "/api/image", "/api/action", "/api/credential/import", "/api/credential/clear", "/api/schedule"]);
+    if (body && activeAccountId && scopedPaths.has(path) && body.accountId === undefined) {
+      body = { ...body, accountId: activeAccountId };
+    }
+    const options = body === undefined
+      ? { method: "GET" }
+      : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    const response = await fetch(path, options);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "请求失败");
+    return payload;
+  }
+
+  function flash(message, tone) {
+    if (!message) { el.flash.hidden = true; return; }
+    el.flash.hidden = false;
+    el.flash.textContent = message;
+    el.flash.style.color = tone === "quiet" ? "var(--ink-soft)" : "var(--mark)";
+  }
+
+  function showRoute() {
+    const sequence = ++routeSequence;
+    let route = /^#\/accounts\/([^/]+)(?:\/([^/?#]+))?$/.exec(location.hash);
+    if (!route) {
+      history.replaceState(null, "", `${location.pathname}${location.search}#/accounts/main/home`);
+      route = ["", "main", "home"];
+    }
+    const accountId = decodeURIComponent(route[1] || "main");
+    let page = route[2] || "home";
+    if (!PAGE_KEYS.has(page)) page = "home";
+    const canonicalHash = `#/accounts/${encodeURIComponent(accountId)}/${page}`;
+    if (location.hash !== canonicalHash) history.replaceState(null, "", `${location.pathname}${location.search}${canonicalHash}`);
+    activePage = page;
+    activeAccountId = accountId;
+    window.scrollTo({ top: 0, behavior: "auto" });
+    el.pageTitle.textContent = PAGE_TITLES[page];
+    const now = state?.now ? new Date(state.now) : new Date();
+    el.pageContext.textContent = page === "home" && !Number.isNaN(now.getTime()) ? `${now.getMonth() + 1}月${now.getDate()}日` : "";
+    el.pageContext.hidden = !el.pageContext.textContent;
+    document.querySelectorAll("[data-page-view]").forEach((view) => { view.hidden = view.dataset.pageView !== page; });
+    document.querySelectorAll("[data-page-link]").forEach((link) => {
+      if (link.dataset.pageLink === page) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    state = null;
+    live.stamped.clear(); live.failed.clear(); live.done.clear(); live.current = null;
+    el.accountWorkspace.hidden = false;
+    el.todayCount.textContent = "—";
+    const url = `/api/state?accountId=${encodeURIComponent(accountId)}`;
+    api(url).then((payload) => {
+      if (sequence !== routeSequence || activeAccountId !== accountId) return;
+      state = payload;
+      render();
+    }).catch((error) => { if (sequence === routeSequence) flash(`读取账号失败：${error.message}`); });
+    connect();
+  }
+
+  // ---------------------------------------------------------------- 渲染
+  function render() {
+    if (!state) return;
+    const friends = state.friends || [];
+    const running = state.running;
+
+    // 只有真实发送才记为已投递：Dry Run 只是检查，不改变今日发送状态。
+    const sending = running ? running.action === "send" : Boolean(state.lastRun && !state.lastRun.dryRun);
+    const stamped = new Set(state.stamped || []);
+    if (sending) {
+      live.stamped.forEach((alias) => {
+        const match = ALIAS_RE.exec(alias);
+        if (match) stamped.add(Number(match[1]) - 1);
+      });
+    }
+
+    el.todayCount.textContent = `${stamped.size} / ${friends.length}`;
+    el.todayCount.parentElement.dataset.complete = String(friends.length > 0 && stamped.size >= friends.length);
+    const sentCount = Math.min(stamped.size, friends.length);
+    const progress = friends.length ? Math.round((sentCount / friends.length) * 100) : 0;
+    el.todayProgressBar.style.width = `${progress}%`;
+    el.progressPercent.textContent = `${progress}%`;
+    el.todayProgressBar.parentElement.setAttribute("aria-valuemax", String(friends.length));
+    el.todayProgressBar.parentElement.setAttribute("aria-valuenow", String(sentCount));
+    el.albumCount.textContent = ` · ${friends.length} 位`;
+    const pageDate = new Date(state.now || Date.now());
+    el.pageContext.textContent = activePage === "home" && !Number.isNaN(pageDate.getTime()) ? `${pageDate.getMonth() + 1}月${pageDate.getDate()}日` : "";
+    el.pageContext.hidden = !el.pageContext.textContent;
+
+    renderRunStats(friends.length, stamped, running);
+    renderAlbum(friends, stamped, running);
+    renderStatus(running, friends.length);
+    renderMessage();
+    renderSchedule();
+    renderCredential();
+    renderHistory(state.runHistory || []);
+    renderHomeFriends(friends, stamped, running);
+    renderHomeRecent(state.runHistory || []);
+    updateSidebarStatus(running);
+  }
+
+  function renderRunStats(total, stamped, running) {
+    const last = state.lastRun;
+    const date = last?.finishedAt ? new Date(last.finishedAt) : null;
+    const hasDate = date && !Number.isNaN(date.getTime());
+    const time = hasDate ? `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}` : "暂无记录";
+    const successful = last ? Number(last.ok || 0) : 0;
+    const failed = last ? Number(last.failed || 0) : 0;
+    const unknown = last ? Number(last.unknown || 0) : 0;
+    el.lastRunStat.textContent = running ? "正在运行" : time;
+    el.nextRunStat.textContent = state.schedule?.next || "—";
+    el.runBadge.dataset.running = String(Boolean(running));
+    el.runBadge.dataset.failed = String(Boolean(!running && (failed || unknown)));
+    el.runBadgeTitle.textContent = running ? "任务运行中" : !last ? "等待运行" : last.dryRun ? (failed ? "检查未通过" : "检查已通过") : unknown ? "有好友待核对" : failed ? "任务有失败" : "任务已完成";
+    el.runBadgeDetail.textContent = running ? `${live.done.size} / ${total} 位好友已处理` : !last ? "登录状态与好友列表就绪后即可发送" : last.dryRun ? `好友定位与输入框：${successful} 位通过` : `${Math.min(stamped.size, total)} / ${total} 位已发送${unknown ? `，${unknown} 位待核对` : ""}`;
+  }
+
+  function renderHistory(history) {
+    el.historyList.textContent = "";
+    el.historyMeta.textContent = `最近 ${history.length} 次`;
+    if (!history.length) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 5;
+      cell.className = "history-empty-cell";
+      cell.textContent = "还没有运行记录。完成一次发送后会显示在这里。";
+      row.append(cell);
+      el.historyList.append(row);
+      return;
+    }
+    const labels = { success: "成功", failed: "失败", skipped: "跳过", duplicate: "重复跳过", unknown: "结果未确认" };
+    history.forEach((run) => {
+      const results = Array.isArray(run.results) ? run.results : [];
+      const succeeded = results.filter((item) => item.status === "success").length;
+      const failed = results.filter((item) => item.status === "failed").length;
+      const timestamp = new Date(run.finishedAt);
+      const row = document.createElement("tr");
+      const time = document.createElement("td");
+      time.dataset.label = "完成时间";
+      time.textContent = Number.isNaN(timestamp.getTime()) ? run.finishedAt || "时间未知" : `${timestamp.getFullYear()}年${timestamp.getMonth()+1}月${timestamp.getDate()}日 ${String(timestamp.getHours()).padStart(2,"0")}:${String(timestamp.getMinutes()).padStart(2,"0")}`;
+      const typeCell = document.createElement("td");
+      typeCell.dataset.label = "运行方式";
+      const type = document.createElement("span");
+      type.className = `history__kind${run.dryRun ? " is-dry" : ""}`;
+      type.textContent = run.dryRun ? "Dry Run" : "正式发送";
+      typeCell.append(type);
+      const resultCell = document.createElement("td");
+      resultCell.dataset.label = "运行结果";
+      resultCell.className = "history__counts";
+      const ok = document.createElement("span");
+      ok.className = "good";
+      ok.textContent = run.dryRun ? `● 通过 ${succeeded}` : `● 成功 ${succeeded}`;
+      const bad = document.createElement("span");
+      bad.className = failed ? "bad" : "";
+      bad.textContent = run.dryRun ? `　未通过 ${failed}` : `　失败 ${failed}`;
+      resultCell.append(ok, bad);
+      const friendCount = document.createElement("td");
+      friendCount.dataset.label = "好友数";
+      friendCount.textContent = `${results.length} 位`;
+      const action = document.createElement("td");
+      action.dataset.label = "操作";
+      const details = document.createElement("details");
+      details.className = "history__details";
+      const summary = document.createElement("summary");
+      summary.textContent = "查看详情 →";
+      const list = document.createElement("ul");
+      list.className = "history__rows";
+      results.forEach((item) => {
+        const entry = document.createElement("li");
+        entry.className = "history__row";
+        const target = document.createElement("span");
+        target.className = "history__target";
+        target.textContent = item.target || "未知好友";
+        const detail = document.createElement("span");
+        detail.className = "history__detail";
+        const status = document.createElement("b");
+        status.className = `history__status history__status--${item.status || "unknown"}`;
+        status.textContent = run.dryRun
+          ? ({ success: "通过", failed: "未通过", skipped: "跳过", duplicate: "重复跳过", unknown: "结果未确认" }[item.status] || "状态未知")
+          : (labels[item.status] || "状态未知");
+        detail.append(status, document.createTextNode(item.error || (item.sent ? `已发送 ${item.sent} 条消息` : run.dryRun && item.status === "success" ? "好友定位与消息输入框检查通过" : "没有发送消息")));
+        entry.append(target, detail);
+        list.append(entry);
+      });
+      if (!results.length) {
+        const entry = document.createElement("li");
+        entry.className = "history__row";
+        entry.textContent = "这次运行没有逐好友结果。";
+        list.append(entry);
+      }
+      details.append(summary, list);
+      action.append(details);
+      row.append(time, typeCell, resultCell, friendCount, action);
+      el.historyList.append(row);
+    });
+  }
+
+  function renderHomeFriends(friends, stamped, running) {
+    el.homeFriendList.textContent = "";
+    el.homeFriendMeta.textContent = `共 ${friends.length} 位`;
+    if (!friends.length) {
+      const empty = document.createElement("li");
+      empty.className = "home-friend-empty";
+      empty.textContent = "还没有好友。添加好友后会显示在这里。";
+      el.homeFriendList.append(empty);
+      return;
+    }
+
+    const labels = { sent: "已发送", pending: "待发送", failed: "失败", unknown: "待核对" };
+    friends.slice(0, 6).forEach((name, index) => {
+      const status = friendStatus(index, stamped);
+      const item = document.createElement("li");
+      item.className = "home-friend-item";
+      const number = document.createElement("span");
+      number.className = "home-friend-no";
+      number.textContent = String(index + 1).padStart(2, "0");
+      const title = document.createElement("span");
+      title.className = "home-friend-name";
+      title.textContent = name;
+      const badge = document.createElement("span");
+      badge.className = `home-friend-status${status === "pending" ? " is-pending" : status === "failed" ? " is-failed" : status === "unknown" ? " is-unknown" : ""}`;
+      badge.textContent = running && live.current === `好友${String(index + 1).padStart(2, "0")}` ? "处理中" : (labels[status] || "状态未知");
+      item.append(number, title, badge);
+      el.homeFriendList.append(item);
+    });
+  }
+
+  function renderHomeRecent(history) {
+    const container = el.homeRecentSummary;
+    container.textContent = "";
+    const latest = history[0];
+    if (!latest) {
+      const empty = document.createElement("p");
+      empty.className = "home-recent-empty";
+      empty.textContent = "还没有运行记录。完成一次任务后，结果会显示在登录与记录中。";
+      container.append(empty);
+      return;
+    }
+
+    const results = Array.isArray(latest.results) ? latest.results : [];
+    const succeeded = results.filter((item) => item.status === "success").length;
+    const failed = results.filter((item) => item.status === "failed").length;
+    const unknown = results.filter((item) => item.status === "unknown").length;
+    const timestamp = new Date(latest.finishedAt);
+    const date = document.createElement("span");
+    date.className = "home-recent-date";
+    date.textContent = Number.isNaN(timestamp.getTime()) ? (latest.finishedAt || "时间未知") : `${timestamp.getMonth() + 1}月${timestamp.getDate()}日 ${String(timestamp.getHours()).padStart(2, "0")}:${String(timestamp.getMinutes()).padStart(2, "0")}`;
+    const kind = document.createElement("span");
+    kind.className = `home-recent-kind${latest.dryRun ? " is-dry" : ""}`;
+    kind.textContent = latest.dryRun ? "Dry Run" : "正式发送";
+    const main = document.createElement("div");
+    main.className = "home-recent-main";
+    main.append(date, kind);
+    const result = document.createElement("div");
+    result.className = "home-recent-result";
+    const good = document.createElement("span");
+    good.className = "good";
+    good.textContent = `${latest.dryRun ? "通过" : "成功"} ${succeeded}`;
+    const bad = document.createElement("span");
+    bad.className = failed ? "bad" : "";
+    bad.textContent = `${latest.dryRun ? "未通过" : "失败"} ${failed}`;
+    result.append(good, bad);
+    if (unknown) {
+      const pending = document.createElement("span");
+      pending.textContent = `待核对 ${unknown}`;
+      result.append(pending);
+    }
+    container.append(main, result);
+  }
+
+  function updateSidebarStatus(running) {
+    const needsAttention = state.accountEnabled === false || !state.credential?.present;
+    const last = state.lastRun;
+    el.sidebarRunStatus.textContent = running ? "任务运行中" : state.accountEnabled === false ? "账号已停用" : !state.credential?.present ? "需要登录" : last && (Number(last.failed || 0) || Number(last.unknown || 0)) ? "运行需留意" : "运行就绪";
+    el.sidebarNextRun.textContent = state.schedule?.next ? `下次执行：${state.schedule.next}` : "下次执行：未配置";
+    el.sidebarStatus.dataset.running = String(Boolean(running));
+    el.sidebarStatus.dataset.attention = String(Boolean(needsAttention));
+  }
+
+  function renderAlbum(friends, stamped, running) {
+    el.albumGrid.textContent = "";
+    const counts = { sent: 0, pending: 0, failed: 0, unknown: 0 };
+    friends.forEach((_, index) => { counts[friendStatus(index, stamped)] += 1; });
+    renderFriendSummary(friends.length, counts);
+    const query = el.friendSearch.value.trim().toLocaleLowerCase();
+    const filter = el.friendStatusFilter.value;
+    const visible = friends.map((name, index) => ({ name, index, status: friendStatus(index, stamped) }))
+      .filter((item) => (!query || item.name.toLocaleLowerCase().includes(query)) && (filter === "all" || filter === item.status));
+    if (!visible.length) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 5;
+      cell.className = "friend-empty";
+          cell.textContent = friends.length ? "没有符合条件的好友。" : "还没有好友，请点击“添加好友”开始添加。";
+      row.append(cell);
+      el.albumGrid.append(row);
+      return;
+    }
+    visible.forEach(({ name, index, status }) => {
+      const row = document.createElement("tr");
+      const numberCell = document.createElement("td");
+      const number = document.createElement("span");
+      number.className = "friend-no";
+      number.textContent = String(index + 1).padStart(2, "0");
+      numberCell.append(number);
+      const nameCell = document.createElement("td");
+      const title = document.createElement("span");
+      title.className = "friend-name";
+      title.textContent = name;
+      title.title = "双击改名";
+      title.tabIndex = 0;
+      title.setAttribute("role", "button");
+      title.setAttribute("aria-label", `${name}，按 Enter 改名`);
+      title.addEventListener("dblclick", () => startRename(row, title, index));
+      title.addEventListener("keydown", (event) => {
+        if (editIndex === null && (event.key === "Enter" || event.key === "F2")) { event.preventDefault(); startRename(row, title, index); }
+      });
+      nameCell.append(title);
+      const statusCell = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = `friend-state${status === "failed" ? " is-failed" : status === "pending" ? " is-pending" : status === "unknown" ? " is-unknown" : ""}`;
+      badge.textContent = running && live.current === `好友${String(index + 1).padStart(2, "0")}` ? "处理中" : ({ sent: "已发送", pending: "待发送", failed: "失败", unknown: "待核对" }[status]);
+      statusCell.append(badge);
+      const timeCell = document.createElement("td");
+      timeCell.textContent = status === "sent" ? latestFriendSendTime(index) : "—";
+      const actionCell = document.createElement("td");
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "friend-delete";
+      remove.textContent = "…";
+      remove.title = `删除好友 ${name}`;
+      remove.setAttribute("aria-label", `删除好友 ${name}`);
+      remove.addEventListener("click", () => removeFriend(index, remove));
+      actionCell.append(remove);
+      row.append(numberCell, nameCell, statusCell, timeCell, actionCell);
+      el.albumGrid.append(row);
+    });
+  }
+
+  function friendStatus(index, stamped) {
+    const alias = `好友${String(index + 1).padStart(2, "0")}`;
+    const status = state.friendStatuses?.[index];
+    if (!state.running && ["sent", "pending", "failed", "unknown"].includes(status)) return status;
+    if (live.action !== "dry-run" && live.failed.has(alias)) return "failed";
+    if (stamped.has(index) || live.stamped.has(alias)) return "sent";
+    if (["sent", "pending", "failed", "unknown"].includes(status)) return status;
+    const latest = (state.runHistory || []).find((run) => !run.dryRun);
+    const result = latest?.results?.find((item) => item.target === alias);
+    if (result?.status === "failed") return "failed";
+    return result?.status === "success" ? "sent" : "pending";
+  }
+
+  function latestFriendSendTime(index) {
+    const alias = `好友${String(index + 1).padStart(2, "0")}`;
+    const run = (state.runHistory || []).find((item) => !item.dryRun && (item.results || []).some((result) => result.target === alias));
+    const date = run?.finishedAt ? new Date(run.finishedAt) : null;
+    return date && !Number.isNaN(date.getTime()) ? `${date.getMonth()+1}月${String(date.getDate()).padStart(2,"0")}日 ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}` : "—";
+  }
+
+  function renderFriendSummary(total, counts) {
+    const filters = [["all", "全部", total], ["sent", "已发送", counts.sent], ["pending", "待发送", counts.pending], ["failed", "失败", counts.failed], ["unknown", "待核对", counts.unknown]];
+    el.friendSummary.textContent = "";
+    filters.forEach(([key, label, count]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(friendFilter === key));
+      button.append(document.createTextNode(label));
+      const number = document.createElement("b");
+      number.textContent = String(count);
+      button.append(number);
+      button.addEventListener("click", () => { friendFilter = key; el.friendStatusFilter.value = key; render(); });
+      el.friendSummary.append(button);
+    });
+  }
+
+  function renderStatus(running, total) {
+    if (running) {
+      const actionLabel = running.action === "login" ? "等待扫码" : running.action === "dry-run" ? "检查中" : "投递中";
+      const done = live.done.size;
+      el.statusText.textContent = running.action === "login"
+        ? `${actionLabel}：浏览器已打开，用抖音 App 扫码`
+        : `${actionLabel} ${done} / ${total}`;
+      el.sendBtn.disabled = true;
+      el.loginBtn.disabled = true;
+      el.stopBtn.hidden = false;
+      return;
+    }
+
+    const disabledAccount = state.accountEnabled === false;
+    el.sendBtn.disabled = disabledAccount;
+    el.loginBtn.disabled = disabledAccount;
+    el.stopBtn.hidden = true;
+
+    if (disabledAccount) {
+      el.statusText.textContent = "主账号当前已停用，请检查本地账号配置后再运行。";
+      return;
+    }
+
+    const run = state.lastRun;
+    if (!run) {
+      el.statusText.textContent = "今天还没有运行";
+      return;
+    }
+    const stamp = new Date(run.finishedAt);
+    const when = isNaN(stamp) ? run.finishedAt : `${stamp.getMonth() + 1} 月 ${stamp.getDate()} 日 ${String(stamp.getHours()).padStart(2, "0")}:${String(stamp.getMinutes()).padStart(2, "0")}`;
+    const now = new Date();
+    const isToday = !isNaN(stamp) && stamp.getFullYear() === now.getFullYear()
+      && stamp.getMonth() === now.getMonth() && stamp.getDate() === now.getDate();
+    const kind = run.dryRun ? "检查" : "投递";
+    const unknown = Number(run.unknown || 0);
+    const tail = unknown ? `，${unknown} 位待核对` : run.failed ? `，${run.failed} 位${run.dryRun ? "未通过" : "没成功"}` : run.dryRun ? "，检查通过" : "，全部送达";
+    const result = `${run.ok} / ${run.ok + run.failed}${tail}`;
+    el.statusText.textContent = isToday
+      ? `今天${kind} ${String(stamp.getHours()).padStart(2, "0")}:${String(stamp.getMinutes()).padStart(2, "0")}：${result}`
+      : `今天还未投递 · 上次${kind} ${when}：${result}`;
+  }
+
+  function renderMessage() {
+    if (document.activeElement !== el.messageBox && !messageDirty) el.messageBox.value = (state.message.texts || []).join("\n");
+    const images = state.message.images || [];
+    const texts = state.message.texts || [];
+    el.messageCharCount.textContent = `${el.messageBox.value.length} 字 · ${texts.length} 条`;
+    const hasUnsavedMessage = messageDirty || imageTouched;
+    el.messageSavedBadge.textContent = hasUnsavedMessage ? "有未保存修改" : "已保存";
+    el.messageSavedBadge.dataset.unsaved = String(hasUnsavedMessage);
+    el.messageState.textContent = state.message.mode === "random"
+      ? images.length && state.message.texts && state.message.texts.length ? `文字和 ${images.length} 张图片随机` : images.length > 1 ? `${images.length} 张图片随机` : images.length ? "随机图片" : "多句随机"
+      : state.message.mode === "sequence" ? "多条消息依次" : images.length > 1 ? `${images.length} 张图片随机` : images.length ? "图片消息" : "";
+    if (!imageTouched) {
+      imageItems = images.map((path) => ({ kind: "saved", path }));
+      renderImageGallery();
+    }
+  }
+
+  function imageUrl(path) {
+    return `/api/images/${String(path).split("/").map(encodeURIComponent).join("/")}`;
+  }
+
+  function renderImageGallery() {
+    el.messageImageGallery.textContent = "";
+    el.messageImageGallery.hidden = imageItems.length === 0;
+    el.messageImageCount.textContent = `${imageItems.length} / 10 张`;
+    imageItems.forEach((item, index) => {
+      const tile = document.createElement("div");
+      tile.className = "message-image__item";
+      const image = document.createElement("img");
+      image.src = item.kind === "pending" ? item.url : imageUrl(item.path);
+      const name = item.kind === "pending" ? item.file.name : item.path.split("/").pop();
+      image.alt = `候选图片 ${index + 1}：${name}`;
+      image.title = name;
+      const remove = document.createElement("button");
+      remove.className = "message-image__remove";
+      remove.type = "button";
+      remove.dataset.imageIndex = String(index);
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `移除第 ${index + 1} 张图片`);
+      tile.append(image, remove);
+      el.messageImageGallery.append(tile);
+    });
+    if (imageItems.length > 0 && imageItems.length < 10) {
+      const add = document.createElement("button");
+      add.className = "message-image__add";
+      add.type = "button";
+      add.dataset.addImages = "true";
+      add.setAttribute("aria-label", "添加图片");
+      add.innerHTML = '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+      el.messageImageGallery.append(add);
+    }
+  }
+
+  function readImageBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",", 2)[1] || "");
+      reader.onerror = () => reject(new Error("读取图片失败"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderSchedule() {
+    const { hour, minute, next } = state.schedule;
+    if (document.activeElement !== el.scheduleHour) el.scheduleHour.value = String(hour).padStart(2, "0");
+    if (document.activeElement !== el.scheduleMinute) el.scheduleMinute.value = String(minute).padStart(2, "0");
+    el.scheduleHint.textContent = `下一次投递：${next}`;
+    el.scheduleNextCard.textContent = next || "—";
+    el.scheduleEnabled.textContent = state.schedule.present ? "已启用" : "未配置";
+    el.scheduleEnabled.dataset.enabled = String(Boolean(state.schedule.present));
+  }
+
+  function renderCredential() {
+    const credential = state.credential;
+    el.credState.dataset.present = String(Boolean(credential.present));
+    if (!credential.present) {
+      el.credState.textContent = "没有登录凭证，投递会被抖音拦下。";
+      return;
+    }
+    const stamp = new Date(credential.updatedAt);
+    const when = isNaN(stamp) ? credential.updatedAt : `${stamp.getMonth() + 1} 月 ${stamp.getDate()} 日 ${String(stamp.getHours()).padStart(2, "0")}:${String(stamp.getMinutes()).padStart(2, "0")}`;
+    el.credState.textContent = `凭证在册：${when} 更新。`;
+  }
+
+  // ---------------------------------------------------------------- 好友
+  async function saveFriends(friends) {
+    try {
+      state = await api("/api/friends", { friends });
+      flash("");
+      render();
+      return true;
+    } catch (error) {
+      flash(error.message);
+      return false;
+    }
+  }
+
+  function removeFriend(index, button) {
+    if (armedDelete !== button) {
+      if (armedDelete) { armedDelete.dataset.armed = "false"; armedDelete.textContent = "…"; }
+      armedDelete = button;
+      button.dataset.armed = "true";
+      button.textContent = "删除？";
+      setTimeout(() => {
+        if (armedDelete === button) {
+          armedDelete = null;
+          button.dataset.armed = "false";
+          button.textContent = "…";
+        }
+      }, 4000);
+      return;
+    }
+    armedDelete = null;
+    const friends = state.friends.filter((_, i) => i !== index);
+    saveFriends(friends);
+  }
+
+  function startRename(card, title, index) {
+    if (editIndex !== null) return;
+    editIndex = index;
+    title.contentEditable = "true";
+    title.setAttribute("role", "textbox");
+    title.setAttribute("aria-label", "编辑好友昵称，按 Enter 保存，按 Escape 取消");
+    title.setAttribute("aria-multiline", "false");
+    title.focus();
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const finish = async (commit) => {
+      title.contentEditable = "false";
+      editIndex = null;
+      const next = title.textContent.trim();
+      const friends = state.friends.slice();
+      title.setAttribute("role", "button");
+      title.setAttribute("aria-label", `${commit && next ? next : friends[index]}，按 Enter 改名`);
+      title.removeAttribute("aria-multiline");
+      if (commit && next && next !== friends[index]) {
+        friends[index] = next;
+        await saveFriends(friends);
+      } else {
+        title.textContent = friends[index];
+      }
+    };
+
+    title.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); finish(true); }
+      if (event.key === "Escape") { event.preventDefault(); finish(false); }
+    }, { once: true });
+    title.addEventListener("blur", () => { if (editIndex === index) finish(true); }, { once: true });
+  }
+
+  el.toggleAddFriend.addEventListener("click", () => {
+    const opening = el.addForm.hidden;
+    el.addForm.hidden = !opening;
+    el.toggleAddFriend.setAttribute("aria-expanded", String(opening));
+    if (opening) el.newFriend.focus();
+    else el.newFriend.value = "";
+  });
+  el.newFriend.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    el.addForm.hidden = true;
+    el.toggleAddFriend.setAttribute("aria-expanded", "false");
+    el.toggleAddFriend.focus();
+  });
+  el.addForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const name = el.newFriend.value.trim();
+    if (!name) return;
+    if (state.friends.includes(name)) { flash("这位好友已经在列表中了"); return; }
+    const saved = await saveFriends(state.friends.concat(name));
+    if (saved) {
+      el.newFriend.value = "";
+      el.addForm.hidden = true;
+      el.toggleAddFriend.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  // ---------------------------------------------------------------- 消息 / 定时 / 凭证
+  function addImageFiles(files) {
+    if (!files.length) return;
+    let rejected = "";
+    for (const file of files) {
+      const suffix = file.name.split(".").pop().toLowerCase();
+      if (!["png", "jpg", "jpeg", "gif", "webp"].includes(suffix)) {
+        rejected = `${file.name} 格式不支持`;
+        continue;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        rejected = `${file.name} 超过 8 MB`;
+        continue;
+      }
+      if (imageItems.length >= 10) {
+        rejected = "最多添加 10 张图片";
+        break;
+      }
+      imageItems.push({ kind: "pending", file, url: URL.createObjectURL(file) });
+      imageTouched = true;
+    }
+    renderImageGallery();
+    if (imageTouched) {
+      el.messageSavedBadge.textContent = "有未保存修改";
+      el.messageSavedBadge.dataset.unsaved = "true";
+    }
+    flash(rejected);
+  }
+
+  el.imageInput.addEventListener("change", () => {
+    addImageFiles(Array.from(el.imageInput.files || []));
+    el.imageInput.value = "";
+  });
+  const uploadDrop = document.querySelector(".upload-drop");
+  uploadDrop.addEventListener("dragover", (event) => { event.preventDefault(); uploadDrop.dataset.dragging = "true"; });
+  uploadDrop.addEventListener("dragleave", () => { uploadDrop.dataset.dragging = "false"; });
+  uploadDrop.addEventListener("drop", (event) => {
+    event.preventDefault();
+    uploadDrop.dataset.dragging = "false";
+    addImageFiles(Array.from(event.dataTransfer?.files || []));
+  });
+  el.messageBox.addEventListener("input", () => {
+    messageDirty = true;
+    el.messageCharCount.textContent = `${el.messageBox.value.length} 字 · ${el.messageBox.value.split("\n").filter((line) => line.trim()).length} 条`;
+    el.messageSavedBadge.textContent = "有未保存修改";
+    el.messageSavedBadge.dataset.unsaved = "true";
+  });
+
+  el.messageImageGallery.addEventListener("click", (event) => {
+    if (event.target.closest("button[data-add-images]")) { el.imageInput.click(); return; }
+    const remove = event.target.closest("button[data-image-index]");
+    if (!remove) return;
+    const index = Number(remove.dataset.imageIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= imageItems.length) return;
+    const [removed] = imageItems.splice(index, 1);
+    if (removed.kind === "pending") URL.revokeObjectURL(removed.url);
+    imageTouched = true;
+    el.messageSavedBadge.textContent = "有未保存修改";
+    el.messageSavedBadge.dataset.unsaved = "true";
+    renderImageGallery();
+  });
+
+  el.saveMessage.addEventListener("click", async () => {
+    const texts = el.messageBox.value.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (!texts.length && !imageItems.length) { flash("至少添加一句文字或一张图片"); return; }
+    el.saveMessage.disabled = true;
+    try {
+      for (const item of imageItems) {
+        if (item.kind !== "pending") continue;
+        const uploaded = await api("/api/image", { name: item.file.name, data: await readImageBase64(item.file) });
+        URL.revokeObjectURL(item.url);
+        item.kind = "saved";
+        item.path = uploaded.path;
+        delete item.file;
+        delete item.url;
+      }
+      const images = imageItems.map((item) => item.path);
+      state = await api("/api/message", { texts, images });
+      imageTouched = false;
+      messageDirty = false;
+      el.messageSavedBadge.textContent = "已保存";
+      el.messageSavedBadge.dataset.unsaved = "false";
+      const itemCount = texts.length + images.length;
+      flash(`已保存 ${itemCount} 项候选${itemCount > 1 ? "，每次随机发送一项" : ""}`);
+      render();
+      setTimeout(() => flash(""), 2600);
+    } catch (error) {
+      flash(error.message);
+    } finally {
+      el.saveMessage.disabled = false;
+    }
+  });
+
+  el.saveSchedule.addEventListener("click", async () => {
+    const hour = Number(el.scheduleHour.value);
+    const minute = Number(el.scheduleMinute.value);
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    try {
+      state = await api("/api/schedule", { hour, minute });
+      flash(`已改为每天 ${value} 投递`, "quiet");
+      render();
+      setTimeout(() => flash(""), 2600);
+    } catch (error) {
+      flash(error.message);
+    }
+  });
+
+  el.credentialFile.addEventListener("change", async () => {
+    const file = el.credentialFile.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      flash("Cookie JSON 文件不能超过 2 MB");
+      el.credentialFile.value = "";
+      return;
+    }
+    try {
+      const credential = JSON.parse(await file.text());
+      state = await api("/api/credential/import", { credential });
+      render();
+      flash("Cookie JSON 已导入到当前账号", "quiet");
+    } catch (error) {
+      flash(error instanceof SyntaxError ? "文件不是有效的 JSON，请检查后重试" : error.message);
+    } finally {
+      el.credentialFile.value = "";
+    }
+  });
+  el.loginBtn.addEventListener("click", () => run("login"));
+  el.sendBtn.addEventListener("click", openSendPreview);
+  el.closeSendPreview.addEventListener("click", () => el.sendPreviewDialog.close());
+  el.cancelSendPreview.addEventListener("click", () => el.sendPreviewDialog.close());
+  el.sendPreviewDialog.addEventListener("click", (event) => {
+    if (event.target === el.sendPreviewDialog) el.sendPreviewDialog.close();
+  });
+  el.confirmSend.addEventListener("click", async () => {
+    el.confirmSend.disabled = true;
+    el.sendPreviewDialog.close();
+    try { await run("send"); }
+    finally { el.confirmSend.disabled = false; }
+  });
+  el.toggleHistory.addEventListener("click", () => {
+    const expanded = el.toggleHistory.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    el.toggleHistory.setAttribute("aria-expanded", String(nextExpanded));
+    el.historyContent.hidden = !nextExpanded;
+    el.historyToggleLabel.textContent = nextExpanded ? "收起" : "展开";
+  });
+  el.stopBtn.addEventListener("click", async () => {
+    try { await api("/api/action/stop", {}); } catch (error) { flash(error.message); }
+  });
+
+  let clearing = false;
+  el.clearCred.addEventListener("click", async () => {
+    if (!clearing) {
+      clearing = true;
+      el.clearCred.textContent = "确定清除？";
+      setTimeout(() => { clearing = false; el.clearCred.textContent = "清除凭证"; }, 4000);
+      return;
+    }
+    clearing = false;
+    el.clearCred.textContent = "清除凭证";
+    try {
+      state = await api("/api/credential/clear", {});
+      flash("凭证已清除，记得重新扫码", "quiet");
+      render();
+    } catch (error) {
+      flash(error.message);
+    }
+  });
+
+  async function run(action) {
+    live.stamped.clear();
+    live.failed.clear();
+    live.done.clear();
+    live.current = null;
+    flash("");
+    try {
+      await api("/api/action", { action });
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  async function openSendPreview() {
+    if (!state) { flash("配置还在读取，请稍后再试"); return; }
+    if (state.running) { flash("当前任务还在运行，请结束后再试"); return; }
+    const accountId = activeAccountId;
+    try {
+      const latest = await api(`/api/state?accountId=${encodeURIComponent(accountId)}`);
+      if (accountId !== activeAccountId) return;
+      state = latest;
+      render();
+    } catch (error) {
+      flash(`刷新发送清单失败：${error.message}`);
+      return;
+    }
+    if (state.running) { flash("当前任务还在运行，请结束后再试"); return; }
+    renderSendPreview();
+    el.sendPreviewDialog.showModal();
+  }
+
+  function renderSendPreview() {
+    const allFriends = Array.isArray(state.friends) ? state.friends : [];
+    const statuses = Array.isArray(state.friendStatuses) ? state.friendStatuses : [];
+    const friends = Array.isArray(state.pendingTargets)
+      ? state.pendingTargets
+      : allFriends.filter((_, index) => ["pending", "failed"].includes(statuses[index] || friendStatus(index, new Set(state.stamped || []))));
+    const unknownTargets = Array.isArray(state.unknownTargets)
+      ? state.unknownTargets
+      : allFriends.filter((_, index) => (statuses[index] || friendStatus(index, new Set(state.stamped || []))) === "unknown");
+    const message = state.message || {};
+    const texts = Array.isArray(message.texts) ? message.texts.filter((text) => String(text).trim()) : [];
+    const images = Array.isArray(message.images) ? message.images.filter(Boolean) : [];
+    const unsaved = el.messageBox.value.split("\n").map((line) => line.trim()).filter(Boolean);
+    const savedTexts = texts.map((text) => String(text).trim());
+    const hasUnsaved = imageTouched || unsaved.length !== savedTexts.length || unsaved.some((text, index) => text !== savedTexts[index]);
+
+    el.sendPreviewCount.textContent = `${friends.length} 位好友`;
+    el.sendPreviewRecipients.textContent = "";
+    friends.forEach((name) => {
+      const item = document.createElement("li");
+      item.textContent = String(name);
+      el.sendPreviewRecipients.append(item);
+    });
+    el.sendPreviewQueueNote.hidden = friends.length > 0 && unknownTargets.length === 0 && state.sendQueueReady !== false;
+    if (state.sendQueueReady === false) {
+      el.sendPreviewQueueNote.textContent = allFriends.length
+        ? "请先配置每日消息后再开始发送。"
+        : "请先添加好友并配置每日消息。";
+    } else if (!friends.length && !allFriends.length) {
+      el.sendPreviewQueueNote.textContent = "还没有好友，请先添加好友并配置每日消息。";
+    } else if (!friends.length) {
+      el.sendPreviewQueueNote.textContent = unknownTargets.length
+        ? `没有可自动续发的好友；${unknownTargets.length} 位好友的发送结果待核对，请先人工核对抖音聊天记录。`
+        : "今天所有好友均已确认送达，无需重复发送。";
+    } else if (unknownTargets.length) {
+      el.sendPreviewQueueNote.textContent = `另有 ${unknownTargets.length} 位好友的发送结果待核对，本次不会自动重发。`;
+    } else {
+      el.sendPreviewQueueNote.textContent = "";
+    }
+
+    el.sendPreviewMessages.textContent = "";
+    el.sendPreviewImages.textContent = "";
+    el.sendPreviewImages.hidden = images.length === 0;
+    el.sendPreviewUnsupported.hidden = true;
+    if (!texts.length && !images.length) {
+      el.sendPreviewMode.textContent = "无法预览";
+      el.sendPreviewUnsupported.textContent = "当前消息包含面板无法预览的类型（例如抖音原生表情），请核对配置后再继续。";
+      el.sendPreviewUnsupported.hidden = false;
+    } else {
+      el.sendPreviewMode.textContent = message.mode === "random"
+        ? texts.length && images.length ? "文字或图片随机选择" : "随机抽取一条"
+        : message.mode === "sequence" ? "按配置顺序" : images.length && !texts.length ? "图片消息" : "固定消息";
+      texts.forEach((text) => {
+        const item = document.createElement("li");
+        item.textContent = String(text);
+        el.sendPreviewMessages.append(item);
+      });
+      images.forEach((path) => {
+        const image = document.createElement("img");
+        image.src = imageUrl(path);
+        image.alt = `待发送图片：${path.split("/").pop()}`;
+        image.loading = "lazy";
+        el.sendPreviewImages.append(image);
+      });
+    }
+    el.sendPreviewUnsaved.hidden = !hasUnsaved;
+    el.confirmSend.disabled = friends.length === 0 || Boolean(state.running) || state.accountEnabled === false || state.sendQueueReady === false;
+  }
+
+  // ---------------------------------------------------------------- SSE
+  function connect() {
+    if (source) source.close();
+    const subscribedAccount = activeAccountId;
+    source = new EventSource(subscribedAccount ? `/api/stream?accountId=${encodeURIComponent(subscribedAccount)}` : "/api/stream");
+    source.onmessage = (event) => {
+      if (subscribedAccount !== activeAccountId) return;
+      let payload;
+      try { payload = JSON.parse(event.data); } catch { return; }
+      if (subscribedAccount && ((payload.accountId && payload.accountId !== subscribedAccount) || (payload.type === "done" && payload.action === "send-all"))) return;
+      handle(payload);
+    };
+    source.onerror = () => { /* 浏览器会自动重连 */ };
+  }
+
+  function handle(payload) {
+    switch (payload.type) {
+      case "state":
+        if (payload.accountId !== activeAccountId) return;
+        state = payload.state;
+        render();
+        break;
+      case "started":
+        live.stamped.clear();
+        live.failed.clear();
+        live.done.clear();
+        live.current = null;
+        live.action = payload.action;
+        if (state) state.running = { action: payload.action, startedAt: payload.startedAt };
+        render();
+        break;
+      case "target":
+        live.current = payload.alias;
+        render();
+        break;
+      case "stamp":
+        live.done.add(payload.alias);
+        if (payload.ok) {
+          if (state && state.running && state.running.action === "send") live.stamped.add(payload.alias);
+          live.failed.delete(payload.alias);
+        } else live.failed.add(payload.alias);
+        live.current = null;
+        render();
+        break;
+      case "done": {
+        const { code, summary, error, action } = payload;
+        if (code !== 0 && error) flash(`${action === "login" ? "扫码" : "运行"}没有完成：${error}`);
+        else if (summary && action === "send") flash(`投递结束：${summary.ok} 位已确认送达${summary.failed ? `，${summary.failed} 位失败` : ""}${summary.unknown ? `，${summary.unknown} 位待核对` : ""}`, summary.failed || summary.unknown ? undefined : "quiet");
+        else if (code !== 0) flash("任务已停下，可展开运行历史查看结果");
+        else if (summary) flash(action === "dry-run"
+          ? `检查完成：好友定位与消息输入框通过 ${summary.ok} 位${summary.failed ? `，未通过 ${summary.failed} 位` : ""}`
+          : `投递完成：${summary.ok} 位已发${summary.failed ? `，${summary.failed} 位没成功` : ""}`, "quiet");
+        if (state) state.running = null;
+        render();
+        api(`/api/state?accountId=${encodeURIComponent(activeAccountId)}`).then((payload) => { state = payload; render(); }).catch(() => {});
+        setTimeout(() => { if (el.flash.dataset.sticky !== "1") flash(""); }, 6000);
+        break;
+      }
+    }
+  }
+
+  function fillTimeOptions() {
+    const pad = (value) => String(value).padStart(2, "0");
+    for (let h = 0; h < 24; h += 1) el.scheduleHour.append(new Option(pad(h), pad(h)));
+    for (let m = 0; m < 60; m += 1) el.scheduleMinute.append(new Option(pad(m), pad(m)));
+  }
+
+  function paintToday() {
+    if (activePage !== "home") return;
+    const now = new Date();
+    el.pageContext.textContent = `${now.getMonth() + 1}月${now.getDate()}日`;
+    el.pageContext.hidden = false;
+  }
+
+  // ---------------------------------------------------------------- 启动
+  fillTimeOptions();
+  el.friendSearch.addEventListener("input", () => { if (state) render(); });
+  el.friendStatusFilter.addEventListener("change", () => {
+    friendFilter = el.friendStatusFilter.value;
+    if (state) render();
+  });
+  window.addEventListener("hashchange", showRoute);
+  showRoute();
+
+  setInterval(paintToday, 60_000);
+})();
+</script>
+</body>
+</html>

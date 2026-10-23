@@ -1,0 +1,16 @@
+{
+  "accounts": [
+    {
+      "id": "account1",
+      "name": "抖音账号 1",
+      "enabled": true,
+      "env_file": ".env.account1"
+    },
+    {
+      "id": "account2",
+      "name": "抖音账号 2",
+      "enabled": true,
+      "env_file": ".env.account2"
+    }
+  ]
+}
