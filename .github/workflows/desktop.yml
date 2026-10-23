@@ -92,4 +92,7 @@ jobs:
         with:
           name: Douyin Fire ${{ github.ref_name }}
           generate_release_notes: true
-          files: release-assets/*
+          files: |
+            release-assets/Douyin.Fire.Setup.*.exe
+            release-assets/Douyin.Fire-*-arm64.dmg
+            release-assets/Douyin.Fire-*.AppImage
