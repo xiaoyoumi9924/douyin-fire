@@ -10,9 +10,7 @@
 - macOS Apple 芯片（arm64）：磁盘映像 `.dmg`
 - Linux x64：便携应用 `.AppImage`
 
-发布后可在 [GitHub Releases](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) 下载对应系统的安装包。目标环境：Windows 11 或更新版本；macOS 14 或更新版本（Apple 芯片）；Debian 12/13 或 Ubuntu 22.04/24.04/26.04（Linux x64）。Linux 上的 Chromium 还需要发行版提供相应图形运行库，详见 [Playwright 系统要求](https://playwright.dev/python/docs/intro#system-requirements)。
 
-手动运行 `Desktop installers` 工作流会生成可下载的构建产物。推送 `v` 开头的版本标签（例如 `v0.1.0`）会创建 GitHub Release 并附上各平台安装包。Mac 安装包目前未签名和公证，首次打开时 macOS 可能要求你在“隐私与安全性”里确认；Windows 也可能显示未签名应用提示。
 
 ## 使用
 
