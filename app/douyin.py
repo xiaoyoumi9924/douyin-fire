@@ -232,10 +232,6 @@ class DouyinChat:
         return False
 
 
-async def _visible_exact_text_in(container: Locator, selectors: tuple[str, ...], expected: str) -> bool:
-    return await _visible_exact_text_locator(container, selectors, expected) is not None
-
-
 async def _visible_exact_text_locator(
     container: Locator, selectors: tuple[str, ...], expected: str
 ) -> Locator | None:
@@ -280,20 +276,6 @@ async def _visible_exact_or_group_text_in(
     if await _visible_exact_text_locator(container, selectors, expected) is not None:
         return True
     return await _visible_group_text_locator(container, selectors, expected) is not None
-
-
-async def _has_exact_text_in(container: Locator, selectors: tuple[str, ...], expected: str) -> bool:
-    for selector in selectors:
-        if await _has_exact_text(container.locator(selector), expected):
-            return True
-    return False
-
-
-async def _has_exact_text(locators: Locator, expected: str) -> bool:
-    for index in range(await locators.count()):
-        if await _text_equals(locators.nth(index), expected):
-            return True
-    return False
 
 
 async def _text_equals(locator: Locator, expected: str) -> bool:

@@ -97,14 +97,11 @@ def load_task(settings: Settings) -> TaskConfig:
         interval_min=interval_min,
         interval_max=interval_max,
         continue_on_error=raw.get("continue_on_error", True),
-        prevent_duplicates=raw.get("prevent_duplicates", False),
         target_open_retries=target_open_retries,
         target_open_timeout_seconds=target_open_timeout_seconds,
     )
     if not isinstance(task.continue_on_error, bool):
         raise ConfigError("continue_on_error 必须是布尔值")
-    if not isinstance(task.prevent_duplicates, bool):
-        raise ConfigError("prevent_duplicates 必须是布尔值")
 
     _validate_stickers(task)
     return task

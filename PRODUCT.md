@@ -28,7 +28,7 @@ Provide the existing Douyin Fire control panel as a desktop app. It should run o
 - Manage friends, text and image messages, accounts, and login state.
 - Run a Dry Run or send task and view progress and history.
 - Schedule daily runs without keeping the desktop window open.
-- Build Windows, macOS Intel, macOS Apple silicon, and Linux installers with GitHub Actions.
+- Build Windows, macOS Apple silicon, and Linux installers with GitHub Actions.
 
 ## Constraints
 
