@@ -132,7 +132,7 @@ def image_suffix_from_bytes(data: bytes, filename: str) -> str | None:
 
 def plist_schedule() -> dict:
     if not PLIST.exists():
-        return {"present": False, "hour": 8, "minute": 0}
+        return {"present": False, "hour": 8, "minute": 0, "savedAt": None}
     text = PLIST.read_text(encoding="utf-8")
     hour = re.search(r"<key>Hour</key>\s*<integer>(\d+)</integer>", text)
     minute = re.search(r"<key>Minute</key>\s*<integer>(\d+)</integer>", text)
@@ -140,6 +140,7 @@ def plist_schedule() -> dict:
         "present": True,
         "hour": int(hour.group(1)) if hour else 8,
         "minute": int(minute.group(1)) if minute else 0,
+        "savedAt": datetime.fromtimestamp(PLIST.stat().st_mtime).astimezone().isoformat(timespec="seconds"),
     }
 
 
@@ -242,12 +243,18 @@ def current_schedule() -> dict:
         return plist_schedule()
     saved = read_json(SCHEDULE_FILE, {})
     if isinstance(saved, dict):
+        saved_at = None
+        try:
+            saved_at = datetime.fromtimestamp(SCHEDULE_FILE.stat().st_mtime).astimezone().isoformat(timespec="seconds")
+        except OSError:
+            pass
         return {
             "present": bool(saved.get("present", False)),
             "hour": int(saved.get("hour", 8)),
             "minute": int(saved.get("minute", 0)),
+            "savedAt": saved_at,
         }
-    return {"present": False, "hour": 8, "minute": 0}
+    return {"present": False, "hour": 8, "minute": 0, "savedAt": None}
 
 
 def _save_schedule(hour: int, minute: int) -> None:
@@ -362,6 +369,103 @@ def last_run(paths: AccountPaths | None = None) -> dict | None:
     }
 
 
+_LOG_TIMING_CACHE: dict[str, tuple[float, list[tuple[datetime, float]]]] = {}
+
+
+def log_run_timings(paths: AccountPaths | None) -> list[tuple[datetime, float]]:
+    """从 run.log 里提取「开始时间 + 结束时间」，用来给旧记录补上用时列。"""
+    log_path = paths.artifacts_dir / "run.log" if paths else ARTIFACTS / "run.log"
+    try:
+        stat = log_path.stat()
+    except OSError:
+        return []
+    key = str(log_path)
+    cached = _LOG_TIMING_CACHE.get(key)
+    if cached and cached[0] == stat.st_mtime:
+        return cached[1]
+    timings: list[tuple[datetime, float]] = []
+    started: datetime | None = None
+    duration: float | None = None
+
+    def flush() -> None:
+        nonlocal started, duration
+        if started is not None and duration is not None:
+            timings.append((started, duration))
+        started = None
+        duration = None
+
+    try:
+        lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        lines = []
+    for line in lines:
+        match = re.search(r"开始时间: (\S+)", line)
+        if match:
+            flush()
+            try:
+                started = datetime.fromisoformat(match.group(1))
+            except ValueError:
+                started = None
+            continue
+        end_match = re.match(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+INFO\s+执行结束", line)
+        if end_match and started is not None and duration is None:
+            try:
+                ended = datetime.strptime(end_match.group(1), "%Y-%m-%d %H:%M:%S,%f")
+                duration = max(0.0, ended.timestamp() - started.timestamp())
+            except ValueError:
+                duration = None
+            continue
+        match = re.search(r"执行时间: ([\d.]+)秒", line)
+        if match and started is not None and duration is None:
+            try:
+                duration = float(match.group(1))
+            except ValueError:
+                duration = None
+    flush()
+    _LOG_TIMING_CACHE[key] = (stat.st_mtime, timings)
+    return timings
+
+
+def log_duration_for(finished_at: str, timings: list[tuple[datetime, float]]) -> float | None:
+    try:
+        finished = datetime.fromisoformat(finished_at)
+    except ValueError:
+        return None
+    best: tuple[float, float] | None = None
+    for started, duration in timings:
+        try:
+            expected = started.timestamp() + duration
+        except (OSError, OverflowError, ValueError):
+            continue
+        delta = abs(finished.timestamp() - expected)
+        if delta <= 5 and (best is None or delta < best[0]):
+            best = (delta, duration)
+    return best[1] if best else None
+
+
+def metrics_timing(paths: AccountPaths | None, finished_at: str) -> tuple[str | None, float | None]:
+    """最近一次运行的耗时只保存在 metrics.json，匹配完成时间后回填给历史行。"""
+    metrics_path = paths.artifacts_dir / "metrics.json" if paths else ARTIFACTS / "metrics.json"
+    payload = read_json(metrics_path)
+    if not isinstance(payload, dict):
+        return None, None
+    try:
+        finished = datetime.fromisoformat(str(finished_at))
+        metrics_finished = datetime.fromisoformat(str(payload.get("finished_at") or ""))
+    except ValueError:
+        return None, None
+    try:
+        if abs((finished - metrics_finished).total_seconds()) > 5:
+            return None, None
+    except TypeError:
+        return None, None
+    duration = payload.get("total_duration_seconds")
+    if isinstance(duration, bool) or not isinstance(duration, (int, float)):
+        duration = None
+    started = payload.get("started_at")
+    return (str(started) if isinstance(started, str) else None, float(duration) if duration is not None else None)
+
+
 def run_history(limit: int = 20, paths: AccountPaths | None = None) -> list[dict]:
     records: list[dict] = []
     history_path = paths.artifacts_dir / "run-history.jsonl" if paths else RUN_HISTORY
@@ -385,11 +489,25 @@ def run_history(limit: int = 20, paths: AccountPaths | None = None) -> list[dict
             records.append(latest)
 
     output: list[dict] = []
+    log_timings: list[tuple[datetime, float]] | None = None
     for record in reversed(records[-limit:]):
         results = [item for item in record["results"] if isinstance(item, dict)]
+        finished_at = str(record.get("finished_at") or "")
+        started_at = record.get("started_at")
+        duration = record.get("duration_seconds")
+        if not isinstance(duration, (int, float)) or isinstance(duration, bool):
+            fallback_started, fallback_duration = metrics_timing(paths, finished_at)
+            started_at = started_at or fallback_started
+            duration = fallback_duration
+        if duration is None and finished_at:
+            if log_timings is None:
+                log_timings = log_run_timings(paths)
+            duration = log_duration_for(finished_at, log_timings)
         output.append({
             "taskId": str(record.get("task_id") or ""),
-            "finishedAt": str(record.get("finished_at") or ""),
+            "finishedAt": finished_at,
+            "startedAt": str(started_at) if isinstance(started_at, str) else None,
+            "durationSeconds": float(duration) if isinstance(duration, (int, float)) and not isinstance(duration, bool) else None,
             "dryRun": bool(record.get("dry_run")),
             "results": [{
                 "target": str(item.get("target") or "未知好友"),

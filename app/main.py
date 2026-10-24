@@ -293,7 +293,15 @@ async def run(
     # 输出指标摘要
     LOGGER.info("\n%s", format_metrics_summary(metrics))
 
-    _write_results(settings.artifacts_dir, task.task_id, dry_run, results, aliases)
+    _write_results(
+        settings.artifacts_dir,
+        task.task_id,
+        dry_run,
+        results,
+        aliases,
+        started_at=metrics.started_at,
+        duration_seconds=metrics.total_duration_seconds,
+    )
     await _notify_dingtalk(settings, task.task_id, dry_run, results, screenshots)
     await _notify_webhook(settings, task.task_id, dry_run, results, screenshots)
     await send_macos_notification(dry_run, results)
@@ -486,13 +494,20 @@ def _write_results(
     dry_run: bool,
     results: list[TargetResult],
     aliases: dict[str, str] | None = None,
+    *,
+    started_at: str | None = None,
+    duration_seconds: float | None = None,
 ) -> None:
-    payload = {
+    payload: dict = {
         "task_id": task_id,
         "dry_run": dry_run,
         "finished_at": datetime.now().astimezone().isoformat(),
         "results": [_redacted_result(result, aliases) for result in results],
     }
+    if started_at:
+        payload["started_at"] = started_at
+    if duration_seconds is not None:
+        payload["duration_seconds"] = round(float(duration_seconds), 1)
     (artifacts_dir / "result.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
         _append_run_history(artifacts_dir, payload)
