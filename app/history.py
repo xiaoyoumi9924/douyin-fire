@@ -246,13 +246,42 @@ def message_id(index: int, message: Message) -> str:
     return f"{index}-{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}"
 
 
+def _process_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
 @contextmanager
 def run_lock(path: Path) -> Iterator[None]:
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError as exc:
-        raise AlreadyRunningError(f"已有任务正在运行；如确认没有进程，请删除 {path}") from exc
+        try:
+            owner = int(path.read_text(encoding="utf-8").strip())
+        except (OSError, ValueError):
+            owner = 0
+        # 定时任务被强杀时仍会留下 run.lock；只有确认持有进程已退出才回收。
+        if owner != os.getpid() and owner > 0 and not _process_alive(owner):
+            try:
+                path.unlink()
+            except OSError:
+                raise AlreadyRunningError(f"已有任务正在运行；如确认没有进程，请删除 {path}") from exc
+            try:
+                descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            except FileExistsError:
+                raise AlreadyRunningError(f"已有任务正在运行；如确认没有进程，请删除 {path}") from exc
+        else:
+            raise AlreadyRunningError(f"已有任务正在运行；如确认没有进程，请删除 {path}") from exc
     try:
         os.write(descriptor, str(os.getpid()).encode("ascii"))
         os.close(descriptor)

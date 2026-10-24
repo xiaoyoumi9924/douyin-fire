@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 import pytest
 
@@ -21,6 +22,14 @@ def test_corrupt_history_fails_closed(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="发送历史损坏"):
         History(path)
+
+
+def test_run_lock_reclaims_a_lock_left_by_a_dead_process(tmp_path: Path) -> None:
+    path = tmp_path / "run.lock"
+    path.write_text("4194304", encoding="utf-8")
+
+    with run_lock(path):
+        assert path.read_text(encoding="utf-8").strip() == str(os.getpid())
 
 
 def test_run_lock_rejects_second_process(tmp_path: Path) -> None:
