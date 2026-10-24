@@ -321,7 +321,7 @@ async def test_chat_open_error_rejects_containing_header_name() -> None:
     error = await DouyinChat(page)._chat_open_error("test")
 
     assert isinstance(error, PageOperationError)
-    assert "无法确认聊天已打开" in str(error)
+    assert "未能确认消息可发送" in str(error)
 
 
 @pytest.mark.asyncio
@@ -334,7 +334,7 @@ async def test_chat_open_error_rejects_hidden_stale_name_in_visible_header() -> 
     error = await DouyinChat(page)._chat_open_error("test")
 
     assert isinstance(error, PageOperationError)
-    assert "无法确认聊天已打开" in str(error)
+    assert "未能确认消息可发送" in str(error)
 
 
 @pytest.mark.asyncio
@@ -379,7 +379,7 @@ async def test_chat_open_error_rejects_hidden_stale_group_name_in_visible_header
     error = await DouyinChat(page)._chat_open_error("test")
 
     assert isinstance(error, PageOperationError)
-    assert "无法确认聊天已打开" in str(error)
+    assert "未能确认消息可发送" in str(error)
 
 
 @pytest.mark.asyncio
@@ -389,7 +389,9 @@ async def test_chat_open_error_rejects_when_header_name_absent() -> None:
     error = await DouyinChat(page)._chat_open_error("好友A")
 
     assert isinstance(error, PageOperationError)
-    assert "无法确认聊天已打开" in str(error)
+    assert "未能确认消息可发送" in str(error)
+    assert "聊天标题: 未确认" in str(error)
+    assert "消息输入框: 未就绪" in str(error)
 
 
 # Direct unit tests for the standalone group-suffix matcher. The friend exact
