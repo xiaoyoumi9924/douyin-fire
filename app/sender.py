@@ -290,12 +290,48 @@ async def _mark_latest_outgoing_message(page: Page) -> tuple[str, str]:
 
 
 async def _click_and_confirm_sticker(page: Page, item, before: tuple[str, str], name: str) -> None:
+    """Click a native sticker, then prove it actually left the composer.
+
+    Douyin either sends the sticker right away or leaves it staged in the
+    composer. When the first confirmation fails we recover exactly once:
+
+    - an explicit retry marker on the latest outgoing bubble is clicked again;
+    - otherwise, a still-ready send button proves the sticker never left the
+      composer, so pressing send is safe.
+
+    An uncertain outcome is only retried when the send button is still ready;
+    anything that might already have been delivered stays fail-closed.
+    """
     resource_key = await _sticker_resource_key(item)
     try:
         await item.click(force=True)
     except Exception as exc:
         raise SendOutcomeUnknownError("原生表情已触发或状态不明；为避免重复不会自动重试") from exc
-    await _confirm_sticker_sent(page, before, name, resource_key)
+
+    failure: PageOperationError | None = None
+    try:
+        await _confirm_sticker_sent(page, before, name, resource_key)
+        return
+    except SendOutcomeUnknownError:
+        # 结果不明：只有“发送按钮仍可用”能证明表情还停在输入框里、没有发出去。
+        if not await _publish_ready(page):
+            raise
+    except PageOperationError as exc:
+        failure = exc
+
+    if await _click_retry_on_latest_failed_message(page):
+        await _confirm_sticker_sent(page, before, name, resource_key)
+        return
+    if await _publish_ready(page):
+        # 重新打锚点再补点发送：否则第一次确认时被清掉的锚点会让第二次确认
+        # 直接放行，把“其实没发出去”误判成成功。
+        fresh = await _mark_latest_outgoing_message(page)
+        await _trigger_send(page)
+        await _confirm_sticker_sent(page, fresh, name, resource_key)
+        return
+    if failure is not None:
+        raise failure
+    raise SendOutcomeUnknownError("原生表情未能确认发送，且无法安全补救；为避免重复不会自动重试")
 
 
 async def _sticker_resource_key(item) -> str:

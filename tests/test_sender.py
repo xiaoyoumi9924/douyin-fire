@@ -4,6 +4,7 @@ import pytest
 
 from app.models import Message
 from app.douyin import PageOperationError
+from app.sender import SendOutcomeUnknownError
 from app.selectors import IMAGE_INPUTS
 from app.sender import (
     LATEST_OUTGOING_MESSAGE,
@@ -298,9 +299,13 @@ async def test_sticker_click_retries_via_publish_when_staged(monkeypatch) -> Non
     async def fake_ready(_page):
         return True
 
+    async def fake_mark(_page):
+        return ("fresh-anchor", "old-content")
+
     monkeypatch.setattr("app.sender._confirm_sticker_sent", fake_confirm)
     monkeypatch.setattr("app.sender._trigger_send", fake_trigger)
     monkeypatch.setattr("app.sender._publish_ready", fake_ready)
+    monkeypatch.setattr("app.sender._mark_latest_outgoing_message", fake_mark)
 
     await _click_and_confirm_sticker(page, item, ("anchor", "old"), "比心")
 
@@ -384,6 +389,77 @@ async def test_sticker_click_raises_when_not_staged(monkeypatch) -> None:
     monkeypatch.setattr("app.sender._publish_ready", fake_ready)
 
     with pytest.raises(PageOperationError):
+        await _click_and_confirm_sticker(page, item, ("anchor", "old"), "比心")
+
+
+@pytest.mark.asyncio
+async def test_sticker_uncertain_send_recovers_when_still_staged(monkeypatch) -> None:
+    # 结果不明但发送按钮仍可用 => 表情还停在输入框里，确定没发出去，补点发送是安全的。
+    item = MagicMock()
+    item.get_attribute = AsyncMock(return_value=None)
+    item.click = AsyncMock()
+    img_first = MagicMock()
+    img_first.count = AsyncMock(return_value=0)
+    img_loc = MagicMock()
+    img_loc.first = img_first
+    item.locator.return_value = img_loc
+    page = MagicMock()
+    calls = {"confirm": 0, "publish": 0}
+
+    async def fake_confirm(_page, _before, _name, _key=""):
+        calls["confirm"] += 1
+        if calls["confirm"] == 1:
+            raise SendOutcomeUnknownError("未检测到新的已发送消息")
+        return None
+
+    async def fake_trigger(_page):
+        calls["publish"] += 1
+
+    async def fake_ready(_page):
+        return True
+
+    async def fake_mark(_page):
+        return ("fresh-anchor", "old-content")
+
+    monkeypatch.setattr("app.sender._confirm_sticker_sent", fake_confirm)
+    monkeypatch.setattr("app.sender._trigger_send", fake_trigger)
+    monkeypatch.setattr("app.sender._publish_ready", fake_ready)
+    monkeypatch.setattr("app.sender._mark_latest_outgoing_message", fake_mark)
+
+    await _click_and_confirm_sticker(page, item, ("anchor", "old"), "比心")
+
+    assert calls["confirm"] == 2
+    assert calls["publish"] == 1
+
+
+@pytest.mark.asyncio
+async def test_sticker_uncertain_send_stays_fail_closed_when_not_staged(monkeypatch) -> None:
+    # 结果不明且无法证明未发出 => 绝不补发，避免重复。
+    item = MagicMock()
+    item.get_attribute = AsyncMock(return_value=None)
+    item.click = AsyncMock()
+    img_first = MagicMock()
+    img_first.count = AsyncMock(return_value=0)
+    img_loc = MagicMock()
+    img_loc.first = img_first
+    item.locator.return_value = img_loc
+    page = MagicMock()
+
+    async def fake_confirm(_page, _before, _name, _key=""):
+        raise SendOutcomeUnknownError("未检测到新的已发送消息")
+
+    async def fake_trigger(_page):
+        raise AssertionError("结果不明时不应触发发送")
+
+    async def fake_ready(_page):
+        return False
+
+    monkeypatch.setattr("app.sender._confirm_sticker_sent", fake_confirm)
+    monkeypatch.setattr("app.sender._trigger_send", fake_trigger)
+    monkeypatch.setattr("app.sender._publish_ready", fake_ready)
+    monkeypatch.setattr("app.sender._click_retry_on_latest_failed_message", AsyncMock(return_value=False))
+
+    with pytest.raises(SendOutcomeUnknownError):
         await _click_and_confirm_sticker(page, item, ("anchor", "old"), "比心")
 
 
