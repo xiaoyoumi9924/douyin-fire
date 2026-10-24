@@ -145,10 +145,15 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
 
                         if not dry_run:
                             for message_index, message in enumerate(target.messages):
-                                message_id = _message_id(message_index, message)
-                                key = history.key(task.task_id, run_date, target.name, message_id)
+                                # Never rebind ``message_id`` here: the module-level
+                                # history.message_id() helper is also used by the
+                                # pre-filter above, and a local assignment would turn
+                                # it into an unbound local for the whole function.
+                                message_key = history.key(
+                                    task.task_id, run_date, target.name, message_id(message_index, message)
+                                )
 
-                                status = history.status(key)
+                                status = history.status(message_key)
                                 if status == "success":
                                     LOGGER.info("跳过当天已确认成功的消息: %s #%d", alias, message_index + 1)
                                     metrics.record_skipped_message()
@@ -164,7 +169,7 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
                                     message,
                                     task.stickers,
                                     history,
-                                    key,
+                                    message_key,
                                     alias,
                                     message_index + 1,
                                 )
@@ -453,10 +458,6 @@ async def _notify_webhook(
 
 def _trace_path(artifacts_dir: Path) -> Path:
     return artifacts_dir / "traces" / f"{datetime.now():%Y%m%d-%H%M%S}.zip"
-
-
-def _message_id(index, message) -> str:
-    return message_id(index, message)
 
 
 async def _send_message_with_retry(

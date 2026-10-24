@@ -33,7 +33,6 @@ def _task() -> TaskConfig:
         interval_min=0,
         interval_max=0,
         continue_on_error=True,
-        prevent_duplicates=False,
     )
 
 
@@ -50,6 +49,7 @@ async def test_authentication_failure_stops_remaining_targets_and_notifies(monke
 
     history = MagicMock()
     history.run_date.return_value = "2026-08-09"
+    history.target_status.return_value = "pending"
     chat = MagicMock()
     chat.open_target = AsyncMock()
     notify = AsyncMock()
@@ -85,6 +85,7 @@ async def test_browser_start_failure_still_notifies(monkeypatch, tmp_path) -> No
 
     history = MagicMock()
     history.run_date.return_value = "2026-08-09"
+    history.target_status.return_value = "pending"
     notify = AsyncMock()
     monkeypatch.setattr(main_module, "load_settings", lambda _env=None: settings)
     monkeypatch.setattr(main_module, "load_task", lambda _settings: _task())
@@ -113,7 +114,6 @@ async def test_waits_between_consecutive_messages_for_same_friend(monkeypatch, t
         interval_min=0.5,
         interval_max=0.5,
         continue_on_error=True,
-        prevent_duplicates=False,
     )
     page = MagicMock()
     session = SimpleNamespace(page=page, context=MagicMock())
@@ -124,6 +124,7 @@ async def test_waits_between_consecutive_messages_for_same_friend(monkeypatch, t
 
     history = MagicMock()
     history.run_date.return_value = "2026-08-09"
+    history.target_status.return_value = "pending"
     chat = MagicMock()
     chat.open_target = AsyncMock()
     send_message = AsyncMock()
@@ -149,3 +150,22 @@ async def test_waits_between_consecutive_messages_for_same_friend(monkeypatch, t
     assert await main_module.run() == 0
     assert send_message.await_count == 2
     assert sleeps == [0.5]
+
+
+@pytest.mark.asyncio
+async def test_fully_delivered_day_returns_0_without_opening_browser(monkeypatch, tmp_path) -> None:
+    # 回归：run() 的预筛循环曾把 history.message_id 遮蔽成局部变量，
+    # 真实发送（含“今天已全部送达”）在打开浏览器前就抛 UnboundLocalError。
+    settings = _settings(tmp_path)
+    history = MagicMock()
+    history.run_date.return_value = "2026-08-09"
+    history.target_status.return_value = "success"
+    monkeypatch.setattr(main_module, "load_settings", lambda _env=None: settings)
+    monkeypatch.setattr(main_module, "load_task", lambda _settings: _task())
+    monkeypatch.setattr(main_module, "History", MagicMock(return_value=history))
+    monkeypatch.setattr(main_module, "open_douyin", MagicMock(side_effect=AssertionError("不应打开浏览器")))
+    monkeypatch.setattr(main_module, "_write_results", MagicMock())
+    monkeypatch.setattr(main_module, "_notify_dingtalk", AsyncMock())
+    monkeypatch.setattr(main_module, "_configure_logging", lambda _path, _aliases=None: None)
+
+    assert await main_module.run() == 0
