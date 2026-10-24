@@ -925,7 +925,7 @@
       <section class="page-view" data-page-view="tasks" aria-labelledby="pageTitle">
         <section class="block schedule-card" id="accountSettings" aria-labelledby="scheduleCardTitle">
           <div class="card-heading"><span class="card-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h2 id="scheduleCardTitle">自动运行时间</h2></div><span class="schedule-enabled" id="scheduleEnabled">已启用</span></div>
-          <div class="schedule-layout"><div class="schedule-time"><label for="scheduleHour">每日运行时间</label><div class="field-row"><select id="scheduleHour" aria-label="每天发送的小时"></select><span class="unit">:</span><select id="scheduleMinute" aria-label="每天发送的分钟"></select></div></div><div class="schedule-next"><label>下次执行时间</label><b id="scheduleNextCard">—</b><small>每日自动运行</small></div><button class="btn" id="saveSchedule">保存时间</button></div>
+          <div class="schedule-layout"><div class="schedule-time"><label for="scheduleHour">每日运行时间</label><div class="field-row"><select id="scheduleHour" aria-label="每天发送的小时"></select><span class="unit">:</span><select id="scheduleMinute" aria-label="每天发送的分钟"></select></div></div><div class="schedule-next"><label>下次执行时间</label><b id="scheduleNextCard">—</b><small>每日自动运行 · 当天补跑</small></div><button class="btn" id="saveSchedule">保存时间</button></div>
           <p class="hint" id="scheduleHint">下一次投递：—</p><span class="visually-hidden" id="scheduleState"></span>
         </section>
       </section>
@@ -1490,7 +1490,7 @@
     const { hour, minute, next } = state.schedule;
     if (document.activeElement !== el.scheduleHour) el.scheduleHour.value = String(hour).padStart(2, "0");
     if (document.activeElement !== el.scheduleMinute) el.scheduleMinute.value = String(minute).padStart(2, "0");
-    el.scheduleHint.textContent = `下一次投递：${next}`;
+    el.scheduleHint.textContent = `下一次投递：${next}（那天如果关机或睡眠错过了，会在开机/唤醒后补跑一次）`;
     el.scheduleNextCard.textContent = next || "—";
     el.scheduleEnabled.textContent = state.schedule.present ? "已启用" : "未配置";
     el.scheduleEnabled.dataset.enabled = String(Boolean(state.schedule.present));
@@ -1703,7 +1703,7 @@
     const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     try {
       state = await api("/api/schedule", { hour, minute });
-      flash(`已改为每天 ${value} 投递`, "quiet");
+      flash(`已改为每天 ${value} 投递，错过会在当天补跑`, "quiet");
       render();
       setTimeout(() => flash(""), 2600);
     } catch (error) {

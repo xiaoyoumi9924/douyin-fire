@@ -151,15 +151,19 @@ def run_command(mode: str, *args: str) -> list[str]:
     return [str(PYTHON), "run.py", *args]
 
 
-def scheduled_run_command() -> list[str]:
+def scheduled_run_command(hour: int, minute: int) -> list[str]:
+    # 定时任务既按点触发，也每 30 分钟轻量检查一次，用于开机/唤醒后的当天补跑。
+    # 补跑门禁在 app.main.run() 里：当天已完成、未到设定时间、或当天尝试已达上限
+    # 都会立刻退出，不会启动浏览器。
+    catch_up_args = ["--catch-up", "--not-before", f"{hour:02d}:{minute:02d}"]
     appimage = os.environ.get("DOUYIN_SCHEDULE_LAUNCHER")
     if sys.platform.startswith("linux") and appimage:
-        return [appimage, "--scheduled-run"]
-    return run_command("run")
+        return [appimage, "--scheduled-run", *catch_up_args]
+    return run_command("run", *catch_up_args)
 
 
 def plist_body(hour: int, minute: int) -> str:
-    arguments = scheduled_run_command()
+    arguments = scheduled_run_command(hour, minute)
     program_arguments = "\n".join(f"    <string>{xml_escape(argument)}</string>" for argument in arguments)
     browser_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
     browser_environment = (
@@ -187,8 +191,11 @@ def plist_body(hour: int, minute: int) -> str:
     <key>Minute</key><integer>{minute}</integer>
   </dict>
 
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
   <key>RunAtLoad</key>
-  <false/>
+  <true/>
 
   <key>EnvironmentVariables</key>
   <dict>
@@ -251,7 +258,7 @@ def _apply_windows_schedule(hour: int, minute: int) -> None:
     wrapper = DATA_ROOT / "run-scheduled.cmd"
     data_dir = str(DATA_ROOT).replace('"', '""')
     browser_dir = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").replace('"', '""')
-    command = subprocess.list2cmdline(scheduled_run_command())
+    command = subprocess.list2cmdline(scheduled_run_command(hour, minute))
     content = (
         "@echo off\r\n"
         "chcp 65001 >nul\r\n"
@@ -261,14 +268,35 @@ def _apply_windows_schedule(hour: int, minute: int) -> None:
         f"{command}\r\n"
     )
     wrapper.write_text(content, encoding="utf-8")
+    at = f"{hour:02d}:{minute:02d}"
+    # StartWhenAvailable 负责睡眠/关机导致的错过后补跑；程序里的补跑门禁再兜一层。
+    script = (
+        "$ErrorActionPreference='Stop';"
+        f"$action=New-ScheduledTaskAction -Execute '{wrapper}';"
+        f"$trigger=New-ScheduledTaskTrigger -Daily -At '{at}';"
+        "$settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries "
+        "-DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 2);"
+        "Register-ScheduledTask -TaskName 'DouyinAutoFire' -Action $action -Trigger $trigger "
+        "-Settings $settings -Force | Out-Null"
+    )
     result = subprocess.run(
-        ["schtasks", "/Create", "/F", "/SC", "DAILY", "/ST", f"{hour:02d}:{minute:02d}", "/TN", "DouyinAutoFire", "/TR", f'"{wrapper}"'],
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if not result.returncode:
+        return
+    # 旧系统或受限策略：退回按天触发，补跑只能靠下次开机后的整点任务。
+    fallback = subprocess.run(
+        ["schtasks", "/Create", "/F", "/SC", "DAILY", "/ST", at, "/TN", "DouyinAutoFire", "/TR", f'"{wrapper}"'],
         capture_output=True,
         text=True,
         timeout=30,
     )
-    if result.returncode:
-        raise RuntimeError((result.stderr or result.stdout).strip() or "Windows 任务计划程序创建失败")
+    if fallback.returncode:
+        detail = (result.stderr or result.stdout or fallback.stderr or fallback.stdout).strip()
+        raise RuntimeError(detail or "Windows 任务计划程序创建失败")
 
 
 def _apply_linux_schedule(hour: int, minute: int) -> None:
@@ -284,8 +312,9 @@ def _apply_linux_schedule(hour: int, minute: int) -> None:
         browser_path = None  # AppImage chooses its fresh mount path at startup.
     if browser_path:
         environment += f" PLAYWRIGHT_BROWSERS_PATH={shlex.quote(browser_path)}"
-    command = " ".join(shlex.quote(part) for part in scheduled_run_command())
-    retained.append(f"{minute} {hour} * * * {environment} {command} >> {shlex.quote(str(ARTIFACTS / 'scheduled.log'))} 2>&1 # douyin-fire-local-schedule")
+    command = " ".join(shlex.quote(part) for part in scheduled_run_command(hour, minute))
+    # 每 30 分钟轻量检查一次：到点执行，错过（睡眠/关机）则在恢复后的下一个整半点补跑。
+    retained.append(f"*/30 * * * * {environment} {command} >> {shlex.quote(str(ARTIFACTS / 'scheduled.log'))} 2>&1 # douyin-fire-local-schedule")
     installed = subprocess.run([crontab, "-"], input="\n".join(retained) + "\n", capture_output=True, text=True, timeout=15)
     if installed.returncode:
         raise RuntimeError((installed.stderr or installed.stdout).strip() or "写入 crontab 失败")
@@ -653,7 +682,12 @@ class Runner:
     def active(self) -> bool:
         return bool(self.process and self.process.poll() is None)
 
-    def start(self, action: str, account_id: str | None = None) -> tuple[bool, str]:
+    def start(
+        self,
+        action: str,
+        account_id: str | None = None,
+        extra_args: list[str] | None = None,
+    ) -> tuple[bool, str]:
         with self.guard:
             if self.active():
                 return False, "上一条任务还没结束"
@@ -661,7 +695,7 @@ class Runner:
                 return False, "找不到自动化运行环境，请重新安装应用或检查项目虚拟环境"
 
             if action == "send-all":
-                command = run_command("run")
+                command = run_command("run", *(extra_args or []))
                 run_account_id = None
             else:
                 try:
@@ -1193,9 +1227,17 @@ class Handler(BaseHTTPRequestHandler):
         if route == "/api/action":
             action = body.get("action")
             account_id = body.get("accountId")
+            extra_args: list[str] = []
             if action == "send-all":
                 if account_id is not None:
                     return self.fail("发送全部账号不接受 accountId")
+                if body.get("catchUp"):
+                    not_before = body.get("notBefore")
+                    extra_args.append("--catch-up")
+                    if not_before:
+                        if not isinstance(not_before, str) or not re.fullmatch(r"[0-2]?\d:[0-5]\d", not_before):
+                            return self.fail("notBefore 需要 HH:MM 格式")
+                        extra_args += ["--not-before", not_before]
             elif action not in {"send", "dry-run", "login"}:
                 return self.fail("未知动作")
             elif account_id is None:
@@ -1207,7 +1249,7 @@ class Handler(BaseHTTPRequestHandler):
                         return self.fail(f"账号 {account_id} 已停用", 409)
             except ConfigError as exc:
                 return self.fail(str(exc), 400)
-            started, reason = RUNNER.start(action, account_id)
+            started, reason = RUNNER.start(action, account_id, extra_args)
             if not started:
                 return self.fail(reason, 409)
             return self.send_json({"started": action})

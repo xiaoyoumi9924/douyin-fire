@@ -81,7 +81,14 @@ def run_all_accounts(account_id: str | None = None) -> int:
                 settings = load_settings(account.env_file)
                 _configure_logging(settings.artifacts_dir, label=account.id, reset=True)
                 with run_lock(settings.artifacts_dir / "run.lock"):
-                    code = asyncio.run(run(dry_run=args.dry_run, env_file=str(account.env_file)))
+                    code = asyncio.run(
+                        run(
+                            dry_run=args.dry_run,
+                            env_file=str(account.env_file),
+                            catch_up=args.catch_up,
+                            not_before=args.not_before,
+                        )
+                    )
             status = "success" if code == 0 else "failed"
             summary.append((account.id, status, None))
             LOGGER.info("执行完成: %s", status)

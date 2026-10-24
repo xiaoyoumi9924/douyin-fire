@@ -10,6 +10,7 @@ import hashlib
 import time
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.browser import AuthenticationError, RiskControlError, SearchBoxNotReadyError, open_douyin, open_private_messages, save_trace, verify_login
 from app.config import ConfigError, load_settings, load_task
@@ -26,8 +27,20 @@ from app.sender import SendOutcomeUnknownError, SendRejectedError, send_message
 
 LOGGER = logging.getLogger("douyin_sender")
 
+# 补跑（catch-up）：定时任务除了按点触发，还会每 30 分钟轻量检查一次。开机、
+# 唤醒或错过时间点后，只要当天还没完成过一次正式运行，就补跑一次。同一账号
+# 每天最多尝试 3 次，避免崩溃时无限重试。
+CATCH_UP_MAX_ATTEMPTS = 3
+CATCH_UP_STATE_FILE = "catch-up.json"
 
-async def run(dry_run: bool = False, env_file: str | None = None) -> int:
+
+async def run(
+    dry_run: bool = False,
+    env_file: str | None = None,
+    *,
+    catch_up: bool = False,
+    not_before: str | None = None,
+) -> int:
     try:
         settings = load_settings(env_file)
         task = load_task(settings)
@@ -37,6 +50,14 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
     settings.artifacts_dir.mkdir(parents=True, exist_ok=True)
     aliases = build_target_aliases(task.targets)
     _configure_logging(settings.artifacts_dir, aliases)
+
+    if catch_up and not dry_run:
+        reason = _catch_up_skip_reason(settings.artifacts_dir, task.timezone, not_before)
+        if reason is not None:
+            LOGGER.info("补跑检查：跳过（%s）", reason)
+            return 0
+        attempts = _record_catch_up_attempt(settings.artifacts_dir, task.timezone)
+        LOGGER.info("补跑检查：今天第 %d/%d 次运行", attempts, CATCH_UP_MAX_ATTEMPTS)
 
     history = History(settings.artifacts_dir / "history.json")
     run_date = history.run_date(task.timezone)
@@ -291,7 +312,14 @@ def main() -> int:
     try:
         settings = load_settings(args.env_file)
         with run_lock(settings.artifacts_dir / "run.lock"):
-            return asyncio.run(run(dry_run=args.dry_run, env_file=args.env_file))
+            return asyncio.run(
+                run(
+                    dry_run=args.dry_run,
+                    env_file=args.env_file,
+                    catch_up=args.catch_up,
+                    not_before=args.not_before,
+                )
+            )
     except (ConfigError, AuthenticationError, RiskControlError, SearchBoxNotReadyError, AlreadyRunningError) as exc:
         print(f"错误: {exc}")
         return 2
@@ -308,6 +336,16 @@ def _parse_cli_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="只验证登录和好友，不发送消息")
     parser.add_argument("--env-file", help="指定 .env 文件路径")
     parser.add_argument("--account", help="只运行多账号配置中的指定账号（通过 run.py 使用）")
+    parser.add_argument(
+        "--catch-up",
+        action="store_true",
+        help="补跑模式：只有当天还没完成过一次正式运行、且已过设定时间时才执行",
+    )
+    parser.add_argument(
+        "--not-before",
+        metavar="HH:MM",
+        help="补跑最早时间（按任务时区）；早于该时间直接跳过",
+    )
     return parser.parse_args()
 
 
@@ -340,6 +378,91 @@ def _configure_logging(
     for handler in LOGGER.handlers:
         if isinstance(handler.formatter, RedactingFormatter):
             handler.formatter.aliases = dict(aliases or {})
+
+
+def _task_zone(timezone: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(timezone)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"未知时区: {timezone}，请安装 tzdata 或修正配置") from exc
+
+
+def _task_now(timezone: str) -> datetime:
+    return datetime.now(_task_zone(timezone))
+
+
+def _read_json(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, UnicodeError, json.JSONDecodeError):
+        return None
+
+
+def _parse_not_before(value: str) -> tuple[int, int]:
+    try:
+        hour_text, minute_text = value.strip().split(":")
+        hour, minute = int(hour_text), int(minute_text)
+    except (AttributeError, ValueError) as exc:
+        raise ConfigError(f"--not-before 需要 HH:MM 格式，收到 {value!r}") from exc
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        raise ConfigError(f"--not-before 超出范围: {value!r}")
+    return hour, minute
+
+
+def _today_has_finished_run(artifacts_dir: Path, timezone: str) -> bool:
+    """当天是否已经完成过一次正式运行（Dry Run 不算）。"""
+    payload = _read_json(artifacts_dir / "result.json")
+    if not isinstance(payload, dict) or payload.get("dry_run"):
+        return False
+    finished_at = payload.get("finished_at")
+    if not isinstance(finished_at, str):
+        return False
+    try:
+        finished = datetime.fromisoformat(finished_at)
+    except ValueError:
+        return False
+    zone = _task_zone(timezone)
+    if finished.tzinfo is None:
+        finished = finished.replace(tzinfo=zone)
+    return finished.astimezone(zone).date() == _task_now(timezone).date()
+
+
+def _catch_up_attempts(artifacts_dir: Path, today: str) -> int:
+    payload = _read_json(artifacts_dir / CATCH_UP_STATE_FILE)
+    if not isinstance(payload, dict) or payload.get("date") != today:
+        return 0
+    attempts = payload.get("attempts")
+    if isinstance(attempts, bool) or not isinstance(attempts, int) or attempts < 0:
+        return 0
+    return attempts
+
+
+def _record_catch_up_attempt(artifacts_dir: Path, timezone: str) -> int:
+    today = _task_now(timezone).date().isoformat()
+    attempts = _catch_up_attempts(artifacts_dir, today) + 1
+    path = artifacts_dir / CATCH_UP_STATE_FILE
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(
+        json.dumps({"date": today, "attempts": attempts}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+    return attempts
+
+
+def _catch_up_skip_reason(artifacts_dir: Path, timezone: str, not_before: str | None) -> str | None:
+    """返回跳过补跑的原因；None 表示现在应该补跑。"""
+    now = _task_now(timezone)
+    if not_before:
+        hour, minute = _parse_not_before(not_before)
+        if (now.hour, now.minute) < (hour, minute):
+            return f"还没到 {hour:02d}:{minute:02d}"
+    if _today_has_finished_run(artifacts_dir, timezone):
+        return "今天已经完成过一次运行"
+    attempts = _catch_up_attempts(artifacts_dir, now.date().isoformat())
+    if attempts >= CATCH_UP_MAX_ATTEMPTS:
+        return f"今天已尝试 {attempts} 次，不再重试"
+    return None
 
 
 async def _screenshot(page, artifacts_dir: Path, label: str) -> Path | None:

@@ -84,7 +84,7 @@ def test_run_all_accounts_account_failure_does_not_block_others(monkeypatch, tmp
     env_b = _env_file(tmp_path, ".env.b", "DOUYIN_COOKIE=cookie-b\n")
     seen: list[str] = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         cookie = os.environ["DOUYIN_COOKIE"]
         seen.append(cookie)
         if cookie == "cookie-a":
@@ -92,7 +92,7 @@ def test_run_all_accounts_account_failure_does_not_block_others(monkeypatch, tmp
         return 0
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
@@ -108,12 +108,12 @@ def test_run_all_accounts_legacy_env_cleared_for_each_account(monkeypatch, tmp_p
     env_a = _env_file(tmp_path, ".env.a", "DOUYIN_COOKIE=cookie-a\n")
     seen: list[str] = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         seen.append(os.environ["DOUYIN_COOKIE"])
         return 0
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
@@ -127,12 +127,12 @@ def test_run_all_accounts_all_success_returns_zero(monkeypatch, tmp_path: Path) 
     env_b = _env_file(tmp_path, ".env.b", "DOUYIN_COOKIE=cookie-b\n")
     calls = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         calls.append(os.environ["DOUYIN_COOKIE"])
         return 0
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
@@ -144,11 +144,11 @@ def test_run_all_accounts_all_success_returns_zero(monkeypatch, tmp_path: Path) 
 def test_run_all_accounts_all_failed_returns_one(monkeypatch, tmp_path: Path) -> None:
     env_a = _env_file(tmp_path, ".env.a", "DOUYIN_COOKIE=cookie-a\n")
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         raise RuntimeError("全部失败")
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
@@ -159,12 +159,12 @@ def test_run_all_accounts_all_failed_returns_one(monkeypatch, tmp_path: Path) ->
 def test_run_all_accounts_no_enabled_accounts_skips(monkeypatch) -> None:
     calls = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         calls.append(1)
         return 0
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
 
     assert runner_module.run_all_accounts() == 0
@@ -176,12 +176,12 @@ def test_run_all_accounts_missing_env_file_fails_only_that_account(monkeypatch, 
     env_b = _env_file(tmp_path, ".env.b", "DOUYIN_COOKIE=cookie-b\n")
     seen: list[str] = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         seen.append(os.environ["DOUYIN_COOKIE"])
         return 0
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
@@ -195,7 +195,7 @@ def test_run_all_accounts_uses_per_account_artifacts_dir(monkeypatch, tmp_path: 
     env_a = _env_file(tmp_path, ".env.a", "DOUYIN_COOKIE=cookie-a\n")
     lock_dirs: list[Path] = []
 
-    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+    async def fake_run(dry_run: bool = False, env_file: str | None = None, **_kwargs) -> int:
         return 0
 
     def fake_load_settings(env_file=None):
@@ -204,7 +204,7 @@ def test_run_all_accounts_uses_per_account_artifacts_dir(monkeypatch, tmp_path: 
         return settings
 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a)])
-    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None, catch_up=False, not_before=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
     monkeypatch.setattr(runner_module, "load_settings", fake_load_settings)
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)

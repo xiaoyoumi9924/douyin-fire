@@ -23,7 +23,7 @@ const python = process.env.DOUYIN_PYTHON || path.join(
 );
 const backendScript = path.join(projectRoot, "desktop_backend.py");
 const backendPath = isPackaged ? packagedBackend : (fs.existsSync(developmentBackend) ? developmentBackend : python);
-const backendArgs = (mode) => backendPath === python ? [backendScript, mode] : [mode];
+const backendArgs = (...args) => backendPath === python ? [backendScript, ...args] : args;
 const browserPath = isPackaged
   ? path.join(process.resourcesPath, "ms-playwright")
   : (process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(projectRoot, "dist", "ms-playwright"));
@@ -91,12 +91,29 @@ async function requestScheduledRun() {
     const response = await fetch(`${readyUrl}/api/action`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "send-all" }),
+      body: JSON.stringify({ action: "send-all", ...scheduledRunPayload() }),
     });
     if (!response.ok) writeBackendLog(`定时发送请求失败：HTTP ${response.status}\n`);
   } catch (error) {
     writeBackendLog(`定时发送请求失败：${error.message}\n`);
   }
+}
+
+// 定时任务会把补跑参数透传给后端；AppImage 第二次启动时也要保留它们。
+function scheduledRunFlags() {
+  const flags = [];
+  if (process.argv.includes("--catch-up")) flags.push("--catch-up");
+  const index = process.argv.indexOf("--not-before");
+  if (index !== -1 && process.argv[index + 1]) flags.push("--not-before", process.argv[index + 1]);
+  return flags;
+}
+
+function scheduledRunPayload() {
+  const flags = scheduledRunFlags();
+  const payload = { catchUp: flags.includes("--catch-up") };
+  const index = flags.indexOf("--not-before");
+  if (index !== -1 && flags[index + 1]) payload.notBefore = flags[index + 1];
+  return payload;
 }
 
 function stopBackend() {
@@ -153,7 +170,7 @@ function startScheduledBackend() {
     return;
   }
   fs.mkdirSync(dataDir, { recursive: true });
-  backend = spawn(backendPath, backendArgs("run"), {
+  backend = spawn(backendPath, backendArgs("run", ...scheduledRunFlags()), {
     cwd: dataDir,
     env: backendEnvironment(),
     stdio: ["ignore", "pipe", "pipe"],
