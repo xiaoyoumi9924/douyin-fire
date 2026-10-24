@@ -425,6 +425,9 @@
   .schedule-statusbar span{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
   .schedule-statusbar .dot{width:6px;height:6px}
   .schedule-statusbar .schedule-platform{margin-left:auto;color:var(--ink-3)}
+  .schedule-note{display:flex;align-items:flex-start;gap:7px;margin:0 -26px;padding:2px 26px 18px;color:var(--ink-3);font-size:12px;line-height:1.55}
+  .schedule-note .i{margin-top:2px;flex:none}
+  .schedule-note[data-tone="warning"]{margin-top:2px;padding:12px 26px 14px;border-top:1px solid var(--amber-border);background:var(--amber-soft);color:#73500F}
   .dot--green{background:var(--green-bright)}
   .dot--blue{background:var(--blue)}
   .dot--gray{background:#B4B4B9}
@@ -787,6 +790,8 @@
     .schedule-action .badge{order:0}
     .schedule-action .field-hint{order:2;width:100%;text-align:center;font-size:10.5px}
     .schedule-statusbar{margin:14px -16px 0;padding:13px 16px;gap:7px 14px;font-size:11px}
+    .schedule-note{margin:0 -16px;padding:2px 16px 15px;font-size:11px}
+    .schedule-note[data-tone="warning"]{padding:11px 16px 12px}
     .schedule-statusbar .schedule-platform{display:none}
     .note-card{padding:13px 14px}
     .run-item{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px}
@@ -1039,6 +1044,7 @@
             <span><svg class="i i--xs"><use href="#i-globe"/></svg>Asia/Shanghai</span>
             <span class="schedule-platform" id="schedulePlatform">macOS launchd</span>
           </div>
+          <p class="schedule-note" id="scheduleNote"><svg class="i i--xs"><use href="#i-info"/></svg><span id="scheduleNoteText">退出应用后，系统计划任务仍会在设定时间自动运行。</span></p>
           <span class="visually-hidden" id="scheduleState"></span>
         </section>
 
@@ -1312,6 +1318,7 @@
     scheduleHour: $("scheduleHour"), scheduleMinute: $("scheduleMinute"), saveSchedule: $("saveSchedule"), editTimeBtn: $("editTimeBtn"),
     scheduleEnabled: $("scheduleEnabled"), scheduleNextCard: $("scheduleNextCard"),
     scheduleCountdown: $("scheduleCountdown"), scheduleState: $("scheduleState"), scheduleHint: $("scheduleHint"),
+    scheduleNote: $("scheduleNote"), scheduleNoteText: $("scheduleNoteText"),
     taskWeekStrip: $("taskWeekStrip"), taskWeekRange: $("taskWeekRange"),
     weekDelivered: $("weekDelivered"), weekComplete: $("weekComplete"), weekFailed: $("weekFailed"),
     taskRecentList: $("taskRecentList"),
@@ -2391,6 +2398,18 @@
       : "登录凭证缺失";
     el.credentialDot.className = `dot ${credential.present ? "dot--green" : "dot--gray"}`;
     el.schedulePlatform.textContent = platformLabel();
+    if (schedule.present && schedule.unstableLocation) {
+      el.scheduleNote.dataset.tone = "warning";
+      el.scheduleNoteText.textContent = "当前应用还在临时位置，退出后定时任务可能失效。请把应用拖到「应用程序」文件夹，再点「保存时间」。";
+    } else if (schedule.present && schedule.commandMatches === false) {
+      el.scheduleNote.dataset.tone = "warning";
+      el.scheduleNoteText.textContent = "系统计划任务指向旧位置，点「保存时间」即可修复。";
+    } else {
+      el.scheduleNote.dataset.tone = "";
+      el.scheduleNoteText.textContent = schedule.present
+        ? "退出应用后，系统计划任务仍会在设定时间自动运行。"
+        : "保存时间后，即使退出应用，系统也会在设定时间自动运行。";
+    }
     updateCountdown();
   }
 

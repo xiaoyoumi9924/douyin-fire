@@ -21,14 +21,16 @@ def test_scheduled_command_carries_catch_up_flags(server) -> None:
     assert command[-3:] == ["--catch-up", "--not-before", "07:05"]
 
 
-def test_plist_runs_at_load_and_every_thirty_minutes(server) -> None:
+def test_plist_runs_on_schedule_and_every_thirty_minutes(server) -> None:
     body = server.plist_body(7, 5)
 
     assert "<key>StartCalendarInterval</key>" in body
     assert "<key>Hour</key><integer>7</integer>" in body
     assert "<key>Minute</key><integer>5</integer>" in body
     assert "<key>StartInterval</key>\n  <integer>1800</integer>" in body
-    assert "<key>RunAtLoad</key>\n  <true/>" in body
+    # 保存/修复计划任务不应立刻触发一次补跑。
+    assert "RunAtLoad" not in body
+    assert "<key>DOUYIN_SCHEDULE_SAVED_AT</key>" in body
     assert "<string>--catch-up</string>" in body
     assert "<string>--not-before</string>" in body
     assert "<string>07:05</string>" in body

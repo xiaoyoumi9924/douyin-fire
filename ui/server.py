@@ -13,6 +13,7 @@ import base64
 import binascii
 import mimetypes
 import os
+import plistlib
 import queue
 import re
 import signal
@@ -166,6 +167,7 @@ def scheduled_run_command(hour: int, minute: int) -> list[str]:
 def plist_body(hour: int, minute: int) -> str:
     arguments = scheduled_run_command(hour, minute)
     program_arguments = "\n".join(f"    <string>{xml_escape(argument)}</string>" for argument in arguments)
+    saved_at = datetime.now().astimezone().isoformat(timespec="seconds")
     browser_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
     browser_environment = (
         f"    <key>PLAYWRIGHT_BROWSERS_PATH</key>\n    <string>{xml_escape(browser_path)}</string>\n"
@@ -195,15 +197,14 @@ def plist_body(hour: int, minute: int) -> str:
   <key>StartInterval</key>
   <integer>1800</integer>
 
-  <key>RunAtLoad</key>
-  <true/>
-
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
     <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>DOUYIN_DATA_DIR</key>
     <string>{xml_escape(str(DATA_ROOT))}</string>
+    <key>DOUYIN_SCHEDULE_SAVED_AT</key>
+    <string>{xml_escape(saved_at)}</string>
 {browser_environment}    <key>LANG</key>
     <string>zh_CN.UTF-8</string>
   </dict>
@@ -271,6 +272,7 @@ def _apply_windows_schedule(hour: int, minute: int) -> None:
         "chcp 65001 >nul\r\n"
         f'cd /d "{data_dir}"\r\n'
         f'set "DOUYIN_DATA_DIR={data_dir}"\r\n'
+        f'set "DOUYIN_SCHEDULE_SAVED_AT={datetime.now().astimezone().isoformat(timespec="seconds")}"\r\n'
         f'set "PLAYWRIGHT_BROWSERS_PATH={browser_dir}"\r\n'
         f"{command}\r\n"
     )
@@ -313,7 +315,11 @@ def _apply_linux_schedule(hour: int, minute: int) -> None:
     listed = subprocess.run([crontab, "-l"], capture_output=True, text=True, timeout=15)
     existing = listed.stdout.splitlines() if listed.returncode == 0 else []
     retained = [line for line in existing if "# douyin-fire-local-schedule" not in line]
-    environment = f"DOUYIN_DATA_DIR={shlex.quote(str(DATA_ROOT))} HEADLESS=true"
+    saved_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    environment = (
+        f"DOUYIN_DATA_DIR={shlex.quote(str(DATA_ROOT))} "
+        f"DOUYIN_SCHEDULE_SAVED_AT={shlex.quote(saved_at)} HEADLESS=true"
+    )
     browser_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
     if os.environ.get("DOUYIN_SCHEDULE_LAUNCHER"):
         browser_path = None  # AppImage chooses its fresh mount path at startup.
@@ -344,6 +350,80 @@ def apply_schedule(hour: int, minute: int) -> None:
     else:
         raise RuntimeError(f"暂不支持在 {sys.platform} 设置系统定时任务")
     _save_schedule(hour, minute)
+
+
+def schedule_command_matches(hour: int, minute: int) -> bool:
+    """计划任务是否指向当前这个应用实例。"""
+    if not PACKAGED or sys.platform != "darwin":
+        return True
+    try:
+        payload = plistlib.loads(PLIST.read_bytes())
+    except (OSError, plistlib.InvalidFileException, ValueError):
+        return False
+    args = payload.get("ProgramArguments")
+    env = payload.get("EnvironmentVariables") or {}
+    if payload.get("RunAtLoad"):
+        return False
+    if not env.get("DOUYIN_SCHEDULE_SAVED_AT"):
+        return False
+    if args != scheduled_run_command(hour, minute):
+        return False
+    if str(env.get("DOUYIN_DATA_DIR") or "") != str(DATA_ROOT):
+        return False
+    browser = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    if browser and str(env.get("PLAYWRIGHT_BROWSERS_PATH") or "") != browser:
+        return False
+    return True
+
+
+def app_location_unstable() -> bool:
+    """应用仍在 DMG / 下载目录 / App Translocation 时，退出后计划任务可能找不到它。"""
+    if not PACKAGED or sys.platform != "darwin":
+        return False
+    try:
+        raw = str(Path(sys.executable).resolve())
+    except OSError:
+        return False
+    return "/AppTranslocation/" in raw or raw.startswith("/Volumes/") or "/Downloads/" in raw
+
+
+def clean_stale_run_lock() -> None:
+    """定时任务崩溃后可能留下 run.lock；进程已不在时清掉，避免手动发送一直被挡住。"""
+    lock = ARTIFACTS / "run.lock"
+    try:
+        pid = int(lock.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return
+    if pid <= 0:
+        return
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        try:
+            lock.unlink()
+        except OSError:
+            pass
+    except OSError:
+        pass
+
+
+def repair_schedule_once() -> None:
+    """应用被移动/更新后，把已有计划任务重新指向当前应用；不主动创建新任务。"""
+    if not PACKAGED or sys.platform != "darwin":
+        return
+    schedule = current_schedule()
+    if not schedule.get("present"):
+        return
+    hour, minute = int(schedule.get("hour", 7)), int(schedule.get("minute", 0))
+    if schedule_command_matches(hour, minute):
+        return
+    if (ARTIFACTS / "run.lock").exists():
+        return
+    try:
+        apply_schedule(hour, minute)
+        print("已把系统计划任务指向当前应用", flush=True)
+    except Exception as exc:  # 修复失败不影响应用启动
+        print(f"修复系统计划任务失败：{exc}", file=sys.stderr)
 
 
 def last_run(paths: AccountPaths | None = None) -> dict | None:
@@ -663,6 +743,7 @@ def build_state(account_id: str | None = None) -> dict:
                 unknown_targets.append(target.name)
         all_targets_complete = bool(friends) and not pending_targets and not unknown_targets
     schedule = current_schedule()
+    schedule_matches = schedule_command_matches(int(schedule["hour"]), int(schedule["minute"])) if schedule.get("present") else False
     run = last_run(paths)
     return {
         "accountId": account_id,
@@ -675,7 +756,12 @@ def build_state(account_id: str | None = None) -> dict:
         "allTargetsComplete": all_targets_complete,
         "sendQueueReady": task is not None,
         "message": message_state(config),
-        "schedule": {**schedule, "next": next_run_text(schedule["hour"], schedule["minute"])},
+        "schedule": {
+            **schedule,
+            "next": next_run_text(schedule["hour"], schedule["minute"]),
+            "commandMatches": schedule_matches,
+            "unstableLocation": app_location_unstable(),
+        },
         "credential": credential_state(paths.storage_state if paths else STATE_FILE),
         "lastRun": run,
         "runHistory": run_history(paths=paths),
@@ -1420,6 +1506,8 @@ def main() -> int:
     if not CONFIG.exists() and not REGISTRY.exists():
         print(f"找不到 {CONFIG}，请在项目根目录运行", file=sys.stderr)
         return 2
+    clean_stale_run_lock()
+    repair_schedule_once()
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     PORT = server.server_port
     server.daemon_threads = True

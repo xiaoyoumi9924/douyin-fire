@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import random
 import re
 import hashlib
@@ -52,7 +53,12 @@ async def run(
     _configure_logging(settings.artifacts_dir, aliases)
 
     if catch_up and not dry_run:
-        reason = _catch_up_skip_reason(settings.artifacts_dir, task.timezone, not_before)
+        reason = _catch_up_skip_reason(
+            settings.artifacts_dir,
+            task.timezone,
+            not_before,
+            schedule_saved_at=os.environ.get("DOUYIN_SCHEDULE_SAVED_AT"),
+        )
         if reason is not None:
             LOGGER.info("补跑检查：跳过（%s）", reason)
             return 0
@@ -458,13 +464,30 @@ def _record_catch_up_attempt(artifacts_dir: Path, timezone: str) -> int:
     return attempts
 
 
-def _catch_up_skip_reason(artifacts_dir: Path, timezone: str, not_before: str | None) -> str | None:
+def _catch_up_skip_reason(
+    artifacts_dir: Path,
+    timezone: str,
+    not_before: str | None,
+    schedule_saved_at: str | None = None,
+) -> str | None:
     """返回跳过补跑的原因；None 表示现在应该补跑。"""
     now = _task_now(timezone)
     if not_before:
         hour, minute = _parse_not_before(not_before)
         if (now.hour, now.minute) < (hour, minute):
             return f"还没到 {hour:02d}:{minute:02d}"
+        if schedule_saved_at:
+            try:
+                saved = datetime.fromisoformat(schedule_saved_at)
+            except ValueError:
+                saved = None
+            if saved is not None:
+                if saved.tzinfo is None:
+                    saved = saved.replace(tzinfo=now.tzinfo)
+                scheduled_today = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                # 今天过了设定时间才第一次保存计划任务时，不应把「今天」当成错过的一天。
+                if saved.astimezone(now.tzinfo).date() == now.date() and saved >= scheduled_today:
+                    return "计划任务今天才设置"
     if _today_has_finished_run(artifacts_dir, timezone):
         return "今天已经完成过一次运行"
     attempts = _catch_up_attempts(artifacts_dir, now.date().isoformat())

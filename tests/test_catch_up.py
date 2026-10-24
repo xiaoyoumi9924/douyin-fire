@@ -59,6 +59,35 @@ def test_runs_when_nothing_happened_today(tmp_path, fixed_now) -> None:
     assert main_module._catch_up_skip_reason(tmp_path, ZONE, "07:00") is None
 
 
+def test_schedule_saved_after_todays_time_does_not_catch_up(tmp_path, fixed_now) -> None:
+    reason = main_module._catch_up_skip_reason(
+        tmp_path,
+        ZONE,
+        "07:00",
+        schedule_saved_at="2026-10-24T23:00:00+08:00",
+    )
+
+    assert reason == "计划任务今天才设置"
+
+
+def test_schedule_saved_before_todays_time_allows_catch_up(tmp_path, fixed_now) -> None:
+    assert main_module._catch_up_skip_reason(
+        tmp_path,
+        ZONE,
+        "07:00",
+        schedule_saved_at="2026-10-24T06:00:00+08:00",
+    ) is None
+
+
+def test_schedule_saved_yesterday_allows_catch_up(tmp_path, fixed_now) -> None:
+    assert main_module._catch_up_skip_reason(
+        tmp_path,
+        ZONE,
+        "07:00",
+        schedule_saved_at="2026-10-23T23:00:00+08:00",
+    ) is None
+
+
 def test_skips_when_today_already_finished(tmp_path, fixed_now) -> None:
     _write_result(tmp_path, "2026-10-24T07:04:00+08:00")
 
