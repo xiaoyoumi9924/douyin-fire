@@ -23,40 +23,4 @@
 
 应用不依赖浏览器或 Python 预装环境。账号配置、Cookie/Storage State、消息图片和运行记录保存在本机的应用数据目录；不会随安装包上传。不要把这些文件或截图提交到公开仓库。
 
-## 本地开发
 
-需要 Python 3.12、Node.js 22 和 npm：
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt -r requirements-desktop.txt
-export PLAYWRIGHT_BROWSERS_PATH="$PWD/browser-cache"
-python -m playwright install chromium
-npm ci
-python desktop/build_backend.py
-python desktop/prepare_browsers.py
-npm run desktop:dev
-```
-
-Windows PowerShell 的虚拟环境激活命令为 `.venv\Scripts\Activate.ps1`。要在本机生成安装包，先完成上面的后端与浏览器准备，再运行：
-
-```bash
-npm run desktop:package
-```
-
-GitHub Actions 只构建三个常见目标：Windows x64、macOS Apple 芯片（arm64）和 Linux x64；各平台的后端和 Chromium 都必须在对应平台 runner 上打包。
-
-## 本地数据位置
-
-- macOS：`~/Library/Application Support/Douyin Fire`
-- Windows：`%LOCALAPPDATA%\Douyin Fire`
-- Linux：`$XDG_DATA_HOME/douyin-fire`，未设置时为 `~/.local/share/douyin-fire`
-
-可以通过环境变量 `DOUYIN_DATA_DIR` 指定其他数据目录。源码开发模式直接使用项目目录；安装版的设置、凭证、图片和日志保存在以上应用数据目录。要把已有源码项目迁移到安装版，请先备份，再把 `config.json`、`.env`、`storage-state.json`、`images/`、`artifacts/` 以及多账号模式使用的 `config/accounts.json`、`config/tasks/`、`.env.account-*`、`storage_state/` 复制到该目录并保持相对目录结构。Storage State 相当于登录凭证，务必按密码保管。
-
-## 来源与许可
-
-本仓库以当前本地项目为基础制作桌面版，其中沿用了 [unmev/douyin-auto-fire](https://github.com/unmev/douyin-auto-fire) 的部分代码和实现。本仓库保留原始 [PolyForm Noncommercial License 1.0.0](LICENSE) 与版权声明；使用、修改和再发布都必须遵守该许可。该许可不授予商业使用权。
-
-自动化依赖抖音网页界面，网页改版或登录状态失效时可能需要重新扫码或更新适配。请只向自己有权联系的对象发送消息，并遵守抖音平台规则。
