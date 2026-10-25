@@ -2,50 +2,50 @@
 name: 续火花 · 本地任务控制台
 description: 以今日发送进度为中心的本地控制台，蓝色主操作，桌面侧栏、平板图标栏、手机底部导航三档自适应。
 colors:
-  canvas: "#F5F5F7"
+  canvas: "#F1F5FC"
   surface: "#FFFFFF"
-  surface-soft: "#FAFAFC"
-  ink: "#1D1D1F"
-  secondary: "#515154"
-  faint: "#86868B"
-  border: "#E8E8EC"
-  accent: "#0066CC"
-  accent-soft: "#EAF2FD"
-  info: "#0066CC"
-  info-soft: "#EAF2FD"
-  success: "#17804A"
-  success-soft: "#EAF7F0"
-  warning: "#9A6700"
+  surface-soft: "#F7FAFE"
+  ink: "#15233F"
+  secondary: "#33425E"
+  faint: "#6C7C96"
+  border: "#E3EBF7"
+  accent: "#1F5FCB"
+  accent-soft: "#EAF1FD"
+  info: "#1F5FCB"
+  info-soft: "#EAF1FD"
+  success: "#0F7A49"
+  success-soft: "#E9F7F0"
+  warning: "#96620A"
   warning-soft: "#FFF6E5"
-  danger: "#C8403B"
+  danger: "#C04440"
   danger-soft: "#FDF0EF"
-  brand: "#0066CC"
+  brand: "#1F5FCB"
 typography:
   base:
-    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: 14.5px
+    fontFamily: '"PingFang SC", "HarmonyOS Sans SC", "MiSans", "Source Han Sans SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif'
+    fontSize: 15px
     fontWeight: 400
-    lineHeight: 1.6
+    lineHeight: 1.65
   page-title:
-    fontSize: 'clamp(28px, 2.8vw, 34px)'
-    fontWeight: 800
-    letterSpacing: -1.1px
+    fontSize: 'clamp(30px, 2.6vw, 36px)'
+    fontWeight: 700
+    letterSpacing: -0.6px
   card-title:
-    fontSize: 18px
-    fontWeight: 750
-    letterSpacing: -0.35px
+    fontSize: 19px
+    fontWeight: 700
+    letterSpacing: -0.2px
   eyebrow:
     fontSize: 12.5px
-    fontWeight: 550
-    letterSpacing: 0.02em
+    fontWeight: 600
+    letterSpacing: 0.04em
   data:
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'
     fontSize: 11px
 rounded:
-  control: 12px
-  surface: 20px
-  dialog: 22px
-  navigation: 12px
+  control: 11px
+  surface: 18px
+  dialog: 20px
+  navigation: 11px
 ---
 
 # Design System: 续火花 · 本地任务控制台
@@ -54,7 +54,7 @@ rounded:
 
 这是一个管理抖音私信自动发送任务的本地网页。界面围绕“今天发到哪了、下一步做什么”组织：首页先给出今日发送进度、最近运行与下次执行，再展开好友进度和最近一次运行结果；好友、任务、消息、凭证与记录各占一个页面。
 
-视觉上使用中性浅灰画布、白色内容表面、清晰的字号层级和统一的蓝色强调。蓝色用于主操作、当前导航、进度与焦点；绿色、琥珀色和红色只用于表达运行结果。品牌标识为蓝色圆角底上的火苗 🔥；所有状态同时使用文字和颜色表达。所有数据来自本机配置文件与运行结果，不构造示例统计。
+视觉上使用冷调浅蓝画布、白色内容表面、深蓝色导航栏和清晰的字号层级。深蓝导航承载品牌与页面切换，亮蓝用于主操作、当前页、进度与焦点；绿色、琥珀色和红色只用于表达运行结果。品牌标识为火苗 🔥；所有状态同时使用文字和颜色表达。所有数据来自本机配置文件与运行结果，不构造示例统计。
 
 ## Information Architecture
 
@@ -70,15 +70,15 @@ rounded:
 
 ### Desktop · 1121px 以上
 
-- 固定 236px 白色侧栏，品牌、五个页面导航和底部运行状态卡片。
-- 主内容区最大宽度 1440px，左对齐，左右各留 34px；页面标题、说明和当前页操作在顶部一行。
+- 固定 248px 深蓝渐变侧栏，品牌、五个页面导航和底部运行状态卡片；品牌下方以半透明白色分隔线收束。
+- 主内容区最大宽度 1460px，左对齐，左右各留 40px；页面标题、说明和当前页操作在顶部一行。
 - 首页为一张全宽今日进度卡和一组两列信息区（好友进度 / 最近运行）；不重复展示近七天和周趋势。
 - 自动任务按“自动运行时间 → 本周运行 → 最近自动运行”纵向排列；登录与记录按“登录凭证 → 运行历史”排列。
 - 消息管理使用单张全宽卡片：文字候选、图片上传、发送规则与保存操作在同一张卡内完成。
 
 ### Tablet · 901–1120px
 
-- 侧栏收窄为 84px 图标栏，图标下保留 9px 导航文字；悬停或键盘聚焦时显示提示。
+- 侧栏收窄为 88px 图标栏，图标下保留 9px 导航文字；悬停或键盘聚焦时显示提示。
 - 内容区保持单列主结构；首页两列信息区在 1000px 以下改为单列，进度卡内的操作按钮下移并占满宽度。
 
 ### Mobile · 900px 以下
@@ -93,21 +93,21 @@ rounded:
 
 | Token | 值 | 用途 |
 | --- | --- | --- |
-| `canvas` | `#F5F5F7` | 页面背景 |
-| `surface` | `#FFFFFF` | 卡片、侧栏、顶部与底部导航 |
-| `surface-soft` | `#FAFAFC` | 卡片内嵌区块、筛选、空状态 |
-| `ink` | `#1D1D1F` | 标题与正文 |
-| `secondary` | `#515154` | 说明文字、次要操作 |
-| `faint` | `#86868B` | 日期、提示、占位符 |
-| `border` | `#E8E8EC` | 卡片边框、表格分隔线 |
-| `accent` | `#0066CC` | 主操作、当前导航、进度、焦点 |
-| `accent-soft` | `#EAF2FD` | 当前导航、选中筛选、编号徽标 |
-| `info` | `#0066CC` | Dry Run、运行中、处理中的过程状态 |
-| `info-soft` | `#EAF2FD` | Dry Run、运行中、处理中的浅底 |
-| `success` | `#17804A` | 已送达、登录有效、全完成 |
-| `warning` | `#9A6700` | 待核对、待重试、需留意 |
-| `danger` | `#C8403B` | 失败、清除凭证、停止 |
-| `brand` | `#0066CC` | 火苗标志 |
+| `canvas` | `#F1F5FC` | 页面背景 |
+| `surface` | `#FFFFFF` | 卡片、顶部与底部导航 |
+| `surface-soft` | `#F7FAFE` | 卡片内嵌区块、筛选、空状态 |
+| `ink` | `#15233F` | 标题与正文 |
+| `secondary` | `#33425E` | 说明文字、次要操作 |
+| `faint` | `#6C7C96` | 日期、提示、占位符 |
+| `border` | `#E3EBF7` | 卡片边框、表格分隔线 |
+| `accent` | `#1F5FCB` | 主操作、当前导航、进度、焦点 |
+| `accent-soft` | `#EAF1FD` | 当前导航、选中筛选、编号徽标 |
+| `info` | `#1F5FCB` | Dry Run、运行中、处理中的过程状态 |
+| `info-soft` | `#EAF1FD` | Dry Run、运行中、处理中的浅底 |
+| `success` | `#0F7A49` | 已送达、登录有效、全完成 |
+| `warning` | `#96620A` | 待核对、待重试、需留意 |
+| `danger` | `#C04440` | 失败、清除凭证、停止 |
+| `brand` | `#1F5FCB` | 火苗标志 |
 
 颜色不能单独表达状态；所有状态标签必须带文字。
 
@@ -115,7 +115,7 @@ rounded:
 
 | 组件 | 规则 |
 | --- | --- |
-| 侧栏 / 底部导航 | 当前页使用浅蓝底和蓝色图标；手机底部导航包含图标与文字 |
+| 侧栏 / 底部导航 | 桌面侧栏为深蓝渐变，当前页使用亮蓝底和白色文字；手机底部导航为白色，当前页使用浅蓝底和蓝色图标 |
 | 页面标题 | 首页显示日期在右上角；好友页显示“联系人”眉题；任务与记录页显示一行说明；操作按钮跟随标题右侧，移动端下移并拉伸 |
 | 今日进度卡 | 顶部为图标、标题与运行状态徽标；大号 `已发送 / 总数`、百分比和蓝色进度条；下排为最近运行、下次执行与主操作“立即发送” |
 | 运行徽标 | 绿=已完成、蓝=运行中、琥珀=需留意、红=失败或未登录；左侧为实心圆形图标，右侧为两行文字 |
@@ -162,6 +162,6 @@ rounded:
 **Don't**
 
 - 不用装饰性仪表、虚构统计或示例好友代替真实状态。
-- 不用高饱和渐变、重投影、卡片套卡片或过多强调色。
+- 不用多色高饱和渐变、重投影、卡片套卡片或过多强调色；渐变只用于侧栏的同色系深蓝。
 - 不把好友昵称、消息文本或凭证内容写入演示用统计。
 - 不在窄屏隐藏页面或操作入口。
