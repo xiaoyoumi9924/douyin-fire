@@ -424,7 +424,12 @@ def _parse_not_before(value: str) -> tuple[int, int]:
 
 
 def _today_has_finished_run(artifacts_dir: Path, timezone: str) -> bool:
-    """当天是否已经完成过一次正式运行（Dry Run 不算）。"""
+    """当天是否已经完成过一次「没有失败目标」的正式运行（Dry Run 不算）。
+
+    部分失败不能算完成：下一次补跑检查会按 history 只挑出仍为
+    pending/failed 的好友重试，已确认送达的不会重复发送。重试次数仍受
+    ``CATCH_UP_MAX_ATTEMPTS`` 限制，不会无限跑。
+    """
     payload = _read_json(artifacts_dir / "result.json")
     if not isinstance(payload, dict) or payload.get("dry_run"):
         return False
@@ -438,7 +443,14 @@ def _today_has_finished_run(artifacts_dir: Path, timezone: str) -> bool:
     zone = _task_zone(timezone)
     if finished.tzinfo is None:
         finished = finished.replace(tzinfo=zone)
-    return finished.astimezone(zone).date() == _task_now(timezone).date()
+    if finished.astimezone(zone).date() != _task_now(timezone).date():
+        return False
+    results = payload.get("results")
+    if isinstance(results, list) and any(
+        isinstance(item, dict) and item.get("status") == "failed" for item in results
+    ):
+        return False
+    return True
 
 
 def _catch_up_attempts(artifacts_dir: Path, today: str) -> int:

@@ -94,6 +94,67 @@ def test_skips_when_today_already_finished(tmp_path, fixed_now) -> None:
     assert main_module._catch_up_skip_reason(tmp_path, ZONE, "07:00") == "今天已经完成过一次运行"
 
 
+def test_partial_failure_still_allows_a_catch_up_retry(tmp_path, fixed_now) -> None:
+    artifacts = tmp_path
+    artifacts.mkdir(parents=True, exist_ok=True)
+    (artifacts / "result.json").write_text(
+        json.dumps(
+            {
+                "dry_run": False,
+                "finished_at": "2026-10-24T07:04:00+08:00",
+                "results": [
+                    {"target": "好友01", "status": "success"},
+                    {"target": "好友02", "status": "failed"},
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    assert main_module._catch_up_skip_reason(tmp_path, ZONE, "07:00") is None
+
+
+def test_unknown_result_does_not_count_as_retryable_failure(tmp_path, fixed_now) -> None:
+    artifacts = tmp_path
+    artifacts.mkdir(parents=True, exist_ok=True)
+    (artifacts / "result.json").write_text(
+        json.dumps(
+            {
+                "dry_run": False,
+                "finished_at": "2026-10-24T07:04:00+08:00",
+                "results": [{"target": "好友02", "status": "unknown"}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    assert main_module._catch_up_skip_reason(tmp_path, ZONE, "07:00") == "今天已经完成过一次运行"
+
+
+def test_retry_after_partial_failure_respects_the_attempt_limit(tmp_path, fixed_now) -> None:
+    (tmp_path / "result.json").write_text(
+        json.dumps(
+            {
+                "dry_run": False,
+                "finished_at": "2026-10-24T07:04:00+08:00",
+                "results": [{"target": "好友02", "status": "failed"}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / main_module.CATCH_UP_STATE_FILE).write_text(
+        json.dumps({"date": "2026-10-24", "attempts": main_module.CATCH_UP_MAX_ATTEMPTS}),
+        encoding="utf-8",
+    )
+
+    reason = main_module._catch_up_skip_reason(tmp_path, ZONE, "07:00")
+
+    assert reason is not None and "已尝试 3 次" in reason
+
+
 def test_dry_run_today_does_not_count(tmp_path, fixed_now) -> None:
     _write_result(tmp_path, "2026-10-24T07:04:00+08:00", dry_run=True)
 
