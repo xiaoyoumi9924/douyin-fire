@@ -23,6 +23,15 @@ SEARCH_INPUTS = (
     'input[aria-label*="搜索"]',
     '[role="textbox"][aria-label*="搜索"]',
 )
+# 私信会话列表的行。搜索建立在 IM 会话数据之上：列表还没同步出来时，搜索框
+# 可以输入，但结果区只会显示「未搜索到相关内容」。开跑前等到至少一行会话可见，
+# 能避免冷启动时前几位好友被误判为「搜索不到」。
+CONVERSATION_ITEMS = (
+    '[data-e2e="conversation-item"]',
+    '[class*="conversationConversationItem"]',
+    '[class*="conversation-item"]',
+    '[class*="ConversationItem"]',
+)
 CHAT_PANEL_MARKERS = (
     '[class*="RightPanelHeader"]',
     '[class*="chatHeader"]',

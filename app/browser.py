@@ -13,6 +13,7 @@ from playwright.async_api import Browser, BrowserContext, Page, Playwright, asyn
 from app.config import ConfigError, parse_auth_json
 from app.models import Settings
 from app.selectors import (
+    CONVERSATION_ITEMS,
     DOUYIN_CHAT_URL,
     LOGIN_MARKERS,
     LOGIN_REQUIRED_MARKERS,
@@ -40,6 +41,8 @@ class SearchBoxNotReadyError(RuntimeError):
 # 单轮等待窗口。这里做有限次数重试，并在需要时 reload，避免把慢渲染误判为认证失效。
 SEARCH_BOX_RETRIES = 3
 _SEARCH_RETRY_DELAY_MS = 1_500
+# 搜索依赖 IM 会话数据；冷启动时列表同步约需 10-15 秒，留足余量。
+CONVERSATION_READY_TIMEOUT_MS = 30_000
 
 
 # Collects only safe, whitelisted attributes. It deliberately reads no
@@ -136,6 +139,13 @@ async def open_private_messages(page: Page, timeout_ms: int = 15_000) -> None:
         matched = await _first_visible_selector(page, SEARCH_INPUTS, timeout_ms)
         if matched is not None:
             LOGGER.info("检测到好友搜索框: selector=%s, 第 %d 次尝试", matched, attempt)
+            # 搜索框挂载得比 IM 会话列表早。列表为空时输入好友名会得到
+            # 「未搜索到相关内容」，这不是好友不存在，而是数据还没同步完。
+            if not await _wait_for_conversation_list(page):
+                LOGGER.warning(
+                    "好友会话列表在 %d 秒内仍未加载，搜索可能返回空结果",
+                    CONVERSATION_READY_TIMEOUT_MS // 1000,
+                )
             await page.wait_for_timeout(3_000)
             return
         # The search box is missing; a freshly shown login prompt may only have
@@ -199,6 +209,26 @@ async def _first_visible_selector(
         except Exception:
             continue
     return None
+
+
+async def _wait_for_conversation_list(
+    page: Page,
+    timeout_ms: int = CONVERSATION_READY_TIMEOUT_MS,
+) -> bool:
+    """Wait until at least one conversation row is rendered.
+
+    The friend search is backed by the IM conversation data that the SPA syncs
+    after the shell mounts.  Before the first rows render, typing a friend name
+    shows Douyin's empty state and the app would classify a real friend as
+    missing.  Returning ``False`` on timeout is deliberate: an account with no
+    conversations must still be able to run.
+    """
+    selector = ", ".join(CONVERSATION_ITEMS)
+    try:
+        await page.locator(selector).first.wait_for(state="visible", timeout=timeout_ms)
+        return True
+    except Exception:
+        return False
 
 
 async def _collect_safe_diagnostic(

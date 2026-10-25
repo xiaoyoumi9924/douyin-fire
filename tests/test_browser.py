@@ -10,10 +10,11 @@ from app.browser import (
     _collect_safe_diagnostic,
     _normalize_cookies,
     _safe_url,
+    _wait_for_conversation_list,
     open_private_messages,
 )
 from app.config import ConfigError
-from app.selectors import DOUYIN_CHAT_URL, LOGIN_REQUIRED_MARKERS, RISK_MARKERS
+from app.selectors import CONVERSATION_ITEMS, DOUYIN_CHAT_URL, LOGIN_REQUIRED_MARKERS, RISK_MARKERS
 
 
 @pytest.mark.asyncio
@@ -119,6 +120,49 @@ async def test_search_hit_emits_no_diagnostic(caplog) -> None:
 
     assert "页面安全诊断" not in caplog.text
     page.wait_for_timeout.assert_awaited_once_with(3_000)
+
+
+@pytest.mark.asyncio
+async def test_search_hit_waits_for_the_conversation_list_before_searching() -> None:
+    page = MagicMock()
+    page.goto = AsyncMock()
+    page.wait_for_timeout = AsyncMock()
+
+    with patch("app.browser._any_visible", new=AsyncMock(side_effect=[False, False])):
+        with patch("app.browser._first_visible_selector", new=AsyncMock(return_value='input[placeholder="搜索"]')):
+            with patch(
+                "app.browser._wait_for_conversation_list",
+                new=AsyncMock(return_value=True),
+            ) as wait_for_list:
+                await open_private_messages(page)
+
+    wait_for_list.assert_awaited_once_with(page)
+
+
+@pytest.mark.asyncio
+async def test_conversation_list_wait_returns_true_when_a_row_is_visible() -> None:
+    page = MagicMock()
+    row = MagicMock()
+    row.first.wait_for = AsyncMock()
+    page.locator.return_value = row
+
+    assert await _wait_for_conversation_list(page, timeout_ms=1234) is True
+
+    page.locator.assert_called_once()
+    selector = page.locator.call_args.args[0]
+    for item_selector in CONVERSATION_ITEMS:
+        assert item_selector in selector
+    row.first.wait_for.assert_awaited_once_with(state="visible", timeout=1234)
+
+
+@pytest.mark.asyncio
+async def test_conversation_list_wait_times_out_without_raising() -> None:
+    page = MagicMock()
+    row = MagicMock()
+    row.first.wait_for = AsyncMock(side_effect=RuntimeError("timeout"))
+    page.locator.return_value = row
+
+    assert await _wait_for_conversation_list(page, timeout_ms=1) is False
 
 
 @pytest.mark.asyncio
