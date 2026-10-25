@@ -116,9 +116,24 @@ class History:
             if stale_records:
                 # Old run-history targets are privacy-redacted as "好友NN".
                 # If the current friend/message config changed after an old run,
-                # the old row number may refer to another person. Only use rows
-                # from runs made with the current config; uncovered targets fail
-                # closed as unknown instead of being resent.
+                # the old row number may refer to another person. Records from
+                # the stale runs are therefore not trusted for delivery status.
+                # ``covered`` keeps the row numbers those runs actually touched:
+                # only they can hide a duplicate, so only they fail closed as
+                # unknown. A row that never appeared in a stale run (a friend
+                # added later in the day) stays pending and can still be sent.
+                covered: set[int] = set()
+                for _, record, _ in stale_records:
+                    results = record.get("results")
+                    if not isinstance(results, list):
+                        continue
+                    for result in results:
+                        if not isinstance(result, dict):
+                            continue
+                        covered_index = aliases.get(str(result.get("target") or ""))
+                        if covered_index is not None:
+                            covered.add(covered_index)
+
                 eligible_records = [
                     item for item in legacy_records
                     if item[0] > config_modified + timestamp_tolerance
@@ -155,7 +170,10 @@ class History:
                                 inferred[key] = (inferred_status, current_finished_at)
 
                 for index, target in enumerate(targets):
-                    if index in represented:
+                    if index in represented or index not in covered:
+                        # Nothing from a stale run points at this row, so it
+                        # cannot have been delivered there: keep it pending
+                        # instead of inventing an unknown result.
                         continue
                     for message_index, message in enumerate(target.messages):
                         key = self.key(task_id, run_date, target.name, message_id(message_index, message))
