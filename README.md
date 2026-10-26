@@ -10,7 +10,7 @@
 | macOS | [下载 macOS 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 | Ubuntu| [下载 Linux 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 
-## 一条命令安装
+## 快速安装
 
 装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会开机自启，关掉终端不影响。
 首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。
@@ -31,36 +31,6 @@ irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/instal
 
 ```bash
 curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
-```
-
-> 脚本都从最新 Release 取，和安装包版本天然配套。GitHub 访问很慢时，可以把
-> `https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/`
-> 换成 `https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/`（文件名不变）。
-
-想装完顺便把每日任务设成 07:00：
-
-```bash
-# macOS
-curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash -s -- --schedule 07:00
-
-# Linux
-curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash -s -- --schedule 07:00
-
-# Windows
-$env:DOUYIN_SCHEDULE='07:00'; irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
-```
-
-卸载（数据保留）：
-
-```bash
-# macOS
-curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash -s -- --uninstall
-
-# Linux
-curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash -s -- --uninstall
-
-# Windows
-$env:DOUYIN_UNINSTALL='1'; irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
 ## 使用步骤
