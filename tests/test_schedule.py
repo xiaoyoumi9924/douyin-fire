@@ -1,4 +1,5 @@
 import importlib
+import plistlib
 
 import pytest
 
@@ -41,3 +42,37 @@ def test_plist_keeps_the_env_from_the_configured_data_dir(server, tmp_path) -> N
 
     assert f"<string>{tmp_path}</string>" in body
     assert "DOUYIN_DATA_DIR" in body
+
+
+def _prepare_repair(server, tmp_path, monkeypatch, schedule_data_dir, calls) -> None:
+    plist = tmp_path / "schedule.plist"
+    plist.write_bytes(
+        plistlib.dumps({"EnvironmentVariables": {"DOUYIN_DATA_DIR": schedule_data_dir}})
+    )
+    monkeypatch.setattr(server, "PACKAGED", True)
+    monkeypatch.setattr(server.sys, "platform", "darwin")
+    monkeypatch.setattr(server, "PLIST", plist)
+    monkeypatch.setattr(server, "DATA_ROOT", tmp_path / "data")
+    monkeypatch.setattr(server, "ARTIFACTS", tmp_path / "artifacts")
+    monkeypatch.setattr(server, "current_schedule", lambda: {"present": True, "hour": 7, "minute": 0})
+    monkeypatch.setattr(server, "schedule_command_matches", lambda hour, minute: False)
+    monkeypatch.setattr(server, "apply_schedule", lambda hour, minute: calls.append((hour, minute)))
+
+
+def test_repair_schedule_keeps_another_installs_task(server, tmp_path, monkeypatch) -> None:
+    """另一套安装（不同数据目录）的定时任务不能被顺手改写。"""
+    calls = []
+    _prepare_repair(server, tmp_path, monkeypatch, str(tmp_path / "other-data"), calls)
+
+    server.repair_schedule_once()
+
+    assert calls == []
+
+
+def test_repair_schedule_repoints_its_own_task(server, tmp_path, monkeypatch) -> None:
+    calls = []
+    _prepare_repair(server, tmp_path, monkeypatch, str(tmp_path / "data"), calls)
+
+    server.repair_schedule_once()
+
+    assert calls == [(7, 0)]

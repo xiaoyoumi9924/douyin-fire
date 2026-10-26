@@ -414,6 +414,15 @@ def repair_schedule_once() -> None:
     schedule = current_schedule()
     if not schedule.get("present"):
         return
+    # 已有计划任务属于另一份数据目录（另一套安装、开发实例或临时测试）时不要改写，
+    # 否则会把用户原来那条定时任务抢过来。
+    try:
+        payload = plistlib.loads(PLIST.read_bytes())
+    except (OSError, plistlib.InvalidFileException, ValueError):
+        payload = {}
+    environment = payload.get("EnvironmentVariables") or {}
+    if str(environment.get("DOUYIN_DATA_DIR") or "") != str(DATA_ROOT):
+        return
     hour, minute = int(schedule.get("hour", 7)), int(schedule.get("minute", 0))
     if schedule_command_matches(hour, minute):
         return
