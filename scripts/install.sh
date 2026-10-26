@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 抖音自动续火花 · macOS 一键安装
 #
-#   curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash
+#   curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
+#   直连 GitHub 时也可以用：https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh
 #
 # 带参数时（注意 bash 后面的 --）：
 #   curl -fsSL .../install.sh | bash -s -- --port 8765 --schedule 07:00
@@ -60,7 +61,7 @@ usage() {
   cat <<'TEXT'
 抖音自动续火花 · macOS 一键安装
 
-  curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash
+  curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
 
 参数：
   --port 8765         面板端口（默认 8765）

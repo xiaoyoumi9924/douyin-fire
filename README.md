@@ -13,6 +13,13 @@
 ## 一条命令安装（macOS）
 
 ```bash
+# 国内网络推荐（jsDelivr，速度更稳）
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
+```
+
+GitHub 能直连时，也可以用仓库里的原文件：
+
+```bash
 curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash
 ```
 
@@ -23,13 +30,13 @@ curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scri
 想装完顺便把每日任务设成 07:00：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash -s -- --schedule 07:00
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --schedule 07:00
 ```
 
 卸载（数据保留）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --uninstall
 ```
 
 ## 使用步骤
