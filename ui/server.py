@@ -846,16 +846,23 @@ def account_overview() -> dict:
             config = load_config(paths.task_config)
             run = last_run(paths)
             credential = credential_state(paths.storage_state)
+            friend_count = len(config.get("friends") or config.get("targets") or [])
+            raw_messages = config.get("messages")
+            # 消息可能是文字、图片或表情，这里只统计配置条目；是否可启用与
+            # /api/accounts/update 的校验保持一致，只看 messages 是否非空。
+            message_count = len(raw_messages) if isinstance(raw_messages, list) else (1 if raw_messages else 0)
             items.append({
                 "id": account.id,
                 "name": account.display_name,
                 "enabled": account.enabled,
-                "friendCount": len(config.get("friends") or config.get("targets") or []),
+                "friendCount": friend_count,
+                "messageCount": message_count,
+                "configured": bool(friend_count and raw_messages),
                 "lastRun": run,
                 "credential": credential,
             })
         except Exception as exc:
-            items.append({"id": account.id, "name": account.display_name, "enabled": account.enabled, "friendCount": 0, "error": str(exc)})
+            items.append({"id": account.id, "name": account.display_name, "enabled": account.enabled, "friendCount": 0, "messageCount": 0, "configured": False, "error": str(exc)})
     return {"accounts": items, "legacy": legacy, "running": RUNNER.snapshot()}
 
 
@@ -913,7 +920,7 @@ class Runner:
             else:
                 try:
                     account = account_for(account_id)
-                    if not account.enabled:
+                    if not account.enabled and action != "login":
                         return False, f"账号 {account_id} 已停用"
                     account_id = account.id
                     paths = account_paths(account, DATA_ROOT)
@@ -1313,6 +1320,8 @@ class Handler(BaseHTTPRequestHandler):
                 account_id = validate_account_id(body.get("accountId"))
                 if not any(item.id == account_id for item in records):
                     return self.fail(f"不存在账号 {account_id}", 404)
+                if account_id == "main":
+                    return self.fail("主账号是默认登录账户，不能移除", 400)
                 write_registry([{"id": item.id, "name": item.display_name, "enabled": item.enabled, "env_file": item.env_file.as_posix()} for item in records if item.id != account_id])
                 self.send_json(account_overview())
             except (ConfigError, OSError) as exc:
@@ -1458,7 +1467,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 if action != "send-all":
                     selected = account_for(account_id)
-                    if not selected.enabled:
+                    # 新账号默认停用，必须先扫码登录才能进入配置；只有发信动作要求已启用。
+                    if not selected.enabled and action != "login":
                         return self.fail(f"账号 {account_id} 已停用", 409)
             except ConfigError as exc:
                 return self.fail(str(exc), 400)

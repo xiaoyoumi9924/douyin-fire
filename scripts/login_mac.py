@@ -148,8 +148,7 @@ def main() -> int:
             account = next((item for item in records if item.id == args.account), None)
             if account is None:
                 raise ConfigError(f"不存在账号 {args.account}")
-            if not account.enabled:
-                raise ConfigError(f"账号 {args.account} 已停用")
+            # 新账号默认停用，需要先扫码登录才能进入配置；登录本身不受 enabled 限制。
             paths = account_paths(account, DATA_ROOT)
             if paths.storage_state is None:
                 raise ConfigError("该账号未配置 DOUYIN_STORAGE_STATE 保存位置")

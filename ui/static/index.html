@@ -86,10 +86,11 @@
   .app{min-height:100dvh}
   .sidebar{
     position:fixed;z-index:30;inset:0 auto 0 0;display:flex;flex-direction:column;
-    width:var(--sidebar-w);padding:28px 18px 20px;
+    width:var(--sidebar-w);padding:28px 18px 20px;overflow-y:auto;scrollbar-width:none;
     background:linear-gradient(180deg,var(--navy-top) 0%,var(--navy) 46%,var(--navy-deep) 100%);
     box-shadow:inset -1px 0 0 rgba(255,255,255,.07);
   }
+  .sidebar::-webkit-scrollbar{display:none}
   .brand{display:flex;align-items:center;gap:11px;padding:0 8px;text-decoration:none;color:var(--ink);min-width:0}
   .brand-mark{
     display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;
@@ -579,6 +580,81 @@
   .history__status--unknown,.history__status--skipped,.history__status--duplicate{color:var(--amber)}
   .history-empty-cell{padding:34px 10px!important;color:var(--ink-3);font-size:12.5px;text-align:center!important;white-space:normal!important;line-height:1.6}
 
+  /* ----------------------------------------------------------------- accounts */
+  .account-chip{display:flex;align-items:center;gap:10px;margin:17px 4px 0;padding:9px 10px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.07);color:#fff;text-decoration:none;transition:background .15s,border-color .15s}
+  .account-chip:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.26);color:#fff}
+  .account-chip__mark{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.16);font-size:13px;font-weight:700}
+  .account-chip__copy{display:grid;min-width:0;gap:1px}
+  .account-chip__copy small{color:rgba(255,255,255,.58);font-size:10px;font-weight:600;letter-spacing:.05em}
+  .account-chip__copy b{overflow:hidden;font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+  .account-chip>.i{margin-left:auto;width:14px;height:14px;color:rgba(255,255,255,.45)}
+
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+  .section-head h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.2px}
+  .section-head p{margin:5px 0 0;color:var(--ink-3);font-size:13px;line-height:1.55}
+  .section-head>span{flex:none;color:var(--ink-3);font-size:13px}
+
+  .accounts-overview{padding:24px 26px 0;overflow:hidden}
+  .accounts-overview__head{display:flex;align-items:flex-start;gap:14px}
+  .accounts-overview__copy{flex:1;min-width:0}
+  .accounts-overview__copy h2{margin:0;font-size:20.5px;font-weight:700;letter-spacing:-.25px}
+  .accounts-overview__copy p{max-width:76ch;margin:6px 0 0;color:var(--ink-3);font-size:13.5px;line-height:1.6}
+  .accounts-overview__badge{align-self:flex-start;margin-left:auto}
+  .accounts-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px -26px 0;border-top:1px solid var(--line-soft);background:var(--surface-2)}
+  .account-stat{min-width:0;padding:16px 26px;border-left:1px solid var(--line-soft)}
+  .account-stat:first-child{border-left:0}
+  .account-stat>span{display:block;color:var(--ink-3);font-size:12.5px;font-weight:500}
+  .account-stat b{display:inline-flex;align-items:baseline;gap:4px;margin-top:3px;font-size:24px;font-weight:700;letter-spacing:-.4px}
+  .account-stat b i{color:var(--ink-3);font-size:12px;font-style:normal;font-weight:500}
+  .account-stat small{display:block;color:var(--ink-4);font-size:11.5px}
+
+  .accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .account-card{display:flex;flex-direction:column;gap:14px;padding:20px 22px 18px;transition:border-color .15s,box-shadow .15s}
+  .account-card[data-current="true"]{border-color:var(--blue-border);box-shadow:0 0 0 3px var(--blue-ring),var(--shadow-sm)}
+  .account-card__head{display:flex;align-items:flex-start;gap:12px;min-width:0}
+  .account-avatar{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid var(--line);border-radius:13px;background:var(--blue-soft);color:var(--blue-ink);font-size:16px;font-weight:700}
+  .account-avatar[data-main="true"]{border-color:transparent;background:linear-gradient(145deg,#3A86DF,#1F5FCB);color:#fff}
+  .account-avatar[data-off="true"]{background:var(--surface-3);color:var(--ink-3)}
+  .account-card__title{flex:1;min-width:0}
+  .account-card__name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .account-card__name h3{max-width:100%;margin:0;overflow:hidden;font-size:17px;font-weight:700;letter-spacing:-.15px;text-overflow:ellipsis;white-space:nowrap}
+  .account-card__title p{margin:4px 0 0;color:var(--ink-3);font-size:11.5px;line-height:1.5}
+  .account-card__badges{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+  .account-card__stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;padding:12px 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+  .account-card__stats div{min-width:0;padding:0 12px;border-left:1px solid var(--line-soft)}
+  .account-card__stats div:first-child{padding-left:0;border-left:0}
+  .account-card__stats dt{color:var(--ink-3);font-size:11.5px;font-weight:500}
+  .account-card__stats dd{display:flex;align-items:baseline;gap:3px;margin:3px 0 0;overflow:hidden;color:var(--ink);font-size:17px;font-weight:700;letter-spacing:-.2px;text-overflow:ellipsis;white-space:nowrap}
+  .account-card__stats dd i{color:var(--ink-3);font-size:11px;font-style:normal;font-weight:500}
+  .account-card__stats dd.is-date{font-size:13.5px;font-weight:600;letter-spacing:0}
+  .account-card__hint{margin:0;color:var(--ink-3);font-size:12px;line-height:1.6}
+  .account-card__hint[data-tone="error"]{color:var(--red)}
+  .account-card__actions{display:flex;align-items:center;gap:8px;margin-top:auto}
+  .account-card__actions .btn{flex:1;min-height:40px;border-radius:11px;font-size:13.5px}
+  .account-card__foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:2px}
+  .account-card__manage{display:flex;align-items:center;gap:2px}
+  .account-card__manage .row-action{min-height:30px;font-size:11.5px}
+  .toggle{display:inline-flex;align-items:center;gap:8px;padding:4px 2px;border:0;background:transparent;color:var(--ink-3);font-size:12px;font-weight:500;white-space:nowrap}
+  .toggle:hover:not(:disabled){color:var(--ink-2)}
+  .toggle:disabled{opacity:.45;cursor:not-allowed}
+  .toggle__track{position:relative;display:block;width:34px;height:20px;border-radius:999px;background:#D9E3F2;transition:background .16s}
+  .toggle__track::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(20,42,84,.24);transition:transform .16s}
+  .toggle[aria-checked="true"]{color:var(--blue-ink)}
+  .toggle[aria-checked="true"] .toggle__track{background:var(--blue)}
+  .toggle[aria-checked="true"] .toggle__track::after{transform:translateX(14px)}
+  .accounts-note{margin:0}
+  .accounts-empty{grid-column:1/-1;padding:26px 20px;border-style:dashed;background:var(--surface-2)}
+  .text-input{width:100%;min-height:46px;padding:0 13px;border:1px solid var(--line-strong);border-radius:11px;background:#FBFDFF;color:var(--ink);font-size:15px;outline:0;transition:border-color .15s,box-shadow .15s,background .15s}
+  .text-input:focus{border-color:#8FB8E8;box-shadow:0 0 0 3px var(--blue-ring);background:#fff}
+  .text-input::placeholder{color:var(--ink-4);opacity:1}
+  .account-dialog{width:min(560px,calc(100vw - 32px))}
+  .account-steps{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line-soft)}
+  .account-steps li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .account-steps li:last-child{padding-bottom:0;border-bottom:0}
+  .account-steps li>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--blue-soft);color:var(--blue-ink);font-size:11.5px;font-weight:700}
+  .account-steps b{display:block;font-size:13px;font-weight:600}
+  .account-steps p{margin:2px 0 0;color:var(--ink-3);font-size:12px;line-height:1.6}
+
   /* ------------------------------------------------------------------- footer */
   .app-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:30px;padding:16px 2px 0;border-top:1px solid var(--line);color:var(--ink-3);font-size:12px}
   .app-footer .mono{color:var(--ink-3)}
@@ -660,7 +736,10 @@
     .brand{padding:0}
     .sidebar .brand{padding:0;border-bottom:0}
     .brand-text,.nav-heading,.sidebar-foot{display:none}
-    .main-nav{width:100%;gap:5px;margin-top:26px}
+    .account-chip{justify-content:center;margin:16px 0 0;padding:8px;border-radius:11px}
+    .account-chip__copy,.account-chip>.i{display:none}
+    .account-chip__mark{flex-basis:34px;width:34px;height:34px}
+    .main-nav{width:100%;gap:5px;margin-top:22px}
     .nav-link{flex-direction:column;justify-content:center;gap:3px;min-height:56px;padding:6px 2px;border-radius:12px}
     .nav-link span{display:block;font-size:9px;font-weight:600;line-height:1.15;white-space:nowrap}
     .nav-link__badge{display:none}
@@ -715,7 +794,7 @@
     .action-group{width:100%}
     .action-group .btn{flex:1}
     .bottom-nav{
-      position:fixed;z-index:40;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);
+      position:fixed;z-index:40;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,1fr);
       padding:6px 8px calc(6px + env(safe-area-inset-bottom));border-top:1px solid rgba(227,235,247,.92);
       background:rgba(255,255,255,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     }
@@ -752,6 +831,24 @@
     .run-fact{padding:14px}
     .hero-send{min-height:50px;font-size:15px}
     .friends-card,.recent-card,.list-card,.schedule-card,.message-card,.credential-card,.history-card{padding:18px 16px;border-radius:16px}
+    .accounts-overview{padding:18px 16px 0;border-radius:16px}
+    .accounts-overview__head{gap:11px}
+    .accounts-overview__copy h2{font-size:17.5px}
+    .accounts-overview__copy p{font-size:12.5px}
+    .accounts-overview__badge{display:none}
+    .accounts-stats{margin:16px -16px 0}
+    .account-stat{padding:13px 16px}
+    .account-stat b{font-size:21px}
+    .account-stat small{font-size:10.5px}
+    .accounts-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+    .account-card{padding:17px 16px 16px;border-radius:16px}
+    .account-card__head{gap:10px}
+    .account-avatar{flex-basis:40px;width:40px;height:40px;border-radius:12px;font-size:15px}
+    .account-card__name h3{font-size:16px}
+    .account-card__stats div{padding:0 10px}
+    .account-card__stats dd{font-size:16px}
+    .account-card__stats dd.is-date{font-size:12.5px}
+    .section-head{align-items:flex-start;flex-direction:column;gap:3px}
     .card-head{margin-bottom:15px}
     .card-head h2{font-size:16.5px}
     .card-head p{font-size:12px}
@@ -893,6 +990,11 @@
       <span class="brand-mark" aria-hidden="true"><span class="brand-emoji">🔥</span></span>
       <span class="brand-text"><strong>续火花</strong><small>Douyin Fire</small></span>
     </a>
+    <a class="account-chip" href="#/accounts/main/accounts" id="accountChip" aria-label="当前账户，打开多账户管理">
+      <span class="account-chip__mark" id="accountChipMark" aria-hidden="true">主</span>
+      <span class="account-chip__copy"><small>当前账户</small><b id="accountChipName">主账号</b></span>
+      <svg class="i" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+    </a>
     <p class="nav-heading">工作区</p>
     <nav class="main-nav" aria-label="主导航">
       <a class="nav-link" href="#/accounts/main/home" data-page-link="home" data-tip="首页"><svg class="i"><use href="#i-home"/></svg><span>首页</span></a>
@@ -900,6 +1002,7 @@
       <a class="nav-link" href="#/accounts/main/tasks" data-page-link="tasks" data-tip="自动任务"><svg class="i"><use href="#i-clock"/></svg><span>自动任务</span></a>
       <a class="nav-link" href="#/accounts/main/messages" data-page-link="messages" data-tip="消息管理"><svg class="i"><use href="#i-message"/></svg><span>消息管理</span></a>
       <a class="nav-link" href="#/accounts/main/system" data-page-link="system" data-tip="登录与记录"><svg class="i"><use href="#i-shield"/></svg><span>登录与记录</span></a>
+      <a class="nav-link" href="#/accounts/main/accounts" data-page-link="accounts" data-tip="多账户管理"><svg class="i"><use href="#i-accounts"/></svg><span>多账户管理</span></a>
     </nav>
     <div class="sidebar-bottom">
       <div class="sidebar-status" id="sidebarStatus" aria-live="polite">
@@ -938,6 +1041,10 @@
           <div class="action-group" data-page-actions="tasks" hidden>
             <a class="btn btn--ghost" href="#/accounts/main/system"><svg class="i"><use href="#i-clock"/></svg>查看运行记录</a>
             <button class="btn btn--primary" id="taskSendBtn" type="button"><svg class="i"><use href="#i-play"/></svg>立即发送</button>
+          </div>
+          <div class="action-group" data-page-actions="accounts" hidden>
+            <button class="btn btn--ghost" id="refreshAccounts" type="button"><svg class="i"><use href="#i-refresh"/></svg>刷新</button>
+            <button class="btn btn--primary" id="addAccountBtn" type="button"><svg class="i"><use href="#i-plus"/></svg>添加账户</button>
           </div>
         </div>
       </header>
@@ -1172,6 +1279,40 @@
         </section>
       </section>
 
+      <!-- ----------------------------------------------------------- accounts -->
+      <section class="page-view accounts-page" data-page-view="accounts" aria-labelledby="pageTitle" hidden>
+        <section class="accounts-overview card" aria-labelledby="accountsOverviewTitle">
+          <div class="accounts-overview__head">
+            <span class="icon-tile" aria-hidden="true"><svg class="i"><use href="#i-accounts"/></svg></span>
+            <div class="accounts-overview__copy">
+              <p class="eyebrow">本机 · 多账户</p>
+              <h2 id="accountsOverviewTitle">一套程序，多个抖音账户</h2>
+              <p>每个账户都有独立的好友、消息、登录凭证和运行记录。启动时默认进入主账号，其他账户在这里添加和登录。</p>
+            </div>
+            <span class="badge badge--blue accounts-overview__badge" id="accountsCurrentBadge">当前：主账号</span>
+          </div>
+          <div class="accounts-stats">
+            <div class="account-stat"><span>账户总数</span><b id="accountsTotal">—</b><small>包含主账号</small></div>
+            <div class="account-stat"><span>自动运行</span><b id="accountsEnabled">—</b><small>已启用账户</small></div>
+            <div class="account-stat"><span>登录状态</span><b id="accountsLogged">—</b><small>凭证有效</small></div>
+          </div>
+        </section>
+
+        <div class="section-head">
+          <div><h2>账户列表</h2><p>进入某个账户后，好友、消息、任务和记录都会跟随该账户。</p></div>
+          <span id="accountsMeta">正在读取…</span>
+        </div>
+        <div class="accounts-grid" id="accountsGrid" aria-live="polite"></div>
+
+        <section class="note-card accounts-note" aria-label="多账户说明">
+          <svg class="i" aria-hidden="true"><use href="#i-info"/></svg>
+          <div>
+            <b>同一时间只运行一个账户</b>
+            <p>手动发送只针对当前账户；每天定时任务会按登记顺序依次运行所有已启用账户。移除账户只移除本机入口，不删除好友、消息和凭证文件。</p>
+          </div>
+        </section>
+      </section>
+
       <footer class="app-footer">
         <span>本地应用 · 账号与登录凭证保存在此设备</span>
         <span class="mono" id="buildInfoHost">正在连接本机</span>
@@ -1185,6 +1326,7 @@
     <a class="bottom-link" href="#/accounts/main/tasks" data-page-link="tasks"><svg class="i"><use href="#i-clock"/></svg><span>任务</span></a>
     <a class="bottom-link" href="#/accounts/main/messages" data-page-link="messages"><svg class="i"><use href="#i-message"/></svg><span>消息</span></a>
     <a class="bottom-link" href="#/accounts/main/system" data-page-link="system"><svg class="i"><use href="#i-shield"/></svg><span>记录</span></a>
+    <a class="bottom-link" href="#/accounts/main/accounts" data-page-link="accounts"><svg class="i"><use href="#i-accounts"/></svg><span>账户</span></a>
   </nav>
 </main>
 
@@ -1275,11 +1417,36 @@
   </div>
 </dialog>
 
+<dialog class="send-dialog account-dialog" id="accountDialog" aria-labelledby="accountDialogTitle" aria-describedby="accountDialogLead">
+  <div class="dialog-sheet">
+    <header class="dialog-head">
+      <div><p class="eyebrow">多账户</p><h2 id="accountDialogTitle">添加账户</h2></div>
+      <button class="icon-btn" id="closeAccountDialog" type="button" aria-label="关闭账户窗口"><svg class="i"><use href="#i-x"/></svg></button>
+    </header>
+    <div class="dialog-body">
+      <p class="dialog-hint" id="accountDialogLead">每个账户都有独立的好友、消息、登录凭证和运行记录。添加后先扫码登录，再进入账户配置内容。</p>
+      <label class="field-label" for="accountName">账户名称</label>
+      <input class="text-input" id="accountName" maxlength="40" autocomplete="off" placeholder="例如：工作号、备用号" required>
+      <ol class="account-steps" id="accountDialogSteps">
+        <li><span>1</span><div><b>先登录这个账户</b><p>添加后点「扫码登录」，用对应的抖音 App 扫码。</p></div></li>
+        <li><span>2</span><div><b>进入账户设置好友与消息</b><p>每个账户的数据完全独立，不会影响主账号。</p></div></li>
+        <li><span>3</span><div><b>配置完成后开启自动运行</b><p>至少一位好友和一条消息后，才能启用账户。</p></div></li>
+      </ol>
+      <p class="dialog-empty" id="accountDialogHint" hidden></p>
+    </div>
+    <footer class="dialog-foot">
+      <button class="btn btn--ghost" id="cancelAccountDialog" type="button">取消</button>
+      <button class="btn btn--primary" id="submitAccount" type="button"><svg class="i"><use href="#i-plus"/></svg>添加账户</button>
+    </footer>
+  </div>
+</dialog>
+
 <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12.7 2.2c.4 3.5-1.2 5.7-3.5 7.9-2 1.9-3.5 3.8-3.5 6.2a6.3 6.3 0 0 0 12.6 0c0-3-1.5-5.8-5-9.2.1 2.4-.5 3.6-1.5 4.7-.2-3.9-1.5-7-2.1-9.6Z" fill="currentColor" stroke="none"/><path d="M12 20.9a3.4 3.4 0 0 1-3.4-3.4c0-1.3.8-2.4 2-3.5.7-.6 1.2-1.3 1.4-2.2.6.9.7 1.7.7 2.6.9-.6 1.3-1.3 1.3-2.1.9 1 1.3 2.1 1.3 3.4a3.4 3.4 0 0 1-3.3 3.2Z" fill="#fff" stroke="none"/></symbol>
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10.2 9-7 9 7V20a1 1 0 0 1-1 1h-5.2v-6.6H9.2V21H4a1 1 0 0 1-1-1v-9.8Z"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c.3-3.4 3-5.3 6.2-5.3s5.9 1.9 6.2 5.3M16 5.2a3.2 3.2 0 0 1 0 6.1M18.2 14.9c2 .7 3 2.4 3.2 5.1"/></symbol>
+    <symbol id="i-accounts" viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.3 2"/></symbol>
     <symbol id="i-message" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-6a7.5 7.5 0 0 1-.5-3.5A7.5 7.5 0 0 1 10 4h2.5a7.5 7.5 0 0 1 7.5 7.5Z"/><path d="M8 10h8m-8 4h5"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
@@ -1361,6 +1528,16 @@
     sendPreviewQueueNote: $("sendPreviewQueueNote"), sendPreviewMode: $("sendPreviewMode"),
     sendPreviewMessages: $("sendPreviewMessages"), sendPreviewImages: $("sendPreviewImages"),
     sendPreviewUnsupported: $("sendPreviewUnsupported"), sendPreviewUnsaved: $("sendPreviewUnsaved"),
+    accountChip: $("accountChip"), accountChipMark: $("accountChipMark"), accountChipName: $("accountChipName"),
+    accountsCurrentBadge: $("accountsCurrentBadge"), accountsTotal: $("accountsTotal"),
+    accountsEnabled: $("accountsEnabled"), accountsLogged: $("accountsLogged"),
+    accountsMeta: $("accountsMeta"), accountsGrid: $("accountsGrid"),
+    addAccountBtn: $("addAccountBtn"), refreshAccounts: $("refreshAccounts"),
+    accountDialog: $("accountDialog"), accountDialogTitle: $("accountDialogTitle"),
+    accountDialogLead: $("accountDialogLead"), accountName: $("accountName"),
+    accountDialogHint: $("accountDialogHint"), accountDialogSteps: $("accountDialogSteps"),
+    submitAccount: $("submitAccount"), cancelAccountDialog: $("cancelAccountDialog"),
+    closeAccountDialog: $("closeAccountDialog"),
     flash: $("flash"), buildInfo: $("buildInfo"), buildInfoHost: $("buildInfoHost")
   };
   const uploadDrop = document.querySelector(".upload-drop");
@@ -1382,10 +1559,14 @@
   let clearTimer = 0;
   let flashTimer = 0;
   let welcomeChecked = false;
+  let overview = null;
+  let overviewLoading = false;
+  let editingAccount = null;
+  let armedAccountRemove = null;
 
   const ALIAS_RE = /^好友(\d+)$/;
-  const PAGE_TITLES = { home: "首页", friends: "好友管理", tasks: "自动任务", messages: "消息管理", system: "登录与记录" };
-  const PAGE_EYEBROWS = { friends: "联系人" };
+  const PAGE_TITLES = { home: "首页", friends: "好友管理", tasks: "自动任务", messages: "消息管理", system: "登录与记录", accounts: "多账户管理" };
+  const PAGE_EYEBROWS = { friends: "联系人", accounts: "本机账户" };
   const PAGE_KEYS = new Set(Object.keys(PAGE_TITLES));
   const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
   const STATUS_LABELS = { sent: "已发送", pending: "待发送", failed: "失败", unknown: "待核对", processing: "处理中" };
@@ -1495,6 +1676,14 @@
 
   // ---------------------------------------------------------------- routing
   function buildSubtitle() {
+    if (activePage === "accounts") {
+      if (!overview) return "正在读取本机账户…";
+      const list = overview.accounts || [];
+      if (!list.length) return "还没有账户，添加一个账户后就可以分别登录和运行";
+      const enabled = list.filter((item) => item.enabled).length;
+      const logged = list.filter((item) => item.credential?.present).length;
+      return `共 ${list.length} 个账户 · ${enabled} 个已启用 · ${logged} 个已登录。启动时默认进入主账号。`;
+    }
     if (!state) return "正在读取本机配置…";
     const schedule = state.schedule || {};
     const friends = state.friends || [];
@@ -1542,6 +1731,8 @@
     const title = PAGE_TITLES[activePage] || "首页";
     el.pageTitle.textContent = title;
     document.title = `${title} · 续火花`;
+    syncAccountLinks();
+    renderAccountChrome();
     const now = nowDate();
     el.pageDate.hidden = activePage !== "home";
     el.pageDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日`;
@@ -1561,6 +1752,29 @@
       else link.removeAttribute("aria-current");
     });
     el.pageSubtitle.textContent = buildSubtitle();
+  }
+
+  function syncAccountLinks() {
+    const prefix = `#/accounts/${encodeURIComponent(activeAccountId)}/`;
+    document.querySelectorAll('a[href^="#/accounts/"]').forEach((link) => {
+      if (link.dataset.accountLink === "true") return;
+      const match = /^#\/accounts\/[^/]+\/(.+)$/.exec(link.getAttribute("href") || "");
+      if (match) link.setAttribute("href", `${prefix}${match[1]}`);
+    });
+  }
+
+  function currentAccountName() {
+    const found = (overview?.accounts || []).find((item) => item.id === activeAccountId);
+    return found?.name || state?.accountName || (activeAccountId === "main" ? "主账号" : activeAccountId);
+  }
+
+  function renderAccountChrome() {
+    const name = currentAccountName();
+    el.accountChipName.textContent = name;
+    el.accountChipMark.textContent = Array.from(name)[0] || "账";
+    el.accountChip.title = `当前账户：${name} · 打开多账户管理`;
+    el.accountChip.setAttribute("aria-label", `当前账户：${name}，打开多账户管理`);
+    el.accountsCurrentBadge.textContent = `当前：${name}`;
   }
 
   function showRoute() {
@@ -1587,7 +1801,7 @@
     activeAccountId = accountId;
     state = null;
     live.stamped.clear(); live.failed.clear(); live.done.clear(); live.current = null; live.action = null;
-    editIndex = null; armedDelete = null;
+    editIndex = null; armedDelete = null; editingAccount = null; armedAccountRemove = null;
 
     applyPageChrome();
     el.accountWorkspace.hidden = false;
@@ -1599,13 +1813,21 @@
       activeView.classList.add("is-entering");
     }
     window.scrollTo({ top: 0, behavior: "auto" });
+    if (page === "accounts") loadOverview();
 
     api(`/api/state?accountId=${encodeURIComponent(accountId)}`).then((payload) => {
       if (sequence !== routeSequence || activeAccountId !== accountId) return;
       state = payload;
       render();
     }).catch((error) => {
-      if (sequence === routeSequence) flash(`读取账号失败：${error.message}`);
+      if (sequence !== routeSequence) return;
+      if (page === "accounts") {
+        state = null;
+        renderAccounts();
+        applyPageChrome();
+      } else {
+        flash(`读取账号失败：${error.message}`);
+      }
     });
     connect();
   }
@@ -1716,7 +1938,8 @@
     el.sendBtn.disabled = !canRun;
     if (el.taskSendBtn) el.taskSendBtn.disabled = !canRun;
     el.dryRunBtn.disabled = !canRun || state.sendQueueReady === false;
-    el.loginBtn.disabled = Boolean(running) || disabledAccount;
+    // 新账户在启用前也要能先扫码登录，登录不受 enabled 限制。
+    el.loginBtn.disabled = Boolean(running);
     const sendTitle = disabledAccount ? "账号已停用" : state.credential?.present === false ? "请先在「登录与记录」中扫码登录" : "核对本次发送的好友与消息";
     el.sendBtn.title = sendTitle;
     if (el.taskSendBtn) el.taskSendBtn.title = sendTitle;
@@ -2661,6 +2884,214 @@
     el.mobileStatus.dataset.attention = String(Boolean(needsAttention));
   }
 
+  function accountBadge(text, tone = "") {
+    const span = document.createElement("span");
+    span.className = `badge${tone ? ` badge--${tone}` : ""}`;
+    span.textContent = text;
+    return span;
+  }
+
+  function buildAccountCard(account, running) {
+    const current = account.id === activeAccountId;
+    const credential = account.credential || {};
+    const isRunning = Boolean(running && (running.accountId == null || running.accountId === account.id));
+    const card = document.createElement("article");
+    card.className = "account-card card";
+    card.dataset.current = String(current);
+    card.dataset.accountId = account.id;
+
+    const head = document.createElement("header");
+    head.className = "account-card__head";
+    const avatar = document.createElement("span");
+    avatar.className = "account-avatar";
+    avatar.textContent = account.id === "main" ? "主" : (Array.from(account.name || account.id)[0] || "账");
+    avatar.dataset.main = String(account.id === "main");
+    avatar.dataset.off = String(!account.enabled);
+    avatar.setAttribute("aria-hidden", "true");
+
+    const title = document.createElement("div");
+    title.className = "account-card__title";
+    const nameLine = document.createElement("div");
+    nameLine.className = "account-card__name";
+    const name = document.createElement("h3");
+    name.textContent = account.name;
+    name.title = account.name;
+    nameLine.append(name);
+    if (current) nameLine.append(accountBadge("当前", "blue"));
+    if (isRunning) nameLine.append(accountBadge(running.action === "login" ? "等待扫码" : "运行中", "blue"));
+    const sub = document.createElement("p");
+    sub.textContent = `ID ${account.id}${account.id === "main" ? " · 默认登录账户" : ""}`;
+    title.append(nameLine, sub);
+
+    const loginBadge = accountBadge(credential.present ? "已登录" : "待登录", credential.present ? "green" : "amber");
+    head.append(avatar, title, loginBadge);
+
+    const badges = document.createElement("div");
+    badges.className = "account-card__badges";
+    if (account.id === "main") badges.append(accountBadge("主账号", "plain"));
+    if (account.error) badges.append(accountBadge("配置异常", "red"));
+    else if (account.configured) badges.append(accountBadge("已配置", "green"));
+    else badges.append(accountBadge("待配置", "amber"));
+
+    const stats = document.createElement("dl");
+    stats.className = "account-card__stats";
+    const statValues = [
+      ["好友", Number(account.friendCount || 0), "位"],
+      ["消息", Number(account.messageCount || 0), "项"],
+    ];
+    statValues.forEach(([label, value, unit]) => {
+      const item = document.createElement("div");
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const detail = document.createElement("dd");
+      detail.textContent = String(value);
+      const suffix = document.createElement("i");
+      suffix.textContent = unit;
+      detail.append(suffix);
+      item.append(term, detail);
+      stats.append(item);
+    });
+    const runItem = document.createElement("div");
+    const runTerm = document.createElement("dt");
+    runTerm.textContent = "最近运行";
+    const runDetail = document.createElement("dd");
+    runDetail.className = "is-date";
+    runDetail.textContent = account.lastRun?.finishedAt ? formatWhen(account.lastRun.finishedAt) : "暂无记录";
+    runDetail.title = account.lastRun?.finishedAt ? formatFull(account.lastRun.finishedAt) : "还没有运行记录";
+    runItem.append(runTerm, runDetail);
+    stats.append(runItem);
+
+    const hint = document.createElement("p");
+    hint.className = "account-card__hint";
+    if (account.error) {
+      hint.dataset.tone = "error";
+      hint.textContent = "账户配置读取失败，进入账户查看具体提示。";
+    } else if (!account.configured) {
+      hint.textContent = account.id === "main"
+        ? "还没有配置好友或消息，进入账户补充后再运行。"
+        : "先登录这个账户，再进入账户添加好友和消息，之后才能开启自动运行。";
+    } else if (!credential.present) {
+      hint.textContent = "登录凭证缺失，先扫码登录这个账户。";
+    } else {
+      hint.textContent = "好友、消息、任务和运行记录只属于这个账户。";
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "account-card__actions";
+    const enter = document.createElement("a");
+    enter.className = "btn btn--primary";
+    enter.href = `#/accounts/${encodeURIComponent(account.id)}/home`;
+    enter.dataset.accountLink = "true";
+    enter.innerHTML = `${iconMarkup("i-arrow-right", "i i--sm")}${current ? "打开账户" : "进入账户"}`;
+    const login = document.createElement("button");
+    login.type = "button";
+    login.className = "btn btn--ghost";
+    login.disabled = isRunning;
+    login.innerHTML = `${iconMarkup("i-scan", "i i--sm")}${credential.present ? "重新扫码" : "扫码登录"}`;
+    login.setAttribute("aria-label", `${credential.present ? "重新扫码登录" : "扫码登录"} ${account.name}`);
+    login.addEventListener("click", () => startAccountLogin(account));
+    actions.append(enter, login);
+
+    const foot = document.createElement("div");
+    foot.className = "account-card__foot";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "toggle";
+    toggle.setAttribute("role", "switch");
+    toggle.setAttribute("aria-checked", String(account.enabled));
+    toggle.disabled = isRunning;
+    toggle.innerHTML = `<span class="toggle__track" aria-hidden="true"></span><span>自动运行 · ${account.enabled ? "开" : "关"}</span>`;
+    toggle.setAttribute("aria-label", `${account.name} 的自动运行，当前${account.enabled ? "已开启" : "已关闭"}`);
+    toggle.addEventListener("click", () => toggleAccount(account));
+    const manage = document.createElement("div");
+    manage.className = "account-card__manage";
+    const rename = document.createElement("button");
+    rename.type = "button";
+    rename.className = "row-action";
+    rename.innerHTML = `${iconMarkup("i-edit", "i i--xs")}<span>改名</span>`;
+    rename.setAttribute("aria-label", `修改 ${account.name} 的名称`);
+    rename.addEventListener("click", () => openAccountDialog(account));
+    manage.append(rename);
+    if (account.id !== "main") {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "row-action delete";
+      remove.innerHTML = `${iconMarkup("i-trash", "i i--xs")}<span>移除</span>`;
+      remove.setAttribute("aria-label", `移除账户 ${account.name}`);
+      remove.addEventListener("click", () => removeAccount(account, remove));
+      manage.append(remove);
+    }
+    foot.append(toggle, manage);
+
+    card.append(head, badges, stats, hint, actions, foot);
+    return card;
+  }
+
+  function renderAccounts() {
+    if (activePage !== "accounts") return;
+    const accounts = overview?.accounts || [];
+    const enabledCount = accounts.filter((item) => item.enabled).length;
+    const loggedCount = accounts.filter((item) => item.credential?.present).length;
+    renderAccountChrome();
+
+    if (!overview) {
+      el.accountsTotal.textContent = "—";
+      el.accountsEnabled.textContent = "—";
+      el.accountsLogged.textContent = "—";
+      el.accountsMeta.textContent = "正在读取…";
+      el.accountsGrid.textContent = "";
+      const loading = document.createElement("div");
+      loading.className = "accounts-empty card empty";
+      loading.innerHTML = `${iconMarkup("i-accounts", "i")}<p>正在读取本机账户…</p>`;
+      el.accountsGrid.append(loading);
+      return;
+    }
+
+    const setStat = (node, value) => {
+      node.textContent = String(value);
+      const unit = document.createElement("i");
+      unit.textContent = "个";
+      node.append(unit);
+    };
+    setStat(el.accountsTotal, accounts.length);
+    setStat(el.accountsEnabled, enabledCount);
+    setStat(el.accountsLogged, loggedCount);
+    el.accountsMeta.textContent = `${accounts.length} 个账户 · 主账号默认登录`;
+    el.pageSubtitle.textContent = buildSubtitle();
+
+    el.accountsGrid.textContent = "";
+    if (!accounts.length) {
+      const empty = document.createElement("div");
+      empty.className = "accounts-empty card empty";
+      empty.innerHTML = `${iconMarkup("i-accounts", "i")}<p>还没有账户。添加一个账户后，就可以分别登录和配置。</p>`;
+      const add = document.createElement("button");
+      add.type = "button";
+      add.className = "btn btn--primary";
+      add.innerHTML = `${iconMarkup("i-plus", "i i--sm")}添加账户`;
+      add.addEventListener("click", () => openAccountDialog());
+      empty.append(add);
+      el.accountsGrid.append(empty);
+      return;
+    }
+    accounts.forEach((account) => el.accountsGrid.append(buildAccountCard(account, overview.running)));
+  }
+
+  async function loadOverview({ silent = false } = {}) {
+    if (overviewLoading) return;
+    overviewLoading = true;
+    try {
+      overview = await api("/api/state");
+      if (activePage === "accounts") {
+        renderAccounts();
+        applyPageChrome();
+      }
+    } catch (error) {
+      if (!silent) flash(`读取账户失败：${error.message}`);
+    } finally {
+      overviewLoading = false;
+    }
+  }
+
   function render() {
     if (!state) return;
     const friends = state.friends || [];
@@ -2706,7 +3137,9 @@
     renderCredential();
     renderHistory();
     renderTaskRecent();
+    renderAccounts();
     updateIndicators(running);
+    syncAccountLinks();
     maybeShowWelcome();
   }
 
@@ -2729,6 +3162,146 @@
     } catch (error) {
       live.action = null;
       flash(error.message);
+    }
+  }
+
+  function paintAccountPage() {
+    if (state) {
+      render();
+    } else {
+      renderAccounts();
+      applyPageChrome();
+    }
+  }
+
+  async function startAccountLogin(account) {
+    if (overview?.running) {
+      flash("有任务正在运行，请结束后再登录其他账户");
+      return;
+    }
+    try {
+      await api("/api/action", { action: "login", accountId: account.id });
+      flash(`正在打开「${account.name}」的扫码窗口，请用对应的抖音 App 扫码`, "quiet", 7000);
+      if (overview) overview.running = { action: "login", startedAt: new Date().toISOString(), accountId: account.id };
+      paintAccountPage();
+      window.setTimeout(() => loadOverview({ silent: true }), 1500);
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  async function toggleAccount(account) {
+    if (!account.enabled && !account.configured) {
+      flash(`先进入「${account.name}」添加好友和消息，再开启自动运行`);
+      return;
+    }
+    try {
+      overview = await api("/api/accounts/update", {
+        accountId: account.id,
+        name: account.name,
+        enabled: !account.enabled,
+      });
+      const updated = (overview.accounts || []).find((item) => item.id === account.id);
+      flash(`已${updated?.enabled ? "启用" : "停用"}「${account.name}」`, "quiet", 3000);
+      if (account.id === activeAccountId) refreshState();
+      paintAccountPage();
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  async function removeAccount(account, button) {
+    if (account.id === "main") return;
+    if (armedAccountRemove !== button) {
+      if (armedAccountRemove?.isConnected) {
+        armedAccountRemove.dataset.armed = "false";
+        armedAccountRemove.innerHTML = `${iconMarkup("i-trash", "i i--xs")}<span>移除</span>`;
+      }
+      armedAccountRemove = button;
+      button.dataset.armed = "true";
+      button.innerHTML = `<span>确认移除</span>`;
+      window.setTimeout(() => {
+        if (armedAccountRemove !== button) return;
+        armedAccountRemove = null;
+        if (!button.isConnected) return;
+        button.dataset.armed = "false";
+        button.innerHTML = `${iconMarkup("i-trash", "i i--xs")}<span>移除</span>`;
+      }, 4000);
+      return;
+    }
+    armedAccountRemove = null;
+    try {
+      overview = await api("/api/accounts/remove", { accountId: account.id });
+      flash(`已移除「${account.name}」的本机入口，好友、消息和凭证文件仍保留`, "quiet", 4500);
+      if (activeAccountId === account.id) {
+        location.hash = "#/accounts/main/home";
+      } else {
+        paintAccountPage();
+      }
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  function showAccountDialogHint(message, tone = "error") {
+    el.accountDialogHint.hidden = !message;
+    el.accountDialogHint.textContent = message || "";
+    el.accountDialogHint.dataset.tone = tone;
+  }
+
+  function openAccountDialog(account = null) {
+    editingAccount = account;
+    const editing = Boolean(account);
+    el.accountDialogTitle.textContent = editing ? "修改账户名称" : "添加账户";
+    el.accountDialogLead.textContent = editing
+      ? "只修改显示名称，好友、消息、登录凭证和运行记录都不会改变。"
+      : "每个账户都有独立的好友、消息、登录凭证和运行记录。添加后先扫码登录，再进入账户配置内容。";
+    el.accountName.value = account?.name || "";
+    el.accountDialogSteps.hidden = editing;
+    el.submitAccount.disabled = false;
+    el.submitAccount.innerHTML = editing
+      ? `${iconMarkup("i-check", "i i--sm")}保存名称`
+      : `${iconMarkup("i-plus", "i i--sm")}添加账户`;
+    showAccountDialogHint("");
+    el.accountDialog.showModal();
+    requestAnimationFrame(() => el.accountName.focus());
+  }
+
+  async function submitAccountForm() {
+    if (el.submitAccount.disabled) return;
+    const name = el.accountName.value.trim();
+    if (!name) {
+      showAccountDialogHint("请先填写账户名称。");
+      el.accountName.focus();
+      return;
+    }
+    if (name.length > 40) {
+      showAccountDialogHint("账户名称需为 1–40 个字符。");
+      el.accountName.focus();
+      return;
+    }
+    const target = editingAccount;
+    el.submitAccount.disabled = true;
+    showAccountDialogHint("");
+    try {
+      if (target) {
+        overview = await api("/api/accounts/update", {
+          accountId: target.id,
+          name,
+          enabled: target.enabled,
+        });
+        flash(`已把账户名称改为「${name}」`, "quiet", 3000);
+        if (target.id === activeAccountId) refreshState();
+      } else {
+        overview = await api("/api/accounts", { name });
+        flash(`已添加「${name}」，接下来点「扫码登录」登录这个账户`, "quiet", 5200);
+      }
+      el.accountDialog.close();
+      paintAccountPage();
+    } catch (error) {
+      showAccountDialogHint(error.message);
+    } finally {
+      el.submitAccount.disabled = false;
     }
   }
 
@@ -2855,6 +3428,7 @@
         live.action = payload.action;
         if (state) state.running = { action: payload.action, startedAt: payload.startedAt };
         render();
+        if (activePage === "accounts") loadOverview({ silent: true });
         break;
       case "target":
         live.current = payload.alias;
@@ -2886,6 +3460,7 @@
         api(`/api/state?accountId=${encodeURIComponent(activeAccountId)}`).then((nextState) => {
           if (activeAccountId === nextState.accountId) { state = nextState; render(); }
         }).catch(() => {});
+        if (activePage === "accounts") loadOverview({ silent: true });
         break;
       }
     }
@@ -3015,7 +3590,7 @@
     if (welcomeChecked || !state) return;
     welcomeChecked = true;
     if (state.credential?.present) return;
-    if (activePage === "system") return;
+    if (activePage === "system" || activePage === "accounts") return;
     if (state.running?.action === "login") return;
     if (welcomeDismissed()) return;
     if (document.querySelector("dialog[open]")) return;
@@ -3118,6 +3693,28 @@
   });
 
   el.loginBtn.addEventListener("click", () => run("login"));
+  el.addAccountBtn.addEventListener("click", () => openAccountDialog());
+  el.refreshAccounts.addEventListener("click", async () => {
+    el.refreshAccounts.disabled = true;
+    await loadOverview();
+    el.refreshAccounts.disabled = false;
+  });
+  el.cancelAccountDialog.addEventListener("click", () => el.accountDialog.close());
+  el.closeAccountDialog.addEventListener("click", () => el.accountDialog.close());
+  el.accountDialog.addEventListener("click", (event) => {
+    if (event.target === el.accountDialog) el.accountDialog.close();
+  });
+  el.accountDialog.addEventListener("close", () => {
+    editingAccount = null;
+    el.accountName.value = "";
+    showAccountDialogHint("");
+  });
+  el.submitAccount.addEventListener("click", submitAccountForm);
+  el.accountName.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    submitAccountForm();
+  });
   el.sendBtn.addEventListener("click", openSendPreview);
   el.taskSendBtn.addEventListener("click", openSendPreview);
   el.dryRunBtn.addEventListener("click", () => run("dry-run"));
@@ -3196,8 +3793,15 @@
   });
 
   window.addEventListener("hashchange", showRoute);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshState(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    refreshState();
+    if (activePage === "accounts") loadOverview({ silent: true });
+  });
   setInterval(paintClock, 30_000);
+  setInterval(() => {
+    if (activePage === "accounts") loadOverview({ silent: true });
+  }, 6000);
   showRoute();
 })();
 </script>
