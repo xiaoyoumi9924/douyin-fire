@@ -14,7 +14,7 @@
 #   --port 8765         面板端口（默认 8765）
 #   --schedule 07:00    装完顺便把每日任务设成这个时间（可选）
 #   --no-open           装完不自动打开浏览器
-#   --version v0.1.6    指定版本（默认 GitHub 最新 release）
+#   --version v0.1.7    指定版本（默认 GitHub 最新 release）
 #   --source PATH       从本地 .app / .dmg 安装（离线或测试用）
 #   --uninstall         卸载面板服务和应用（数据保留）
 #   --purge-data        卸载时连数据一起删（谨慎）
@@ -67,7 +67,7 @@ usage() {
   --port 8765         面板端口（默认 8765）
   --schedule 07:00    装完顺便把每日任务设成这个时间（可选）
   --no-open           装完不自动打开浏览器
-  --version v0.1.6    指定版本（默认 GitHub 最新 release）
+  --version v0.1.7    指定版本（默认 GitHub 最新 release）
   --source PATH       从本地 .app / .dmg 安装（离线或测试用）
   --data-dir PATH     数据目录（默认 ~/Library/Application Support/Douyin Fire）
   --install-dir PATH  安装目录（默认 /Applications）

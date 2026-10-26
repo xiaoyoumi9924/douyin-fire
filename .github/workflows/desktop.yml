@@ -98,3 +98,5 @@ jobs:
             release-assets/Douyin*.dmg
             release-assets/Douyin*.AppImage
             scripts/install.sh
+            scripts/install.ps1
+            scripts/install-linux.sh

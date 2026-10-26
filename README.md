@@ -10,33 +10,49 @@
 | macOS | [下载 macOS 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 | Ubuntu| [下载 Linux 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 
-## 一条命令安装（macOS）
-
-```bash
-# 国内网络推荐（jsDelivr，速度更稳）
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
-```
-
-GitHub 能直连时，也可以用仓库里的原文件：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash
-```
+## 一条命令安装
 
 装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会开机自启，关掉终端不影响。
 首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。
-目前这条命令只支持 Apple Silicon 的 macOS；Windows / Linux 请用上面的安装包。
+
+**macOS（Apple Silicon）**
+
+```bash
+# 国内网络推荐 jsDelivr；GitHub 能直连时也可以用 raw.githubusercontent.com 的同名路径
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
+```
+
+**Windows（10 / 11）**
+
+```powershell
+irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
+```
+
+**Linux（x86_64，需要 systemd）**
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash
+```
 
 想装完顺便把每日任务设成 07:00：
 
 ```bash
+# macOS / Linux
 curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --schedule 07:00
+
+# Windows
+$env:DOUYIN_SCHEDULE='07:00'; irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
 ```
 
 卸载（数据保留）：
 
 ```bash
+# macOS
 curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --uninstall
+# Linux
+curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash -s -- --uninstall
+# Windows
+$env:DOUYIN_UNINSTALL='1'; irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
 ```
 
 ## 使用步骤
