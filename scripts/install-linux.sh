@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # 抖音自动续火花 · Linux 一键安装（AppImage + systemd 用户服务）
 #
-#   curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash
-#   直连 GitHub 时也可以用 raw.githubusercontent.com 的同名路径。
+#   curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
+#   GitHub 很慢时把 releases/latest/download 换成
+#   https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts
 #
 # 带参数（注意 bash 后面的 --）：
 #   curl -fsSL .../install-linux.sh | bash -s -- --port 8765 --schedule 07:00
@@ -44,7 +45,7 @@ usage() {
   cat <<'TEXT'
 抖音自动续火花 · Linux 一键安装
 
-  curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash
+  curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
 
 参数：
   --port 8765         面板端口（默认 8765）

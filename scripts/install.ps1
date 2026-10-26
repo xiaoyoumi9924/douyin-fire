@@ -1,7 +1,7 @@
 <#
 抖音自动续火花 · Windows 一键安装
 
-  irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
+  irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 
 先设环境变量可以改默认行为：
   $env:DOUYIN_PORT = '8765'        面板端口（默认 8765）

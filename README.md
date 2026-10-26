@@ -18,41 +18,49 @@
 **macOS（Apple Silicon）**
 
 ```bash
-# 国内网络推荐 jsDelivr；GitHub 能直连时也可以用 raw.githubusercontent.com 的同名路径
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash
 ```
 
 **Windows（10 / 11）**
 
 ```powershell
-irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
+irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
 **Linux（x86_64，需要 systemd）**
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
 ```
+
+> 脚本都从最新 Release 取，和安装包版本天然配套。GitHub 访问很慢时，可以把
+> `https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/`
+> 换成 `https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/`（文件名不变）。
 
 想装完顺便把每日任务设成 07:00：
 
 ```bash
-# macOS / Linux
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --schedule 07:00
+# macOS
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash -s -- --schedule 07:00
+
+# Linux
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash -s -- --schedule 07:00
 
 # Windows
-$env:DOUYIN_SCHEDULE='07:00'; irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
+$env:DOUYIN_SCHEDULE='07:00'; irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
 卸载（数据保留）：
 
 ```bash
 # macOS
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash -s -- --uninstall
+
 # Linux
-curl -fsSL https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install-linux.sh | bash -s -- --uninstall
+curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash -s -- --uninstall
+
 # Windows
-$env:DOUYIN_UNINSTALL='1'; irm https://cdn.jsdelivr.net/gh/xiaoyoumi9924/douyin-fire@main/scripts/install.ps1 | iex
+$env:DOUYIN_UNINSTALL='1'; irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
 ## 使用步骤
