@@ -10,6 +10,27 @@
 | macOS | [下载 macOS 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 | Ubuntu| [下载 Linux 版](https://github.com/xiaoyoumi9924/douyin-fire/releases/latest) |
 
+## 一条命令安装（macOS）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash
+```
+
+装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会开机自启，关掉终端不影响。
+首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。
+目前这条命令只支持 Apple Silicon 的 macOS；Windows / Linux 请用上面的安装包。
+
+想装完顺便把每日任务设成 07:00：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash -s -- --schedule 07:00
+```
+
+卸载（数据保留）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/douyin-fire/main/scripts/install.sh | bash -s -- --uninstall
+```
 
 ## 使用步骤
 
