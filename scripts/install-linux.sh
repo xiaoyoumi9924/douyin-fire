@@ -118,7 +118,7 @@ asset_url() {
     url="$(printf '%s' "$json" \
       | grep -o '"browser_download_url": *"[^"]*"' \
       | sed 's/.*"\(https[^"]*\)"/\1/' \
-      | grep -i '\.AppImage$' | grep -i 'x86_64\|amd64' | head -1)" || true
+      | grep -i '\.AppImage$' | head -1)" || true
     if [ -n "$url" ]; then printf '%s' "$url"; return 0; fi
   fi
   printf 'https://github.com/%s/releases/download/%s/Douyin.Fire-%s.AppImage' "$REPO" "$tag" "$ver"
