@@ -50,7 +50,7 @@
     --accent-ring:var(--blue-ring);
     --shadow-sm:0 1px 2px rgba(20,42,84,.04);
     --shadow:0 12px 32px rgba(20,50,105,.07);
-    --sidebar-w:248px;
+    --sidebar-w:232px;
     --radius:18px;
     --font:"PingFang SC","HarmonyOS Sans SC","MiSans","Source Han Sans SC","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
     --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
@@ -86,7 +86,7 @@
   .app{min-height:100dvh}
   .sidebar{
     position:fixed;z-index:30;inset:0 auto 0 0;display:flex;flex-direction:column;
-    width:var(--sidebar-w);padding:28px 18px 20px;overflow-y:auto;scrollbar-width:none;
+    width:var(--sidebar-w);padding:24px 14px 18px;overflow-y:auto;scrollbar-width:none;
     background:linear-gradient(180deg,var(--navy-top) 0%,var(--navy) 46%,var(--navy-deep) 100%);
     box-shadow:inset -1px 0 0 rgba(255,255,255,.07);
   }
@@ -102,32 +102,32 @@
   .brand-text{display:grid;min-width:0;line-height:1.18}
   .brand-text strong{font-size:15.5px;font-weight:700;letter-spacing:-.1px}
   .brand-text small{margin-top:2px;color:var(--ink-3);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-  .sidebar .brand{padding:0 8px 22px;border-bottom:1px solid rgba(255,255,255,.16)}
+  .sidebar .brand{padding:0 6px 18px;border-bottom:1px solid rgba(255,255,255,.16)}
   .sidebar .brand-mark{
-    flex-basis:46px;width:46px;height:46px;border-radius:14px;
+    flex-basis:42px;width:42px;height:42px;border-radius:13px;
     background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
   }
-  .sidebar .brand-emoji{font-size:26px;filter:none}
-  .sidebar .brand-text strong{font-size:18px;font-weight:700;letter-spacing:.01em;color:#fff}
+  .sidebar .brand-emoji{font-size:24px;filter:none}
+  .sidebar .brand-text strong{font-size:17px;font-weight:700;letter-spacing:.01em;color:#fff}
   .sidebar .brand-text small{margin-top:3px;color:rgba(255,255,255,.6);font-size:10px;font-weight:600;letter-spacing:.18em}
-  .nav-heading{margin:26px 10px 12px;color:rgba(255,255,255,.64);font-size:13px;font-weight:600;letter-spacing:.08em}
-  .main-nav{display:grid;gap:8px}
+  .nav-heading{margin:20px 8px 10px;color:rgba(255,255,255,.64);font-size:12px;font-weight:600;letter-spacing:.08em}
+  .main-nav{display:grid;gap:6px}
   .nav-link{
-    position:relative;display:flex;align-items:center;gap:15px;min-height:60px;padding:0 14px;
-    border-radius:13px;color:rgba(255,255,255,.86);font-size:17px;font-weight:600;text-decoration:none;
+    position:relative;display:flex;align-items:center;gap:13px;min-height:54px;padding:0 12px;
+    border-radius:12px;color:rgba(255,255,255,.86);font-size:16px;font-weight:600;text-decoration:none;
     transition:background .15s,color .15s;
   }
-  .nav-link .i{width:23px;height:23px;color:rgba(255,255,255,.66);transition:color .15s}
+  .nav-link .i{width:21px;height:21px;color:rgba(255,255,255,.66);transition:color .15s}
   .nav-link:hover{background:rgba(255,255,255,.10);color:#fff}
   .nav-link:hover .i{color:#fff}
   .nav-link[aria-current="page"]{background:#3273CF;color:#fff;font-weight:600;box-shadow:0 10px 22px rgba(3,22,55,.24)}
   .nav-link[aria-current="page"] .i{color:#fff}
   .nav-link__badge{margin-left:auto;display:grid;place-items:center;min-width:21px;height:21px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.16);color:#FFD8D5;font-size:11px;font-weight:700}
   .nav-link[aria-current="page"] .nav-link__badge{background:#fff;color:var(--red)}
-  .sidebar-bottom{margin-top:auto;display:grid;gap:14px}
+  .sidebar-bottom{margin-top:auto;display:grid;gap:12px}
   .sidebar-status{
-    display:flex;align-items:flex-start;gap:10px;padding:13px 14px;
+    display:flex;align-items:flex-start;gap:10px;padding:11px 12px;
     border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(255,255,255,.08);
   }
   .sidebar-status .dot{width:8px;height:8px;margin-top:5px;background:#3DDC97;box-shadow:0 0 0 3px rgba(61,220,151,.18)}
@@ -136,7 +136,7 @@
   .status-copy{display:grid;min-width:0;gap:3px}
   .status-copy b{font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .status-copy small{font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sidebar-foot{margin:0;padding:0 8px;color:rgba(255,255,255,.55);font-size:11px;line-height:1.6}
+  .sidebar-foot{margin:0;padding:0 6px;color:rgba(255,255,255,.55);font-size:10.5px;line-height:1.6}
   .sidebar-foot .mono{color:rgba(255,255,255,.44)}
   .sidebar :focus-visible{outline-color:rgba(255,255,255,.6)}
 
@@ -581,12 +581,12 @@
   .history-empty-cell{padding:34px 10px!important;color:var(--ink-3);font-size:12.5px;text-align:center!important;white-space:normal!important;line-height:1.6}
 
   /* ----------------------------------------------------------------- accounts */
-  .account-chip{display:flex;align-items:center;gap:10px;margin:17px 4px 0;padding:9px 10px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.07);color:#fff;text-decoration:none;transition:background .15s,border-color .15s}
+  .account-chip{display:flex;align-items:center;gap:9px;margin:14px 2px 0;padding:8px 9px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:rgba(255,255,255,.07);color:#fff;text-decoration:none;transition:background .15s,border-color .15s}
   .account-chip:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.26);color:#fff}
-  .account-chip__mark{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.16);font-size:13px;font-weight:700}
+  .account-chip__mark{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.16);font-size:12px;font-weight:700}
   .account-chip__copy{display:grid;min-width:0;gap:1px}
-  .account-chip__copy small{color:rgba(255,255,255,.58);font-size:10px;font-weight:600;letter-spacing:.05em}
-  .account-chip__copy b{overflow:hidden;font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+  .account-chip__copy small{color:rgba(255,255,255,.58);font-size:9.5px;font-weight:600;letter-spacing:.05em}
+  .account-chip__copy b{overflow:hidden;font-size:12px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
   .account-chip>.i{margin-left:auto;width:14px;height:14px;color:rgba(255,255,255,.45)}
 
   .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
