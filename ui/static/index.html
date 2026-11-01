@@ -125,19 +125,16 @@
   .nav-link[aria-current="page"] .i{color:#fff}
   .nav-link__badge{margin-left:auto;display:grid;place-items:center;min-width:21px;height:21px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.16);color:#FFD8D5;font-size:11px;font-weight:700}
   .nav-link[aria-current="page"] .nav-link__badge{background:#fff;color:var(--red)}
-  .sidebar-bottom{margin-top:auto;display:grid;gap:12px}
+  .sidebar-bottom{margin-top:auto;display:grid}
   .sidebar-status{
-    display:flex;align-items:flex-start;gap:10px;padding:11px 12px;
+    display:flex;align-items:center;gap:10px;padding:11px 12px;
     border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(255,255,255,.08);
   }
-  .sidebar-status .dot{width:8px;height:8px;margin-top:5px;background:#3DDC97;box-shadow:0 0 0 3px rgba(61,220,151,.18)}
+  .sidebar-status .dot{width:8px;height:8px;background:#3DDC97;box-shadow:0 0 0 3px rgba(61,220,151,.18)}
   .sidebar-status[data-running="true"] .dot{background:#8FB8FF;box-shadow:0 0 0 3px rgba(143,184,255,.2);animation:pulse 1.5s ease-in-out infinite}
   .sidebar-status[data-attention="true"] .dot{background:#FFC66B;box-shadow:0 0 0 3px rgba(255,198,107,.18)}
-  .status-copy{display:grid;min-width:0;gap:3px}
+  .status-copy{display:grid;min-width:0}
   .status-copy b{font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .status-copy small{font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sidebar-foot{margin:0;padding:0 6px;color:rgba(255,255,255,.55);font-size:10.5px;line-height:1.6}
-  .sidebar-foot .mono{color:rgba(255,255,255,.44)}
   .sidebar :focus-visible{outline-color:rgba(255,255,255,.6)}
 
   .main{min-width:0;margin-left:var(--sidebar-w)}
@@ -165,7 +162,6 @@
   .page-crumb .i{width:13px;height:13px;transform:rotate(180deg)}
   .eyebrow{margin:0 0 8px;color:var(--ink-3);font-size:12.5px;font-weight:600;letter-spacing:.04em}
   .page-heading h1{margin:0;font-size:clamp(30px,2.6vw,36px);line-height:1.16;font-weight:700;letter-spacing:-.6px;color:var(--ink)}
-  .page-subtitle{max-width:64ch;margin:9px 0 0;color:var(--ink-3);font-size:14.5px;line-height:1.6}
   .page-date{flex:none;margin-left:auto;padding-bottom:5px;color:var(--ink-3);font-size:15px;font-weight:500;letter-spacing:.01em}
   .page-actions{display:flex;align-items:center;gap:9px;flex:none}
   .action-group{display:flex;align-items:center;gap:9px}
@@ -216,8 +212,6 @@
   .card-head p{margin:6px 0 0;color:var(--ink-3);font-size:13.5px;line-height:1.55}
   .card-head__main{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
   .card-meta{color:var(--ink-3);font-size:13.5px;font-weight:400}
-  .card-hint{display:flex;align-items:flex-start;gap:7px;margin:16px 0 0;color:var(--ink-3);font-size:12.5px;line-height:1.6}
-  .card-hint .i{margin-top:1px}
   .text-link{display:inline-flex;align-items:center;gap:4px;flex:none;color:var(--blue);font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
   .text-link:hover{text-decoration:underline}
   .text-link .i{width:14px;height:14px}
@@ -274,7 +268,7 @@
   .progress[data-complete="true"] i{background:var(--green)}
 
   .run-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(230px,.76fr);gap:14px;margin-top:24px;align-items:stretch}
-  .run-fact{display:flex;align-items:flex-start;gap:13px;min-width:0;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:#F6FAFF}
+  .run-fact{display:flex;align-items:center;gap:13px;min-width:0;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:#F6FAFF}
   .run-fact__icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid #E3EBF7;color:var(--blue)}
   .run-fact__icon .i{width:18px;height:18px}
   .run-fact__copy{display:grid;gap:2px;min-width:0}
@@ -437,13 +431,9 @@
   .schedule-action .badge{align-self:flex-end}
   .schedule-action .btn{width:min(210px,100%);min-height:48px;border-radius:12px;font-size:14.5px}
   .schedule-action .field-hint{color:var(--ink-3);font-size:12px;line-height:1.55;text-align:right;width:100%}
-  .schedule-statusbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 22px;margin:18px -26px 0;padding:15px 26px;border-top:1px solid var(--line-soft);color:var(--ink-3);font-size:13px}
-  .schedule-statusbar span{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-  .schedule-statusbar .dot{width:6px;height:6px}
-  .schedule-statusbar .schedule-platform{margin-left:auto;color:var(--ink-3)}
-  .schedule-note{display:flex;align-items:flex-start;gap:7px;margin:0 -26px;padding:2px 26px 18px;color:var(--ink-3);font-size:12.5px;line-height:1.6}
+  .schedule-note{display:flex;align-items:flex-start;gap:7px;margin:0 -26px;padding:14px 26px 18px;border-top:1px solid var(--line-soft);color:var(--ink-3);font-size:12.5px;line-height:1.6}
   .schedule-note .i{margin-top:2px;flex:none}
-  .schedule-note[data-tone="warning"]{margin-top:2px;padding:12px 26px 14px;border-top:1px solid var(--amber-border);background:var(--amber-soft);color:#73500F}
+  .schedule-note[data-tone="warning"]{margin-top:0;padding:13px 26px 14px;border-top:1px solid var(--amber-border);background:var(--amber-soft);color:#73500F}
   .dot--green{background:var(--green-bright)}
   .dot--blue{background:var(--blue)}
   .dot--gray{background:#A9B6C9}
@@ -483,11 +473,8 @@
   .message-card{padding:24px 26px 22px;max-width:100%}
   .message-card .card-head{margin-bottom:0;padding-bottom:20px;border-bottom:1px solid var(--line-soft)}
   .message-field{padding-top:20px}
-  .field-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-  .field-head .field-label{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:var(--ink);font-size:16.5px;font-weight:700;letter-spacing:-.1px}
-  .field-head .field-label__text{white-space:nowrap}
-  .field-head .field-label__note{color:var(--ink-3);font-size:13.5px;font-weight:400;letter-spacing:0}
-  .field-head small{color:var(--ink-3);font-size:12.5px}
+  .field-head{display:flex;align-items:baseline;gap:12px}
+  .field-head .field-label{display:block;color:var(--ink);font-size:16.5px;font-weight:700;letter-spacing:-.1px}
   .message-card textarea{
     display:block;width:100%;min-height:220px;margin-top:12px;padding:16px 18px;resize:vertical;border:1px solid var(--line-strong);border-radius:16px;
     background:#FBFDFF;color:var(--ink);font-size:15px;line-height:1.8;outline:0;
@@ -591,34 +578,29 @@
 
   .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
   .section-head h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.2px}
-  .section-head p{margin:5px 0 0;color:var(--ink-3);font-size:13px;line-height:1.55}
-  .section-head>span{flex:none;color:var(--ink-3);font-size:13px}
 
   .accounts-overview{padding:24px 26px 0;overflow:hidden}
-  .accounts-overview__head{display:flex;align-items:flex-start;gap:14px}
+  .accounts-overview__head{display:flex;align-items:center;gap:14px}
   .accounts-overview__copy{flex:1;min-width:0}
   .accounts-overview__copy h2{margin:0;font-size:20.5px;font-weight:700;letter-spacing:-.25px}
-  .accounts-overview__copy p{max-width:76ch;margin:6px 0 0;color:var(--ink-3);font-size:13.5px;line-height:1.6}
-  .accounts-overview__badge{align-self:flex-start;margin-left:auto}
+  .accounts-overview__badge{margin-left:auto}
   .accounts-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:20px -26px 0;border-top:1px solid var(--line-soft);background:var(--surface-2)}
   .account-stat{min-width:0;padding:16px 26px;border-left:1px solid var(--line-soft)}
   .account-stat:first-child{border-left:0}
   .account-stat>span{display:block;color:var(--ink-3);font-size:12.5px;font-weight:500}
   .account-stat b{display:inline-flex;align-items:baseline;gap:4px;margin-top:3px;font-size:24px;font-weight:700;letter-spacing:-.4px}
   .account-stat b i{color:var(--ink-3);font-size:12px;font-style:normal;font-weight:500}
-  .account-stat small{display:block;color:var(--ink-4);font-size:11.5px}
 
-  .accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .accounts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
   .account-card{display:flex;flex-direction:column;gap:14px;padding:20px 22px 18px;transition:border-color .15s,box-shadow .15s}
   .account-card[data-current="true"]{border-color:var(--blue-border);box-shadow:0 0 0 3px var(--blue-ring),var(--shadow-sm)}
-  .account-card__head{display:flex;align-items:flex-start;gap:12px;min-width:0}
+  .account-card__head{display:flex;align-items:center;gap:12px;min-width:0}
   .account-avatar{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid var(--line);border-radius:13px;background:var(--blue-soft);color:var(--blue-ink);font-size:16px;font-weight:700}
   .account-avatar[data-main="true"]{border-color:transparent;background:linear-gradient(145deg,#3A86DF,#1F5FCB);color:#fff}
   .account-avatar[data-off="true"]{background:var(--surface-3);color:var(--ink-3)}
   .account-card__title{flex:1;min-width:0}
   .account-card__name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .account-card__name h3{max-width:100%;margin:0;overflow:hidden;font-size:17px;font-weight:700;letter-spacing:-.15px;text-overflow:ellipsis;white-space:nowrap}
-  .account-card__title p{margin:4px 0 0;color:var(--ink-3);font-size:11.5px;line-height:1.5}
   .account-card__badges{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
   .account-card__stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;padding:12px 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
   .account-card__stats div{min-width:0;padding:0 12px;border-left:1px solid var(--line-soft)}
@@ -627,8 +609,7 @@
   .account-card__stats dd{display:flex;align-items:baseline;gap:3px;margin:3px 0 0;overflow:hidden;color:var(--ink);font-size:17px;font-weight:700;letter-spacing:-.2px;text-overflow:ellipsis;white-space:nowrap}
   .account-card__stats dd i{color:var(--ink-3);font-size:11px;font-style:normal;font-weight:500}
   .account-card__stats dd.is-date{font-size:13.5px;font-weight:600;letter-spacing:0}
-  .account-card__hint{margin:0;color:var(--ink-3);font-size:12px;line-height:1.6}
-  .account-card__hint[data-tone="error"]{color:var(--red)}
+  .account-card__hint{margin:0;color:var(--red);font-size:12px;line-height:1.6}
   .account-card__actions{display:flex;align-items:center;gap:8px;margin-top:auto}
   .account-card__actions .btn{flex:1;min-height:40px;border-radius:11px;font-size:13.5px}
   .account-card__foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:2px}
@@ -654,10 +635,6 @@
   .account-steps li>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--blue-soft);color:var(--blue-ink);font-size:11.5px;font-weight:700}
   .account-steps b{display:block;font-size:13px;font-weight:600}
   .account-steps p{margin:2px 0 0;color:var(--ink-3);font-size:12px;line-height:1.6}
-
-  /* ------------------------------------------------------------------- footer */
-  .app-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:30px;padding:16px 2px 0;border-top:1px solid var(--line);color:var(--ink-3);font-size:12px}
-  .app-footer .mono{color:var(--ink-3)}
 
   /* ------------------------------------------------------------------- dialog */
   .send-dialog{
@@ -735,7 +712,7 @@
     .sidebar{padding:22px 10px 16px;align-items:center}
     .brand{padding:0}
     .sidebar .brand{padding:0;border-bottom:0}
-    .brand-text,.nav-heading,.sidebar-foot{display:none}
+    .brand-text,.nav-heading{display:none}
     .account-chip{justify-content:center;margin:16px 0 0;padding:8px;border-radius:11px}
     .account-chip__copy,.account-chip>.i{display:none}
     .account-chip__mark{flex-basis:34px;width:34px;height:34px}
@@ -803,13 +780,11 @@
     .bottom-link[aria-current="page"]{color:var(--blue-ink);background:var(--blue-soft);font-weight:600}
     .bottom-link[aria-current="page"] .i{color:var(--blue)}
     .flash{bottom:calc(74px + env(safe-area-inset-bottom))}
-    .app-footer{padding-bottom:6px}
   }
   @media (max-width:680px){
     .page-shell{padding:18px 16px calc(100px + env(safe-area-inset-bottom))}
     .page-head{margin-bottom:18px}
     .page-heading h1{font-size:28px;letter-spacing:-.5px}
-    .page-subtitle{font-size:13px}
     .page-date{font-size:13.5px}
     .page-actions{align-items:stretch}
     .action-group{flex-wrap:wrap}
@@ -834,12 +809,10 @@
     .accounts-overview{padding:18px 16px 0;border-radius:16px}
     .accounts-overview__head{gap:11px}
     .accounts-overview__copy h2{font-size:17.5px}
-    .accounts-overview__copy p{font-size:12.5px}
     .accounts-overview__badge{display:none}
     .accounts-stats{margin:16px -16px 0}
     .account-stat{padding:13px 16px}
     .account-stat b{font-size:21px}
-    .account-stat small{font-size:10.5px}
     .accounts-grid{grid-template-columns:minmax(0,1fr);gap:14px}
     .account-card{padding:17px 16px 16px;border-radius:16px}
     .account-card__head{gap:10px}
@@ -902,10 +875,8 @@
     .schedule-action .btn{width:100%;order:1;margin-left:0}
     .schedule-action .badge{order:0}
     .schedule-action .field-hint{order:2;width:100%;text-align:center;font-size:10.5px}
-    .schedule-statusbar{margin:14px -16px 0;padding:13px 16px;gap:7px 14px;font-size:11px}
-    .schedule-note{margin:0 -16px;padding:2px 16px 15px;font-size:11px}
+    .schedule-note{margin:0 -16px;padding:13px 16px 15px;font-size:11px}
     .schedule-note[data-tone="warning"]{padding:11px 16px 12px}
-    .schedule-statusbar .schedule-platform{display:none}
     .note-card{padding:13px 14px}
     .run-item{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px}
     .run-kind{justify-self:start}
@@ -920,9 +891,8 @@
     .run-table td:nth-child(4){grid-area:duration;text-align:right}
     .run-result{gap:14px;font-size:12.5px}
     .message-card{padding-bottom:16px}
-    .field-head{flex-wrap:wrap;gap:5px 10px}
-    .field-head .field-label{font-size:15.5px;gap:5px}
-    .field-head .field-label__note{font-size:12px}
+    .field-head{gap:5px 10px}
+    .field-head .field-label{font-size:15.5px}
     .message-card textarea{min-height:190px;font-size:13.5px}
     .upload-drop{min-height:112px}
     .rules-box{flex-direction:column;align-items:stretch;gap:14px;padding:16px}
@@ -954,7 +924,6 @@
     .dialog-head{padding:18px 18px 13px}
     .dialog-body{padding:15px 18px 17px}
     .dialog-foot{padding:12px 18px calc(14px + env(safe-area-inset-bottom))}
-    .app-footer{flex-direction:column;align-items:flex-start;gap:5px;margin-top:22px;font-size:10.5px}
   }
   @media (max-width:420px){
     .page-shell{padding-left:13px;padding-right:13px}
@@ -1007,9 +976,8 @@
     <div class="sidebar-bottom">
       <div class="sidebar-status" id="sidebarStatus" aria-live="polite">
         <span class="dot" aria-hidden="true"></span>
-        <div class="status-copy"><b id="sidebarRunStatus">正在读取…</b><small id="sidebarNextRun">下次执行：—</small></div>
+        <div class="status-copy"><b id="sidebarRunStatus">正在读取…</b></div>
       </div>
-      <p class="sidebar-foot">数据只保存在这台设备<br><span class="mono" id="buildInfo"></span></p>
     </div>
   </aside>
 
@@ -1028,9 +996,7 @@
       <header class="page-head">
         <div class="page-heading">
           <p class="page-crumb" id="pageCrumb" hidden><a href="#/accounts/main/home"><svg class="i"><use href="#i-chevron-right"/></svg>首页</a></p>
-          <p class="eyebrow" id="pageContext" hidden></p>
           <h1 id="pageTitle">首页</h1>
-          <p class="page-subtitle" id="pageSubtitle">正在读取本机配置…</p>
         </div>
         <p class="page-date" id="pageDate">10月24日</p>
         <div class="page-actions">
@@ -1070,7 +1036,7 @@
             <div class="run-row">
               <div class="run-fact">
                 <span class="run-fact__icon" aria-hidden="true"><svg class="i"><use href="#i-clock"/></svg></span>
-                <div class="run-fact__copy"><span>最近运行</span><b id="lastRunStat">—</b><small id="statusText" aria-live="polite">正在读取…</small></div>
+                <div class="run-fact__copy"><span>最近运行</span><b id="lastRunStat">—</b></div>
               </div>
               <div class="run-fact">
                 <span class="run-fact__icon" aria-hidden="true"><svg class="i"><use href="#i-calendar"/></svg></span>
@@ -1108,7 +1074,7 @@
       <!-- ---------------------------------------------------------- friends -->
       <section class="page-view" data-page-view="friends" aria-labelledby="pageTitle" hidden>
         <section class="list-card card" id="friends" aria-labelledby="friendsListTitle">
-          <div class="card-head"><div><h2 id="friendsListTitle">好友列表</h2><p id="albumCount">—</p></div></div>
+          <div class="card-head"><h2 id="friendsListTitle">好友列表</h2></div>
           <div class="list-toolbar">
             <label class="search-field" for="friendSearch">
               <svg class="i i--sm"><use href="#i-search"/></svg>
@@ -1132,7 +1098,6 @@
               <tbody id="albumGrid" aria-live="polite"></tbody>
             </table>
           </div>
-          <p class="card-hint"><svg class="i i--xs"><use href="#i-info"/></svg>双击昵称可改名；删除好友需要再次确认。</p>
         </section>
       </section>
 
@@ -1161,13 +1126,7 @@
               <span class="field-hint" id="scheduleHint">—</span>
             </div>
           </div>
-          <div class="schedule-statusbar">
-            <span><i class="dot dot--green" id="schedulerDot"></i><span id="schedulerStatus">计划任务已加载</span></span>
-            <span><i class="dot dot--green" id="credentialDot"></i><span id="scheduleLoginStatus">登录有效</span></span>
-            <span><svg class="i i--xs"><use href="#i-globe"/></svg>Asia/Shanghai</span>
-            <span class="schedule-platform" id="schedulePlatform">macOS launchd</span>
-          </div>
-          <p class="schedule-note" id="scheduleNote"><svg class="i i--xs"><use href="#i-info"/></svg><span id="scheduleNoteText">退出应用后，系统计划任务仍会在设定时间自动运行。</span></p>
+          <p class="schedule-note" id="scheduleNote" hidden><svg class="i i--xs"><use href="#i-info"/></svg><span id="scheduleNoteText"></span></p>
           <span class="visually-hidden" id="scheduleState"></span>
         </section>
 
@@ -1204,8 +1163,7 @@
           </div>
           <div class="message-field">
             <div class="field-head">
-              <label class="field-label" for="messageBox"><span class="field-label__text">文字消息</span><span class="field-label__note">（多行候选，随机发送一条）</span></label>
-              <small id="messageCharCount">0 字 · 0 条</small>
+              <label class="field-label" for="messageBox">文字消息</label>
             </div>
             <textarea id="messageBox" spellcheck="false" placeholder="今天也要开心呀&#10;新的一天，继续保持火花～&#10;记得吃早饭"></textarea>
             <div class="upload-zone">
@@ -1238,7 +1196,7 @@
           <div class="card-head">
             <div class="head-with-icon">
               <span class="icon-tile" aria-hidden="true"><svg class="i"><use href="#i-lock"/></svg></span>
-              <div><h2 id="credentialCardTitle">登录凭证</h2><p>Storage State 等同登录凭证，不会显示在页面上</p></div>
+              <div><h2 id="credentialCardTitle">登录凭证</h2></div>
             </div>
             <span class="badge" id="credBadge">—</span>
           </div>
@@ -1285,22 +1243,19 @@
           <div class="accounts-overview__head">
             <span class="icon-tile" aria-hidden="true"><svg class="i"><use href="#i-accounts"/></svg></span>
             <div class="accounts-overview__copy">
-              <p class="eyebrow">本机 · 多账户</p>
               <h2 id="accountsOverviewTitle">一套程序，多个抖音账户</h2>
-              <p>每个账户都有独立的好友、消息、登录凭证和运行记录。启动时默认进入主账号，其他账户在这里添加和登录。</p>
             </div>
             <span class="badge badge--blue accounts-overview__badge" id="accountsCurrentBadge">当前：主账号</span>
           </div>
           <div class="accounts-stats">
-            <div class="account-stat"><span>账户总数</span><b id="accountsTotal">—</b><small>包含主账号</small></div>
-            <div class="account-stat"><span>自动运行</span><b id="accountsEnabled">—</b><small>已启用账户</small></div>
-            <div class="account-stat"><span>登录状态</span><b id="accountsLogged">—</b><small>凭证有效</small></div>
+            <div class="account-stat"><span>账户总数</span><b id="accountsTotal">—</b></div>
+            <div class="account-stat"><span>自动运行</span><b id="accountsEnabled">—</b></div>
+            <div class="account-stat"><span>登录状态</span><b id="accountsLogged">—</b></div>
           </div>
         </section>
 
         <div class="section-head">
-          <div><h2>账户列表</h2><p>进入某个账户后，好友、消息、任务和记录都会跟随该账户。</p></div>
-          <span id="accountsMeta">正在读取…</span>
+          <h2>账户列表</h2>
         </div>
         <div class="accounts-grid" id="accountsGrid" aria-live="polite"></div>
 
@@ -1312,11 +1267,6 @@
           </div>
         </section>
       </section>
-
-      <footer class="app-footer">
-        <span>本地应用 · 账号与登录凭证保存在此设备</span>
-        <span class="mono" id="buildInfoHost">正在连接本机</span>
-      </footer>
     </div>
   </div>
 
@@ -1483,19 +1433,18 @@
   const $ = (id) => document.getElementById(id);
   const el = {
     accountWorkspace: $("accountWorkspace"),
-    pageTitle: $("pageTitle"), pageContext: $("pageContext"), pageSubtitle: $("pageSubtitle"), pageDate: $("pageDate"), pageCrumb: $("pageCrumb"),
-    sidebarStatus: $("sidebarStatus"), sidebarRunStatus: $("sidebarRunStatus"), sidebarNextRun: $("sidebarNextRun"),
+    pageTitle: $("pageTitle"), pageDate: $("pageDate"), pageCrumb: $("pageCrumb"),
+    sidebarStatus: $("sidebarStatus"), sidebarRunStatus: $("sidebarRunStatus"),
     mobileStatus: $("mobileStatus"), mobileStatusText: $("mobileStatusText"),
     runBadge: $("runBadge"), runBadgeTitle: $("runBadgeTitle"), runBadgeDetail: $("runBadgeDetail"),
     accountHeading: $("accountHeading"),
-    nextRunHint: $("nextRunHint"), schedulerDot: $("schedulerDot"), schedulerStatus: $("schedulerStatus"),
-    scheduleLoginStatus: $("scheduleLoginStatus"), credentialDot: $("credentialDot"), schedulePlatform: $("schedulePlatform"),
+    nextRunHint: $("nextRunHint"),
     todayCount: $("todayCount"), todayProgress: $("todayProgress"), todayProgressBar: $("todayProgressBar"),
     progressPercent: $("progressPercent"),
-    lastRunStat: $("lastRunStat"), nextRunStat: $("nextRunStat"), statusText: $("statusText"),
+    lastRunStat: $("lastRunStat"), nextRunStat: $("nextRunStat"),
     homeFriendMeta: $("homeFriendMeta"), homeFriendList: $("homeFriendList"),
     homeRecentSummary: $("homeRecentSummary"),
-    albumGrid: $("albumGrid"), albumCount: $("albumCount"), addForm: $("addForm"),
+    albumGrid: $("albumGrid"), addForm: $("addForm"),
     toggleAddFriend: $("toggleAddFriend"), cancelAddFriend: $("cancelAddFriend"), newFriend: $("newFriend"),
     friendSummary: $("friendSummary"), friendSearch: $("friendSearch"), friendStatusFilter: $("friendStatusFilter"),
     scheduleHour: $("scheduleHour"), scheduleMinute: $("scheduleMinute"), saveSchedule: $("saveSchedule"), editTimeBtn: $("editTimeBtn"),
@@ -1505,7 +1454,7 @@
     taskWeekStrip: $("taskWeekStrip"), taskWeekRange: $("taskWeekRange"),
     weekDelivered: $("weekDelivered"), weekComplete: $("weekComplete"), weekFailed: $("weekFailed"),
     taskRecentList: $("taskRecentList"),
-    messageBox: $("messageBox"), messageCharCount: $("messageCharCount"), messageSavedBadge: $("messageSavedBadge"),
+    messageBox: $("messageBox"), messageSavedBadge: $("messageSavedBadge"),
     imageInput: $("imageInput"), messageImageCount: $("messageImageCount"),
     messageImageGallery: $("messageImageGallery"),
     saveMessageInline: $("saveMessageInline"), messageState: $("messageState"),
@@ -1531,14 +1480,14 @@
     accountChip: $("accountChip"), accountChipMark: $("accountChipMark"), accountChipName: $("accountChipName"),
     accountsCurrentBadge: $("accountsCurrentBadge"), accountsTotal: $("accountsTotal"),
     accountsEnabled: $("accountsEnabled"), accountsLogged: $("accountsLogged"),
-    accountsMeta: $("accountsMeta"), accountsGrid: $("accountsGrid"),
+    accountsGrid: $("accountsGrid"),
     addAccountBtn: $("addAccountBtn"), refreshAccounts: $("refreshAccounts"),
     accountDialog: $("accountDialog"), accountDialogTitle: $("accountDialogTitle"),
     accountDialogLead: $("accountDialogLead"), accountName: $("accountName"),
     accountDialogHint: $("accountDialogHint"), accountDialogSteps: $("accountDialogSteps"),
     submitAccount: $("submitAccount"), cancelAccountDialog: $("cancelAccountDialog"),
     closeAccountDialog: $("closeAccountDialog"),
-    flash: $("flash"), buildInfo: $("buildInfo"), buildInfoHost: $("buildInfoHost")
+    flash: $("flash")
   };
   const uploadDrop = document.querySelector(".upload-drop");
 
@@ -1566,7 +1515,6 @@
 
   const ALIAS_RE = /^好友(\d+)$/;
   const PAGE_TITLES = { home: "首页", friends: "好友管理", tasks: "自动任务", messages: "消息管理", system: "登录与记录", accounts: "多账户管理" };
-  const PAGE_EYEBROWS = { friends: "联系人", accounts: "本机账户" };
   const PAGE_KEYS = new Set(Object.keys(PAGE_TITLES));
   const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
   const STATUS_LABELS = { sent: "已发送", pending: "待发送", failed: "失败", unknown: "待核对", processing: "处理中" };
@@ -1675,58 +1623,6 @@
   }
 
   // ---------------------------------------------------------------- routing
-  function buildSubtitle() {
-    if (activePage === "accounts") {
-      if (!overview) return "正在读取本机账户…";
-      const list = overview.accounts || [];
-      if (!list.length) return "还没有账户，添加一个账户后就可以分别登录和运行";
-      const enabled = list.filter((item) => item.enabled).length;
-      const logged = list.filter((item) => item.credential?.present).length;
-      return `共 ${list.length} 个账户 · ${enabled} 个已启用 · ${logged} 个已登录。启动时默认进入主账号。`;
-    }
-    if (!state) return "正在读取本机配置…";
-    const schedule = state.schedule || {};
-    const friends = state.friends || [];
-    const message = state.message || {};
-    const texts = message.texts || [];
-    const images = message.images || [];
-    const pending = state.pendingTargets?.length ?? friends.filter((_, index) => ["pending", "failed"].includes(state.friendStatuses?.[index] || "pending")).length;
-    const next = schedule.next || "—";
-    const scheduleLine = schedule.present ? `每天 ${timeText(schedule)} 自动运行` : "计划任务尚未设置";
-
-    if (activePage === "home") {
-      if (state.running) {
-        return state.running.action === "login"
-          ? "浏览器已打开，请用抖音 App 扫码登录"
-          : `任务正在运行，已处理 ${live.done.size} 位好友，请稍候`;
-      }
-      if (state.accountEnabled === false) return "账号已停用，请检查本地账号配置";
-      if (!state.credential?.present) return `登录凭证缺失，发送前需要先扫码 · ${scheduleLine}`;
-      if (!friends.length) return "还没有好友，添加好友后即可开始每天的自动发送";
-      if (pending) return `还有 ${pending} 位好友待发送 · 下次自动运行 ${next}`;
-      return `今天的好友都已送达 · 下次自动运行 ${next}`;
-    }
-    if (activePage === "friends") {
-      return friends.length
-        ? `共 ${friends.length} 位好友 · ${schedule.present ? `每天 ${timeText(schedule)} 自动发送` : "尚未设置计划任务"}`
-        : "添加好友后，每天自动给名单中的好友发送消息";
-    }
-    if (activePage === "tasks") {
-      if (!friends.length) return "还没有好友，添加好友后每天自动发送";
-      return schedule.present
-        ? `每天 ${timeText(schedule)} 自动给 ${friends.length} 位好友发送消息`
-        : "还没有设置自动运行时间 · 选好时间保存后每天自动运行";
-    }
-    if (activePage === "messages") {
-      if (!texts.length && !images.length) return "还没有配置消息，写下候选后保存即可";
-      return `共 ${texts.length} 条文字、${images.length} 张图片候选 · 每次随机选择`;
-    }
-    if (activePage === "system") {
-      return `登录凭证与最近 ${(state.runHistory || []).length} 次运行记录 · 只保存在本机`;
-    }
-    return "";
-  }
-
   function applyPageChrome() {
     const title = PAGE_TITLES[activePage] || "首页";
     el.pageTitle.textContent = title;
@@ -1737,10 +1633,6 @@
     el.pageDate.hidden = activePage !== "home";
     el.pageDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日`;
     el.pageCrumb.hidden = activePage !== "system";
-    const eyebrow = PAGE_EYEBROWS[activePage] || "";
-    el.pageContext.textContent = eyebrow;
-    el.pageContext.hidden = !eyebrow;
-    el.pageSubtitle.hidden = activePage === "home" || activePage === "messages";
     document.querySelectorAll("[data-page-actions]").forEach((group) => {
       group.hidden = group.dataset.pageActions !== activePage;
     });
@@ -1751,7 +1643,6 @@
       if (link.dataset.pageLink === activePage) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");
     });
-    el.pageSubtitle.textContent = buildSubtitle();
   }
 
   function syncAccountLinks() {
@@ -1806,7 +1697,6 @@
     applyPageChrome();
     el.accountWorkspace.hidden = false;
     el.todayCount.textContent = "—";
-    el.pageSubtitle.textContent = "正在读取本机配置…";
     const activeView = document.querySelector(`[data-page-view="${page}"]`);
     if (activeView) {
       void activeView.offsetWidth;
@@ -1930,7 +1820,7 @@
     setIcon(el.runBadge, iconId);
   }
 
-  function renderStatus(running, total) {
+  function renderStatus(running) {
     const disabledAccount = state.accountEnabled === false;
     const canRun = !running && !disabledAccount && state.credential?.present !== false;
     el.stopBtn.hidden = !running;
@@ -1944,39 +1834,6 @@
     el.sendBtn.title = sendTitle;
     if (el.taskSendBtn) el.taskSendBtn.title = sendTitle;
     el.dryRunBtn.title = state.sendQueueReady === false ? "请先配置每日消息" : "打开浏览器检查好友定位与输入框，不会发送消息";
-
-    if (running) {
-      const actionLabel = running.action === "login" ? "等待扫码" : running.action === "dry-run" ? "检查中" : "投递中";
-      el.statusText.textContent = running.action === "login"
-        ? `${actionLabel}：浏览器已打开，用抖音 App 扫码`
-        : `${actionLabel} ${live.done.size} / ${total}`;
-      return;
-    }
-    if (disabledAccount) {
-      el.statusText.textContent = "账号当前已停用，暂时不会自动发送";
-      return;
-    }
-    if (!state.credential?.present) {
-      el.statusText.textContent = "登录凭证缺失，先扫码登录再发送";
-      return;
-    }
-    const run = state.lastRun;
-    if (!run) {
-      el.statusText.textContent = "今天还未投递，等待第一次运行";
-      return;
-    }
-    const stamp = asDate(run.finishedAt);
-    const isToday = stamp ? sameDay(stamp, nowDate()) : false;
-    const kind = run.dryRun ? "检查" : "投递";
-    const unknown = Number(run.unknown || 0);
-    const failed = Number(run.failed || 0);
-    const ok = Number(run.ok || 0);
-    const totalRun = ok + failed;
-    const tail = unknown ? `，${unknown} 位待核对` : failed ? `，${failed} 位没成功` : run.dryRun ? "，检查通过" : "，全部送达";
-    const result = `${ok} / ${totalRun}${tail}`;
-    el.statusText.textContent = isToday
-      ? `今天${kind} ${stamp ? formatClock(stamp) : ""}：${result}`
-      : `今天还未${kind} · 上次${kind} ${formatWhen(run.finishedAt)}：${result}`;
   }
 
   function setWeekStat(node, value, unit) {
@@ -2253,7 +2110,6 @@
     const counts = { sent: 0, pending: 0, failed: 0, unknown: 0 };
     friends.forEach((_, index) => { counts[friendStatus(index, stamped)] += 1; });
     renderFriendSummary(friends.length, counts);
-    el.albumCount.textContent = `${friends.length} 位好友 · ${state.schedule?.present ? `每天 ${timeText(state.schedule)} 自动发送` : "尚未设置计划任务"}`;
 
     const query = el.friendSearch.value.trim().toLocaleLowerCase();
     const filter = el.friendStatusFilter.value;
@@ -2467,11 +2323,6 @@
     return el.messageBox.value.split("\n").map((line) => line.trim()).filter(Boolean);
   }
 
-  function updateMessageCount() {
-    const lines = currentMessageTexts();
-    el.messageCharCount.textContent = `${el.messageBox.value.length} 字 · ${lines.length} 条`;
-  }
-
   function updateSavedBadge(unsaved, unconfigured = false) {
     if (unconfigured && !unsaved) {
       el.messageSavedBadge.textContent = "未配置";
@@ -2493,7 +2344,6 @@
     if (document.activeElement !== el.messageBox && !messageDirty) {
       el.messageBox.value = savedTexts.join("\n");
     }
-    updateMessageCount();
     updateSavedBadge(messageDirty || imageTouched, !savedTexts.length && !savedImages.length && !messageDirty && !imageTouched);
 
     let mode = "";
@@ -2606,14 +2456,6 @@
     el.scheduleCountdown.textContent = text;
   }
 
-  function platformLabel() {
-    const ua = navigator.userAgent || "";
-    if (/Mac/i.test(ua)) return "macOS launchd";
-    if (/Win/i.test(ua)) return "Windows 计划任务";
-    if (/Linux/i.test(ua)) return "Linux cron";
-    return "系统计划任务";
-  }
-
   function renderSchedule() {
     const schedule = state.schedule || { hour: 7, minute: 0, present: false, next: "—" };
     if (document.activeElement !== el.scheduleHour) el.scheduleHour.value = pad(schedule.hour);
@@ -2627,28 +2469,15 @@
     el.scheduleEnabled.className = `badge ${schedule.present ? "badge--green" : ""}`;
     el.scheduleState.textContent = schedule.present ? "已启用" : "未启用";
     el.nextRunHint.textContent = schedule.present ? "每日自动运行" : "保存时间后会启用每日自动运行";
-    el.schedulerStatus.textContent = schedule.present ? "计划任务已加载" : "计划任务未配置";
-    el.schedulerDot.className = `dot ${schedule.present ? "dot--green" : "dot--gray"}`;
-
-    const credential = state.credential || { present: false };
-    const updated = asDate(credential.updatedAt);
-    el.scheduleLoginStatus.textContent = credential.present
-      ? `登录有效 · ${updated ? `${formatClock(updated)} 更新` : "刚刚更新"}`
-      : "登录凭证缺失";
-    el.credentialDot.className = `dot ${credential.present ? "dot--green" : "dot--gray"}`;
-    el.schedulePlatform.textContent = platformLabel();
+    let warning = "";
     if (schedule.present && schedule.unstableLocation) {
-      el.scheduleNote.dataset.tone = "warning";
-      el.scheduleNoteText.textContent = "当前应用还在临时位置，退出后定时任务可能失效。请把应用拖到「应用程序」文件夹，再点「保存时间」。";
+      warning = "当前应用还在临时位置，退出后定时任务可能失效。请把应用拖到「应用程序」文件夹，再点「保存时间」。";
     } else if (schedule.present && schedule.commandMatches === false) {
-      el.scheduleNote.dataset.tone = "warning";
-      el.scheduleNoteText.textContent = "系统计划任务指向旧位置，点「保存时间」即可修复。";
-    } else {
-      el.scheduleNote.dataset.tone = "";
-      el.scheduleNoteText.textContent = schedule.present
-        ? "退出应用后，系统计划任务仍会在设定时间自动运行。"
-        : "保存时间后，即使退出应用，系统也会在设定时间自动运行。";
+      warning = "系统计划任务指向旧位置，点「保存时间」即可修复。";
     }
+    el.scheduleNote.hidden = !warning;
+    el.scheduleNote.dataset.tone = warning ? "warning" : "";
+    el.scheduleNoteText.textContent = warning;
     updateCountdown();
   }
 
@@ -2874,12 +2703,12 @@
             ? "运行需留意"
             : "运行就绪";
     el.sidebarRunStatus.textContent = label;
-    el.sidebarNextRun.textContent = state.schedule?.next ? `下次执行：${state.schedule.next}` : "下次执行：未配置";
     el.sidebarStatus.dataset.running = String(Boolean(running));
     el.sidebarStatus.dataset.attention = String(Boolean(needsAttention));
-    el.sidebarStatus.setAttribute("aria-label", `${label}，${el.sidebarNextRun.textContent}`);
+    const nextText = state.schedule?.next ? `下次执行：${state.schedule.next}` : "下次执行：未配置";
+    el.sidebarStatus.setAttribute("aria-label", `${label}，${nextText}`);
     el.mobileStatusText.textContent = label;
-    el.mobileStatus.title = `${label} · ${el.sidebarNextRun.textContent}`;
+    el.mobileStatus.title = `${label} · ${nextText}`;
     el.mobileStatus.dataset.running = String(Boolean(running));
     el.mobileStatus.dataset.attention = String(Boolean(needsAttention));
   }
@@ -2919,9 +2748,7 @@
     nameLine.append(name);
     if (current) nameLine.append(accountBadge("当前", "blue"));
     if (isRunning) nameLine.append(accountBadge(running.action === "login" ? "等待扫码" : "运行中", "blue"));
-    const sub = document.createElement("p");
-    sub.textContent = `ID ${account.id}${account.id === "main" ? " · 默认登录账户" : ""}`;
-    title.append(nameLine, sub);
+    title.append(nameLine);
 
     const loginBadge = accountBadge(credential.present ? "已登录" : "待登录", credential.present ? "green" : "amber");
     head.append(avatar, title, loginBadge);
@@ -2961,19 +2788,11 @@
     runItem.append(runTerm, runDetail);
     stats.append(runItem);
 
-    const hint = document.createElement("p");
-    hint.className = "account-card__hint";
+    let hint = null;
     if (account.error) {
-      hint.dataset.tone = "error";
+      hint = document.createElement("p");
+      hint.className = "account-card__hint";
       hint.textContent = "账户配置读取失败，进入账户查看具体提示。";
-    } else if (!account.configured) {
-      hint.textContent = account.id === "main"
-        ? "还没有配置好友或消息，进入账户补充后再运行。"
-        : "先登录这个账户，再进入账户添加好友和消息，之后才能开启自动运行。";
-    } else if (!credential.present) {
-      hint.textContent = "登录凭证缺失，先扫码登录这个账户。";
-    } else {
-      hint.textContent = "好友、消息、任务和运行记录只属于这个账户。";
     }
 
     const actions = document.createElement("div");
@@ -3023,7 +2842,9 @@
     }
     foot.append(toggle, manage);
 
-    card.append(head, badges, stats, hint, actions, foot);
+    card.append(head, badges, stats);
+    if (hint) card.append(hint);
+    card.append(actions, foot);
     return card;
   }
 
@@ -3038,11 +2859,10 @@
       el.accountsTotal.textContent = "—";
       el.accountsEnabled.textContent = "—";
       el.accountsLogged.textContent = "—";
-      el.accountsMeta.textContent = "正在读取…";
       el.accountsGrid.textContent = "";
       const loading = document.createElement("div");
       loading.className = "accounts-empty card empty";
-      loading.innerHTML = `${iconMarkup("i-accounts", "i")}<p>正在读取本机账户…</p>`;
+      loading.innerHTML = `${iconMarkup("i-accounts", "i")}<p>正在读取账户…</p>`;
       el.accountsGrid.append(loading);
       return;
     }
@@ -3056,8 +2876,6 @@
     setStat(el.accountsTotal, accounts.length);
     setStat(el.accountsEnabled, enabledCount);
     setStat(el.accountsLogged, loggedCount);
-    el.accountsMeta.textContent = `${accounts.length} 个账户 · 主账号默认登录`;
-    el.pageSubtitle.textContent = buildSubtitle();
 
     el.accountsGrid.textContent = "";
     if (!accounts.length) {
@@ -3117,7 +2935,6 @@
     el.todayProgress.dataset.complete = String(total > 0 && counts.sent >= total);
     el.todayProgress.setAttribute("aria-valuemax", String(total));
     el.todayProgress.setAttribute("aria-valuenow", String(counts.sent));
-    el.albumCount.textContent = `${friends.length} 位好友 · ${state.schedule?.present ? `每天 ${timeText(state.schedule)} 自动发送` : "尚未设置计划任务"}`;
     const lastStamp = asDate(state.lastRun?.finishedAt);
     el.lastRunStat.textContent = running
       ? "正在运行"
@@ -3127,7 +2944,7 @@
     el.nextRunStat.textContent = state.schedule?.next || "—";
 
     renderRunBadge(running, counts, total);
-    renderStatus(running, total);
+    renderStatus(running);
     renderWeekStrip(counts);
     renderHomeFriends(friends, stamped, running, counts);
     renderHomeRecent(state.runHistory || []);
@@ -3481,8 +3298,6 @@
 
   // ---------------------------------------------------------------- wiring
   fillTimeOptions();
-  el.buildInfo.textContent = window.location.host;
-  el.buildInfoHost.textContent = window.location.host;
 
   el.flash.addEventListener("click", () => flash(""));
 
@@ -3549,7 +3364,6 @@
 
   el.messageBox.addEventListener("input", () => {
     messageDirty = true;
-    updateMessageCount();
     updateSavedBadge(true);
   });
 
