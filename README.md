@@ -22,24 +22,24 @@
 6. **看结果**：之后每天自动执行，结果在「登录与记录」的运行历史里。
 
 
-## 快速安装（可选）
+## 本地部署（可选）
 
 装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会开机自启，关掉终端不影响。
 首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。
 
-**macOS（Apple Silicon）**
+**macOS**
 
 ```bash
 curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash
 ```
 
-**Windows（10 / 11）**
+**Windows**
 
 ```powershell
 irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
-**Linux（x86_64，需要 systemd）**
+**Linux**
 
 ```bash
 curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
