@@ -110,7 +110,34 @@ function Wait-Panel([int]$Seconds = 90) {
     return $false
 }
 
+function Install-Fire {
+    $commandDir = Join-Path $env:LOCALAPPDATA 'Douyin Fire\bin'
+    New-Item -ItemType Directory -Force -Path $commandDir | Out-Null
+    $launcher = @('@echo off', "start `"`" `"$PanelUrl`"")
+    Set-Content -Path (Join-Path $commandDir 'fire.cmd') -Value $launcher -Encoding $TextEncoding
+
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ($commandDir -notin ($userPath -split ';')) {
+        $updatedPath = if ($userPath) { "$userPath;$commandDir" } else { $commandDir }
+        [Environment]::SetEnvironmentVariable('Path', $updatedPath, 'User')
+    }
+    if ($commandDir -notin ($env:Path -split ';')) {
+        $env:Path = "$env:Path;$commandDir"
+    }
+    Write-Host '已安装 fire 命令，重新打开终端后输入 fire 即可打开面板。' -ForegroundColor Green
+}
+
+function Remove-Fire {
+    $commandDir = Join-Path $env:LOCALAPPDATA 'Douyin Fire\bin'
+    Remove-Item (Join-Path $commandDir 'fire.cmd') -Force -ErrorAction SilentlyContinue
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $updatedPath = ($userPath -split ';' | Where-Object { $_ -ine $commandDir }) -join ';'
+    [Environment]::SetEnvironmentVariable('Path', $updatedPath, 'User')
+    $env:Path = ($env:Path -split ';' | Where-Object { $_ -ine $commandDir }) -join ';'
+}
+
 function Invoke-Uninstall {
+    Remove-Fire
     Write-Step '停止面板服务'
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
@@ -200,6 +227,8 @@ shell.Run """" & "$panelCmd" & """", 0, False
         Write-Step "设置每日 $Schedule 自动运行"
         Invoke-RestMethod -Uri "${PanelUrl}api/schedule" -Method Post -ContentType 'application/json; charset=utf-8' -Body $body | Out-Null
     }
+
+    Install-Fire
 
     Write-Host ''
     Write-Host " 安装完成" -ForegroundColor Green

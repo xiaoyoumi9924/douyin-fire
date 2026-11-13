@@ -33,3 +33,7 @@ jobs:
         shell: pwsh
         run: |
           [void][scriptblock]::Create((Get-Content -Raw scripts/install.ps1))
+      - name: Windows fire command
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tests/check_fire_windows.ps1

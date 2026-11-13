@@ -125,7 +125,58 @@ asset_url() {
   printf 'https://github.com/%s/releases/download/%s/Douyin.Fire-%s.AppImage' "$REPO" "$tag" "$ver"
 }
 
+install_fire() {
+  local command_dir="${DOUYIN_BIN_DIR:-$HOME/.local/bin}" profile
+  remove_fire
+  mkdir -p "$command_dir"
+  # URL is fixed at installation time, including a custom port.
+  {
+    printf '#!/usr/bin/env bash\nurl=%q\n' "$(panel_url)"
+    cat <<'FIRE'
+case "$(uname -s)" in
+  Darwin) exec open "$url" ;;
+  Linux)
+    if command -v xdg-open >/dev/null 2>&1; then
+      exec xdg-open "$url"
+    fi
+    printf '请用浏览器打开：%s\n' "$url"
+    ;;
+  *) printf '请用浏览器打开：%s\n' "$url" ;;
+esac
+FIRE
+  } > "$command_dir/fire"
+  chmod +x "$command_dir/fire"
+  # Login and interactive shells both need the command after reopening a terminal.
+  for profile in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "${ZDOTDIR:-$HOME}/.zprofile" "${ZDOTDIR:-$HOME}/.zshrc"; do
+    if [ "$profile" = "$HOME/.bash_profile" ] && [ ! -f "$profile" ]; then continue; fi
+    mkdir -p "$(dirname "$profile")"
+    if ! grep -Fq '# douyin-fire command' "$profile" 2>/dev/null; then
+      if [ -s "$profile" ] && [ "$(tail -c 1 "$profile" | wc -l | tr -d ' ')" = 0 ]; then
+        printf '\n' >> "$profile"
+      fi
+      printf 'export PATH=%q:"$PATH" # douyin-fire command\n' "$command_dir" >> "$profile"
+    fi
+  done
+  ok "已安装 fire 命令，重新打开终端后输入 fire 即可打开面板"
+}
+
+remove_fire() {
+  rm -f "${DOUYIN_BIN_DIR:-$HOME/.local/bin}/fire"
+  local profile
+  for profile in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "${ZDOTDIR:-$HOME}/.zprofile" "${ZDOTDIR:-$HOME}/.zshrc"; do
+    if [ -f "$profile" ] && grep -Fq '# douyin-fire command' "$profile"; then
+      # Preserve all unrelated content, permissions and profile symlinks.
+      local cleaned
+      cleaned="$(mktemp "${TMPDIR:-/tmp}/douyin-fire-profile.XXXXXX")"
+      sed '/# douyin-fire command$/d' "$profile" > "$cleaned"
+      cat "$cleaned" > "$profile"
+      rm -f "$cleaned"
+    fi
+  done
+}
+
 do_uninstall() {
+  remove_fire
   step "停止面板服务"
   systemctl --user disable --now "$UNIT" >/dev/null 2>&1 || true
   rm -f "$HOME/.config/systemd/user/$UNIT"
@@ -275,6 +326,8 @@ main() {
   if [ -n "$SCHEDULE" ]; then
     apply_schedule "$SCHEDULE"
   fi
+
+  install_fire
 
   local panel
   panel="$(panel_url)"

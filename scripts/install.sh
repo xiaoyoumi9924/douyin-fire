@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 抖音自动续火花 · macOS 一键安装
+# 抖音自动续火花 · macOS / Linux 一键安装
 #
 #   curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash
 #   GitHub 很慢时把 releases/latest/download 换成
@@ -60,7 +60,7 @@ die()  { printf '%s错误：%s%s\n' "$RED" "$*" "$RESET" >&2; exit 1; }
 
 usage() {
   cat <<'TEXT'
-抖音自动续火花 · macOS 一键安装
+抖音自动续火花 · macOS / Linux 一键安装
 
   curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash
 
@@ -162,7 +162,58 @@ parse_args() {
   done
 }
 
+install_fire() {
+  local command_dir="${DOUYIN_BIN_DIR:-$HOME/.local/bin}" profile
+  remove_fire
+  mkdir -p "$command_dir"
+  # URL is fixed at installation time, including a custom port.
+  {
+    printf '#!/usr/bin/env bash\nurl=%q\n' "$(panel_url)"
+    cat <<'FIRE'
+case "$(uname -s)" in
+  Darwin) exec open "$url" ;;
+  Linux)
+    if command -v xdg-open >/dev/null 2>&1; then
+      exec xdg-open "$url"
+    fi
+    printf '请用浏览器打开：%s\n' "$url"
+    ;;
+  *) printf '请用浏览器打开：%s\n' "$url" ;;
+esac
+FIRE
+  } > "$command_dir/fire"
+  chmod +x "$command_dir/fire"
+  # Login and interactive shells both need the command after reopening a terminal.
+  for profile in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "${ZDOTDIR:-$HOME}/.zprofile" "${ZDOTDIR:-$HOME}/.zshrc"; do
+    if [ "$profile" = "$HOME/.bash_profile" ] && [ ! -f "$profile" ]; then continue; fi
+    mkdir -p "$(dirname "$profile")"
+    if ! grep -Fq '# douyin-fire command' "$profile" 2>/dev/null; then
+      if [ -s "$profile" ] && [ "$(tail -c 1 "$profile" | wc -l | tr -d ' ')" = 0 ]; then
+        printf '\n' >> "$profile"
+      fi
+      printf 'export PATH=%q:"$PATH" # douyin-fire command\n' "$command_dir" >> "$profile"
+    fi
+  done
+  ok "已安装 fire 命令，重新打开终端后输入 fire 即可打开面板"
+}
+
+remove_fire() {
+  rm -f "${DOUYIN_BIN_DIR:-$HOME/.local/bin}/fire"
+  local profile
+  for profile in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "${ZDOTDIR:-$HOME}/.zprofile" "${ZDOTDIR:-$HOME}/.zshrc"; do
+    if [ -f "$profile" ] && grep -Fq '# douyin-fire command' "$profile"; then
+      # Preserve all unrelated content, permissions and profile symlinks.
+      local cleaned
+      cleaned="$(mktemp "${TMPDIR:-/tmp}/douyin-fire-profile.XXXXXX")"
+      sed '/# douyin-fire command$/d' "$profile" > "$cleaned"
+      cat "$cleaned" > "$profile"
+      rm -f "$cleaned"
+    fi
+  done
+}
+
 do_uninstall() {
+  remove_fire
   local app="$INSTALL_DIR/$APP_NAME.app"
   step "停止面板服务"
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
@@ -332,9 +383,22 @@ apply_schedule() {
 }
 
 main() {
+  if [ "$(uname -s)" = "Linux" ]; then
+    # A checkout can use its sibling; a curl | bash invocation downloads it.
+    local sibling="$(dirname "${BASH_SOURCE[0]:-}")/install-linux.sh"
+    if [ -f "${BASH_SOURCE[0]:-}" ] && [ -f "$sibling" ]; then
+      exec bash "$sibling" "$@"
+    fi
+    TMP="$(mktemp -d "${TMPDIR:-/tmp}/douyin-fire-install.XXXXXX")"
+    curl -fsSL --retry 3 --connect-timeout 20 \
+      "https://github.com/$REPO/releases/latest/download/install-linux.sh" -o "$TMP/install-linux.sh" \
+      || die "下载 Linux 安装脚本失败，请检查网络"
+    bash "$TMP/install-linux.sh" "$@"
+    return
+  fi
   parse_args "$@"
 
-  [ "$(uname -s)" = "Darwin" ] || die "这个脚本目前只支持 macOS；Windows / Linux 请从 Releases 下载安装包"
+  [ "$(uname -s)" = "Darwin" ] || die "这个脚本支持 macOS / Linux；Windows 请使用 install.ps1"
   [ "$(uname -m)" = "arm64" ] || die "目前 Release 只提供 Apple Silicon（arm64）版本；Intel Mac 暂不支持"
 
   if [ "$UNINSTALL" -eq 1 ]; then
@@ -414,6 +478,8 @@ main() {
   if [ -n "$SCHEDULE" ]; then
     apply_schedule "$SCHEDULE"
   fi
+
+  install_fire
 
   local url
   url="$(panel_url)"

@@ -24,27 +24,30 @@
 
 ## 本地部署web（可选）
 
-装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会开机自启，关掉终端不影响。
-首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。</br>
-先安装 [Node.js](https://nodejs.org/)和 [Git](https://git-scm.com/downloads)，然后在终端运行：
+装完会输出本机面板地址（默认 `http://127.0.0.1:8765/`），面板会随用户登录自动启动，关掉终端不影响。
+首次仍需在面板里扫码登录、加好友、写消息，最后在「自动任务」点一次「保存时间」。
 
-**macOS**
+**macOS / Linux（自动识别系统）**
+
+macOS 支持 Apple Silicon；Linux 支持 x86_64，需要 systemd 用户服务和图形桌面。
 
 ```bash
 curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.sh | bash
 ```
 
-**Windows**
+**Windows（10 / 11，在 PowerShell 中运行）**
 
 ```powershell
 irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
-**Linux**
+安装完成后，重新打开终端，输入下面的命令即可用默认浏览器打开面板（自定义端口也会自动记住）：
 
-```bash
-curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install-linux.sh | bash
+```text
+fire
 ```
+
+已安装过的用户重新运行对应的安装命令，即可添加 `fire` 命令。
 
 ## 来源与许可
 
