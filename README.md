@@ -40,7 +40,7 @@ curl -fsSL https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download
 irm https://github.com/xiaoyoumi9924/douyin-fire/releases/latest/download/install.ps1 | iex
 ```
 
-安装完成后，重新打开终端，输入下面的命令即可用默认浏览器打开面板：fire。
+安装完成后，重新打开终端，输入 fire 命令即可用默认浏览器打开面板。
 
 ## 来源与许可
 
