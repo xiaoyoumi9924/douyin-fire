@@ -17,7 +17,8 @@ async def page():
     from playwright.async_api import async_playwright
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
-        page = await browser.new_page()
+        # UI fixtures use +08:00 dates; keep their calendar days stable on UTC CI hosts.
+        page = await browser.new_page(timezone_id="Asia/Shanghai")
         yield page
         await browser.close()
 
