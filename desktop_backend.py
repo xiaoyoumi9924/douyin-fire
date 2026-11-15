@@ -30,7 +30,7 @@ def main() -> int:
 
     arguments = sys.argv[1:]
     if not arguments:
-        print("用法: douyin-fire-backend serve|run|login [参数]", file=sys.stderr)
+        print("用法: douyin-fire-backend serve|run|login|sync-friends|health-check [参数]", file=sys.stderr)
         return 2
 
     mode, *rest = arguments
@@ -49,6 +49,12 @@ def main() -> int:
         from scripts.login_mac import main as login
 
         return login()
+
+    if mode in {"sync-friends", "health-check"}:
+        sys.argv = ["sync_friends.py", *(["--health-check"] if mode == "health-check" else []), *rest]
+        from app.contacts import main as sync_friends
+
+        return sync_friends()
 
     print(f"未知命令: {mode}", file=sys.stderr)
     return 2

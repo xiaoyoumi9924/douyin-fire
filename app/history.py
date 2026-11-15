@@ -84,7 +84,7 @@ class History:
                 record = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if not isinstance(record, dict) or record.get("task_id") != task_id or record.get("dry_run"):
+            if not isinstance(record, dict) or record.get("task_id") != task_id or record.get("dry_run") or record.get("message_scoped"):
                 continue
             finished_at = record.get("finished_at")
             if not isinstance(finished_at, str):
@@ -225,18 +225,57 @@ class History:
                         "migrated_from_legacy": True,
                     }
 
-    def reserve(self, key: str) -> None:
-        self.entries[key] = {"status": "unknown", "started_at": datetime.now().astimezone().isoformat()}
+    def reserve(self, key: str, *, selected_choice: int | None = None) -> None:
+        previous = self.entries.get(key, {})
+        reviews = list(previous.get("reviews", [])) if isinstance(previous, dict) else []
+        if isinstance(previous, dict) and previous.get("review_decision") == "not_sent":
+            reviews.append({"action": "retry", "at": datetime.now().astimezone().isoformat(), "outcome": "unknown"})
+        self.entries[key] = {"status": "unknown", "started_at": datetime.now().astimezone().isoformat(), **({"reviews": reviews} if reviews else {})}
+        if selected_choice is not None:
+            self.entries[key]["selected_choice"] = selected_choice
+        elif isinstance(previous, dict) and "selected_choice" in previous:
+            self.entries[key]["selected_choice"] = previous["selected_choice"]
         self._save()
 
     def mark_success(self, key: str) -> None:
-        self.entries[key] = {"status": "success", "finished_at": datetime.now().astimezone().isoformat()}
+        self._set_outcome(key, {"status": "success", "finished_at": datetime.now().astimezone().isoformat()})
         self._save()
 
     def mark_failed(self, key: str, error: str | None = None) -> None:
         entry = {"status": "failed", "finished_at": datetime.now().astimezone().isoformat()}
         if error:
             entry["error"] = str(error)[:500]
+        self._set_outcome(key, entry)
+        self._save()
+
+    def _set_outcome(self, key: str, entry: dict) -> None:
+        previous = self.entries.get(key)
+        if isinstance(previous, dict) and "selected_choice" in previous:
+            entry["selected_choice"] = previous["selected_choice"]
+        if isinstance(previous, dict) and previous.get("reviews"):
+            entry["reviews"] = [dict(event) for event in previous["reviews"]]
+            if entry["reviews"][-1].get("action") == "retry":
+                entry["reviews"][-1]["outcome"] = entry["status"]
+                entry["reviews"][-1]["completedAt"] = entry.get("finished_at")
+        self.entries[key] = entry
+
+    def review_token(self, key: str) -> str:
+        payload = str(self.path.resolve()) + "\0" + key + "\0" + json.dumps(self.entries.get(key), sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def review(self, key: str, token: str, decision: str, *, target: str, message_number: int) -> None:
+        if self.status(key) != "unknown" or token != self.review_token(key):
+            raise ValueError("记录已变化，请刷新后重新核对")
+        if decision not in {"sent", "not_sent"}:
+            raise ValueError("请选择已发送或未发送")
+        previous = self.entries.get(key)
+        entry = dict(previous) if isinstance(previous, dict) else {"status": "unknown"}
+        event = {"action": decision, "at": datetime.now().astimezone().isoformat(), "target": target, "messageNumber": message_number}
+        entry["reviews"] = [*entry.get("reviews", []), event]
+        entry["review_decision"] = decision
+        # Confirmed-unsent stays unknown: only a separate explicit retry can
+        # send it. Native schedulers and ordinary runs must keep skipping it.
+        entry["status"] = "success" if decision == "sent" else "unknown"
         self.entries[key] = entry
         self._save()
 
@@ -244,6 +283,7 @@ class History:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(".tmp")
         temporary.write_text(json.dumps(self.entries, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.chmod(temporary, 0o600)
         temporary.replace(self.path)
 
     def _load(self) -> dict:

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>续火花 · 多用户模块设计稿</title>
+<style>
+  :root{
+    --canvas:#F5F5F7;--ink:#1D1D1F;--ink-2:#515154;--ink-3:#86868B;--ink-4:#A6A6AB;
+    --line:#E2E3E8;--blue:#0066CC;--blue-soft:#EAF2FD;--white:#fff;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{width:1520px;background:#F0F1F4;color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  .wrap{padding:44px 40px 48px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:36px}
+  .kicker{display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--ink-3);font-size:11px;font-weight:650;letter-spacing:.14em;text-transform:uppercase}
+  .kicker i{display:block;width:18px;height:1.5px;background:var(--blue)}
+  h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-1.2px;line-height:1.1}
+  header p{margin:12px 0 0;max-width:64ch;color:var(--ink-2);font-size:13.5px;line-height:1.65}
+  .chips{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:390px;padding-bottom:4px}
+  .chip{padding:5px 10px;border:1px solid #DFE2E8;border-radius:999px;background:#fff;color:var(--ink-2);font-size:11px;font-weight:550;white-space:nowrap}
+  .chip.is-new{border-color:#CFE1F9;background:var(--blue-soft);color:#0A4C99}
+
+  .frame{margin-top:40px}
+  .frame:first-of-type{margin-top:0}
+  .frame-label{display:flex;align-items:baseline;gap:10px;margin:0 2px 12px;font-size:12.5px;color:var(--ink-3)}
+  .frame-label .num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.04em}
+  .frame-label b{color:var(--ink);font-size:13.5px;font-weight:700;letter-spacing:-.1px}
+  .frame-label span.desc{color:var(--ink-3)}
+  .screen{overflow:hidden;border:1px solid #D9DBE1;border-radius:16px;background:#fff;box-shadow:0 20px 46px rgba(17,23,33,.10),0 2px 6px rgba(17,23,33,.05)}
+  .screen iframe{display:block;width:1440px;border:0;background:#fff}
+
+  footer{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:36px;padding-top:18px;border-top:1px solid #E0E2E7;color:var(--ink-3);font-size:11.5px}
+  footer b{color:var(--ink-2);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="kicker"><i></i>Design draft · v1</p>
+      <h1>多用户模块 · 本地多成员</h1>
+      <p>一台电脑，多人轮流使用：各自登录、各自的数据分区，成员之间看不到好友、消息和运行记录。自动任务按成员排队执行。示例成员与数字仅用于说明版式。</p>
+    </div>
+    <div class="chips">
+      <span class="chip is-new">用户块</span>
+      <span class="chip is-new">角色徽标</span>
+      <span class="chip is-new">成员行</span>
+      <span class="chip is-new">进度条</span>
+      <span class="chip">侧栏 236px</span>
+    </div>
+  </header>
+
+  <section class="frame">
+    <p class="frame-label"><span class="num">01</span><b>登录</b><span class="desc">未登录时全屏出现，不带侧栏；选择成员 + 密码，一次只登录一个人</span></p>
+    <div class="screen"><iframe src="login.html" width="1440" height="860" scrolling="no"></iframe></div>
+  </section>
+
+  <section class="frame">
+    <p class="frame-label"><span class="num">02</span><b>用户与成员</b><span class="desc">管理员页面：身份卡 + 成员列表 + 数据边界说明；侧栏底部是切换入口</span></p>
+    <div class="screen"><iframe src="members.html" width="1440" height="1020" scrolling="no"></iframe></div>
+  </section>
+
+  <section class="frame">
+    <p class="frame-label"><span class="num">03</span><b>关键弹层</b><span class="desc">切换用户 / 添加成员 / 删除成员；删除要求输入名字并选择数据处理方式</span></p>
+    <div class="screen"><iframe src="dialogs.html" width="1440" height="716" scrolling="no"></iframe></div>
+  </section>
+
+  <footer>
+    <span><b>多用户模块</b> · 设计稿第 1 版 · 2026-10-25</span>
+    <span>实现方案、数据布局与迁移步骤见 docs/multi-user-design.md</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -41,6 +41,7 @@ async def run(
     *,
     catch_up: bool = False,
     not_before: str | None = None,
+    review_message: str | None = None,
 ) -> int:
     try:
         settings = load_settings(env_file)
@@ -75,11 +76,30 @@ async def run(
         task.targets,
         config_path=settings.task_config_path,
     )
-    targets_to_run = list(enumerate(task.targets))
+    review_key = None
+    review_target_index = None
+    if review_message:
+        from app.review import find_review
+        if dry_run or catch_up:
+            raise ConfigError("人工补发不能与试运行或自动补跑组合")
+        try:
+            review_key, review_target_index, _, _, _ = find_review(task, history, review_message)
+        except ValueError as exc:
+            raise ConfigError(str(exc)) from exc
+        entry = history.entries.get(review_key)
+        if not isinstance(entry, dict) or entry.get("review_decision") != "not_sent":
+            raise ConfigError("请先人工确认这条消息未发送，再单独补发")
+        if not task.targets[review_target_index].enabled:
+            raise ConfigError("这位好友已暂停，请恢复后再补发")
+    targets_to_run = [(index, target) for index, target in enumerate(task.targets) if target.enabled]
     results: list[TargetResult] = []
-    if not dry_run:
+    if review_key:
+        targets_to_run = [(review_target_index, task.targets[review_target_index])]
+    elif not dry_run:
         targets_to_run = []
         for index, target in enumerate(task.targets):
+            if not target.enabled:
+                continue
             keys = [
                 history.key(task.task_id, run_date, target.name, message_id(message_index, message))
                 for message_index, message in enumerate(target.messages)
@@ -106,7 +126,7 @@ async def run(
                 await _notify_webhook(settings, task.task_id, False, results, [])
                 await send_macos_notification(False, results)
             else:
-                LOGGER.info("今天的好友都已确认送达，无需重复发送")
+                LOGGER.info("今天的好友都已确认送达，无需重复发送" if any(target.enabled for target in task.targets) else "所有好友均已暂停，本次不发送")
             return 1 if results else 0
 
     if not settings.storage_state and not settings.cookie:
@@ -179,17 +199,20 @@ async def run(
                                 message_key = history.key(
                                     task.task_id, run_date, target.name, message_id(message_index, message)
                                 )
+                                if review_key and message_key != review_key:
+                                    continue
 
                                 status = history.status(message_key)
                                 if status == "success":
                                     LOGGER.info("跳过当天已确认成功的消息: %s #%d", alias, message_index + 1)
                                     metrics.record_skipped_message()
                                     continue
-                                if status == "unknown":
+                                if status == "unknown" and message_key != review_key:
                                     raise SendOutcomeUnknownError("存在未核对的消息结果；为避免重复，本次停止处理该好友")
 
                                 # 发送单条消息并计时
                                 msg_start = time.time()
+                                from app.rules import rotation_choice
                                 await _send_message_with_retry(
                                     page,
                                     chat,
@@ -199,6 +222,7 @@ async def run(
                                     message_key,
                                     alias,
                                     message_index + 1,
+                                    **({"rotation_index": message.choices.index(rotation_choice(message, run_date, target.name))} if message.type == "rotation" else {}),
                                 )
                                 msg_duration = time.time() - msg_start
                                 metrics.record_message_time(msg_duration)
@@ -307,6 +331,7 @@ async def run(
         aliases,
         started_at=metrics.started_at,
         duration_seconds=metrics.total_duration_seconds,
+        **({"message_scoped": True} if review_message else {}),
     )
     await _notify_dingtalk(settings, task.task_id, dry_run, results, screenshots)
     await _notify_webhook(settings, task.task_id, dry_run, results, screenshots)
@@ -332,6 +357,7 @@ def main() -> int:
                     env_file=args.env_file,
                     catch_up=args.catch_up,
                     not_before=args.not_before,
+                    **({"review_message": args.review_message} if args.review_message else {}),
                 )
             )
     except (ConfigError, AuthenticationError, RiskControlError, SearchBoxNotReadyError, AlreadyRunningError) as exc:
@@ -350,6 +376,7 @@ def _parse_cli_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="只验证登录和好友，不发送消息")
     parser.add_argument("--env-file", help="指定 .env 文件路径")
     parser.add_argument("--account", help="只运行多账号配置中的指定账号（通过 run.py 使用）")
+    parser.add_argument("--review-message", help="只补发已经人工确认未发送的一条消息")
     parser.add_argument(
         "--catch-up",
         action="store_true",
@@ -431,7 +458,7 @@ def _today_has_finished_run(artifacts_dir: Path, timezone: str) -> bool:
     ``CATCH_UP_MAX_ATTEMPTS`` 限制，不会无限跑。
     """
     payload = _read_json(artifacts_dir / "result.json")
-    if not isinstance(payload, dict) or payload.get("dry_run"):
+    if not isinstance(payload, dict) or payload.get("dry_run") or payload.get("message_scoped"):
         return False
     finished_at = payload.get("finished_at")
     if not isinstance(finished_at, str):
@@ -532,6 +559,7 @@ def _write_results(
     *,
     started_at: str | None = None,
     duration_seconds: float | None = None,
+    message_scoped: bool = False,
 ) -> None:
     payload: dict = {
         "task_id": task_id,
@@ -541,8 +569,15 @@ def _write_results(
     }
     if started_at:
         payload["started_at"] = started_at
+    if message_scoped:
+        payload["message_scoped"] = True
     if duration_seconds is not None:
         payload["duration_seconds"] = round(float(duration_seconds), 1)
+    try:
+        from app.streaks import record_success
+        record_success(artifacts_dir, results, dry_run)
+    except (OSError, ValueError, TypeError):
+        LOGGER.warning("本地火花累计保存失败，不影响发送结果")
     (artifacts_dir / "result.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
         _append_run_history(artifacts_dir, payload)
@@ -551,23 +586,18 @@ def _write_results(
 
 
 def _append_run_history(artifacts_dir: Path, payload: dict) -> None:
-    """保留最近 30 次脱敏运行结果，供本地控制面板回看。"""
+    """原子保存全部脱敏运行结果，不自动删除旧记录。"""
     history_path = artifacts_dir / "run-history.jsonl"
     entries: list[str] = []
     try:
-        for line in history_path.read_text(encoding="utf-8").splitlines():
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(record, dict):
-                entries.append(json.dumps(record, ensure_ascii=False, separators=(",", ":")))
+        # Keep unreadable legacy lines too; appending must never erase evidence.
+        entries = [line for line in history_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     except FileNotFoundError:
         pass
 
     entries.append(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     temporary = history_path.with_suffix(".jsonl.tmp")
-    temporary.write_text("\n".join(entries[-30:]) + "\n", encoding="utf-8")
+    temporary.write_text("\n".join(entries) + "\n", encoding="utf-8")
     temporary.replace(history_path)
 
 
@@ -642,13 +672,28 @@ async def _send_message_with_retry(
     key: str,
     alias: str,
     message_number: int,
+    *,
+    rotation_index: int | None = None,
 ) -> None:
     """Send one configured message, retrying only failures known to be safe."""
+    selected_choice = None
+    if message.type in {"random", "rotation"}:
+        previous = history.entries.get(key)
+        saved_choice = previous.get("selected_choice") if isinstance(previous, dict) else None
+        if saved_choice is not None and (type(saved_choice) is not int or not 0 <= saved_choice < len(message.choices)):
+            raise ConfigError("已记录的消息候选无效，请先核对记录后再运行")
+        selected_choice = saved_choice if saved_choice is not None else rotation_index if message.type == "rotation" else random.randrange(len(message.choices))
+        if type(selected_choice) is not int or not 0 <= selected_choice < len(message.choices):
+            raise ConfigError("无法确定今天轮换的消息，请刷新配置后重试")
+        message = message.choices[selected_choice]
     for attempt in range(MAX_MESSAGE_ATTEMPTS):
         reserved = False
         try:
             await verify_login(page, timeout_ms=3_000)
-            history.reserve(key)
+            if selected_choice is None:
+                history.reserve(key)
+            else:
+                history.reserve(key, selected_choice=selected_choice)
             reserved = True
             await send_message(page, chat, message, stickers)
         except SendOutcomeUnknownError as exc:

@@ -3,11 +3,12 @@ from __future__ import annotations
 import asyncio
 import random
 import secrets
+from contextvars import ContextVar
 from urllib.parse import urlsplit
 
 from playwright.async_api import Locator, Page
 
-from app.douyin import DouyinChat, PageOperationError, first_visible
+from app.douyin import DouyinChat, PageOperationError, RecipientIdentityError, first_visible
 from app.models import Message, Sticker
 from app.selectors import IMAGE_INPUTS, MESSAGE_INPUTS, STICKER_BUTTONS, STICKER_PANELS
 
@@ -41,7 +42,17 @@ SEND_BUTTONS = (
 )
 
 
+_recipient_guard = ContextVar("recipient_guard", default=None)
+
+
+async def _verify_recipient() -> None:
+    guard = _recipient_guard.get()
+    if guard is not None:
+        await guard()
+
+
 async def _trigger_send(page: Page) -> None:
+    await _verify_recipient()
     button = None
     for selector in SEND_BUTTONS:
         candidate = page.locator(selector).first
@@ -132,6 +143,15 @@ SEND_INITIAL_CLEAN_GRACE_MS = 2_000
 
 
 async def send_message(page: Page, chat: DouyinChat, message: Message, stickers: dict[str, Sticker]) -> None:
+    token = _recipient_guard.set(chat.assert_recipient if isinstance(chat, DouyinChat) else _recipient_guard.get())
+    try:
+        await _verify_recipient()
+        await _dispatch_message(page, chat, message, stickers)
+    finally:
+        _recipient_guard.reset(token)
+
+
+async def _dispatch_message(page: Page, chat: DouyinChat, message: Message, stickers: dict[str, Sticker]) -> None:
     if message.type == "random":
         await send_message(page, chat, random.choice(message.choices), stickers)
         return
@@ -185,6 +205,7 @@ async def send_image(page: Page, image_path: str) -> None:
             break
     if file_input is None:
         raise PageOperationError("找不到图片上传控件")
+    await _verify_recipient()
     await file_input.set_input_files(image_path)
     await page.wait_for_timeout(1_500)
 
@@ -303,6 +324,7 @@ async def _click_and_confirm_sticker(page: Page, item, before: tuple[str, str], 
     anything that might already have been delivered stays fail-closed.
     """
     resource_key = await _sticker_resource_key(item)
+    await _verify_recipient()
     try:
         await item.click(force=True)
     except Exception as exc:
@@ -319,16 +341,19 @@ async def _click_and_confirm_sticker(page: Page, item, before: tuple[str, str], 
     except PageOperationError as exc:
         failure = exc
 
-    if await _click_retry_on_latest_failed_message(page):
-        await _confirm_sticker_sent(page, before, name, resource_key)
-        return
-    if await _publish_ready(page):
-        # 重新打锚点再补点发送：否则第一次确认时被清掉的锚点会让第二次确认
-        # 直接放行，把“其实没发出去”误判成成功。
-        fresh = await _mark_latest_outgoing_message(page)
-        await _trigger_send(page)
-        await _confirm_sticker_sent(page, fresh, name, resource_key)
-        return
+    try:
+        if await _click_retry_on_latest_failed_message(page):
+            await _confirm_sticker_sent(page, before, name, resource_key)
+            return
+        if await _publish_ready(page):
+            # 重新打锚点再补点发送：否则第一次确认时被清掉的锚点会让第二次确认
+            # 直接放行，把“其实没发出去”误判成成功。
+            fresh = await _mark_latest_outgoing_message(page)
+            await _trigger_send(page)
+            await _confirm_sticker_sent(page, fresh, name, resource_key)
+            return
+    except RecipientIdentityError as exc:
+        raise SendOutcomeUnknownError("表情操作后会话发生变化，无法安全补救；请人工核对", stop_all=True) from exc
     if failure is not None:
         raise failure
     raise SendOutcomeUnknownError("原生表情未能确认发送，且无法安全补救；为避免重复不会自动重试")
@@ -360,8 +385,11 @@ async def _click_retry_on_latest_failed_message(page: Page) -> bool:
         marker = latest.locator(selector).first
         try:
             if await marker.count() and await marker.is_visible():
+                await _verify_recipient()
                 await marker.click(force=True)
                 return True
+        except RecipientIdentityError:
+            raise
         except Exception:
             continue
     return False

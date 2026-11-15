@@ -57,7 +57,7 @@ def classify_error(exc: Exception) -> ErrorCategory:
         错误类别
     """
     from app.browser import AuthenticationError, RiskControlError, SearchBoxNotReadyError
-    from app.douyin import PageOperationError
+    from app.douyin import PageOperationError, RecipientIdentityError
     from app.config import ConfigError
 
     # 认证失效 - 立即停止
@@ -67,6 +67,10 @@ def classify_error(exc: Exception) -> ErrorCategory:
     # 风控检测 - 限流处理
     if isinstance(exc, RiskControlError):
         return ErrorCategory.RATE_LIMIT
+
+    # Recipient ambiguity must never be retried by selecting another row.
+    if isinstance(exc, RecipientIdentityError):
+        return ErrorCategory.PERMANENT
 
     # 配置错误 - 永久性错误
     if isinstance(exc, ConfigError):
@@ -134,5 +138,6 @@ def should_stop_all_tasks(exc: Exception) -> bool:
     Returns:
         是否应该停止所有任务
     """
+    from app.douyin import RecipientChangedError
     category = classify_error(exc)
-    return category in (ErrorCategory.AUTHENTICATION, ErrorCategory.RATE_LIMIT)
+    return isinstance(exc, RecipientChangedError) or category in (ErrorCategory.AUTHENTICATION, ErrorCategory.RATE_LIMIT)

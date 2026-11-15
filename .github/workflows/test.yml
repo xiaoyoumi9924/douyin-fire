@@ -15,6 +15,10 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: python -m playwright install --with-deps chromium
       - run: python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/test_desktop_schedule.cjs
 
   installers:
     runs-on: ${{ matrix.os }}

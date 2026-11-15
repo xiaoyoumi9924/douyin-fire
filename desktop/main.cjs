@@ -33,15 +33,14 @@ let mainWindow = null;
 let quitting = false;
 let readyUrl = null;
 let outputBuffer = "";
-let pendingScheduledRun = false;
+let pendingScheduledRun = null;
 const scheduledRun = process.argv.includes("--scheduled-run");
 
 const ownsLock = app.requestSingleInstanceLock();
 if (!ownsLock) app.quit();
 else app.on("second-instance", (_event, argv = []) => {
   if (argv.includes("--scheduled-run")) {
-    if (readyUrl) requestScheduledRun();
-    else pendingScheduledRun = true;
+    requestScheduledRun(scheduledRunPayload(argv));
     return;
   }
   if (mainWindow) {
@@ -82,16 +81,16 @@ function showBackendFailure(message) {
   }).then(() => app.quit());
 }
 
-async function requestScheduledRun() {
+async function requestScheduledRun(payload) {
   if (!readyUrl) {
-    pendingScheduledRun = true;
+    pendingScheduledRun = payload;
     return;
   }
   try {
     const response = await fetch(`${readyUrl}/api/action`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "send-all", ...scheduledRunPayload() }),
+      body: JSON.stringify({ action: "send-all", ...payload }),
     });
     if (!response.ok) writeBackendLog(`定时发送请求失败：HTTP ${response.status}\n`);
   } catch (error) {
@@ -100,16 +99,16 @@ async function requestScheduledRun() {
 }
 
 // 定时任务会把补跑参数透传给后端；AppImage 第二次启动时也要保留它们。
-function scheduledRunFlags() {
+function scheduledRunFlags(argv) {
   const flags = [];
-  if (process.argv.includes("--catch-up")) flags.push("--catch-up");
-  const index = process.argv.indexOf("--not-before");
-  if (index !== -1 && process.argv[index + 1]) flags.push("--not-before", process.argv[index + 1]);
+  if (argv.includes("--catch-up")) flags.push("--catch-up");
+  const index = argv.indexOf("--not-before");
+  if (index !== -1 && argv[index + 1]) flags.push("--not-before", argv[index + 1]);
   return flags;
 }
 
-function scheduledRunPayload() {
-  const flags = scheduledRunFlags();
+function scheduledRunPayload(argv) {
+  const flags = scheduledRunFlags(argv);
   const payload = { catchUp: flags.includes("--catch-up") };
   const index = flags.indexOf("--not-before");
   if (index !== -1 && flags[index + 1]) payload.notBefore = flags[index + 1];
@@ -151,8 +150,9 @@ function startBackend() {
       readyUrl = match[1];
       mainWindow.loadURL(readyUrl);
       if (pendingScheduledRun) {
-        pendingScheduledRun = false;
-        requestScheduledRun();
+        const payload = pendingScheduledRun;
+        pendingScheduledRun = null;
+        requestScheduledRun(payload);
       }
     }
     outputBuffer = outputBuffer.slice(-8192);
@@ -170,7 +170,7 @@ function startScheduledBackend() {
     return;
   }
   fs.mkdirSync(dataDir, { recursive: true });
-  backend = spawn(backendPath, backendArgs("run", ...scheduledRunFlags()), {
+  backend = spawn(backendPath, backendArgs("run", ...scheduledRunFlags(process.argv)), {
     cwd: dataDir,
     env: backendEnvironment(),
     stdio: ["ignore", "pipe", "pipe"],

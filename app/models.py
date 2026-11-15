@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 
-MessageType = Literal["text", "image", "douyin_sticker", "random"]
+MessageType = Literal["text", "image", "douyin_sticker", "random", "rotation"]
 
 
 @dataclass(frozen=True)
@@ -21,6 +21,7 @@ class Message:
 class Target:
     name: str
     messages: tuple[Message, ...]
+    enabled: bool = True
 
 
 @dataclass(frozen=True)

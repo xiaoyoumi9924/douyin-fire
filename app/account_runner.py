@@ -29,6 +29,8 @@ def run_all_accounts(account_id: str | None = None) -> int:
     """
     args = _parse_cli_args()
     selected_id = account_id if account_id is not None else getattr(args, "account", None)
+    if getattr(args, "review_message", None) and not selected_id:
+        raise ConfigError("人工补发必须指定当前账号")
     if selected_id:
         try:
             all_records = load_account_records()
@@ -87,6 +89,7 @@ def run_all_accounts(account_id: str | None = None) -> int:
                             env_file=str(account.env_file),
                             catch_up=args.catch_up,
                             not_before=args.not_before,
+                            **({"review_message": args.review_message} if getattr(args, "review_message", None) else {}),
                         )
                     )
             status = "success" if code == 0 else "failed"

@@ -50,18 +50,22 @@ def load_settings(env_file: str | Path | None = None) -> Settings:
 
 def load_task(settings: Settings) -> TaskConfig:
     raw = _read_json_file(settings.task_config_path, "任务配置")
+    return parse_task(raw, settings)
+
+
+def parse_task(raw: Any, settings: Settings) -> TaskConfig:
     if not isinstance(raw, dict):
         raise ConfigError("任务配置必须是 JSON 对象")
 
     targets_raw = raw.get("targets")
+    if targets_raw is not None and not isinstance(targets_raw, list):
+        raise ConfigError("targets 必须是非空数组")
     if targets_raw is None and "friends" in raw:
-        friends = raw.get("friends")
-        messages = raw.get("messages")
-        if not isinstance(friends, list) or not friends:
+        if not isinstance(raw["friends"], list) or not raw["friends"]:
             raise ConfigError("friends 必须是非空数组")
-        if not isinstance(messages, list) or not messages:
-            raise ConfigError("messages 必须是非空数组")
-        targets_raw = [{"name": name, "messages": messages} for name in friends]
+    if "friends" in raw or isinstance(targets_raw, list):
+        from app.rules import effective_rows
+        targets_raw = effective_rows(raw)
     if not isinstance(targets_raw, list) or not targets_raw:
         raise ConfigError("targets 必须是非空数组")
 
@@ -126,9 +130,12 @@ def _parse_target(raw: Any, index: int, config_dir: Path) -> Target:
         raise ConfigError(f"{label} 必须是对象")
     name = _non_empty_string(raw.get("name"), f"{label}.name")
     messages_raw = raw.get("messages")
-    if not isinstance(messages_raw, list) or not messages_raw:
+    enabled = raw.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"{label}.enabled 必须是布尔值")
+    if not isinstance(messages_raw, list) or (enabled and not messages_raw):
         raise ConfigError(f"{label}.messages 必须是非空数组")
-    return Target(name=name, messages=tuple(_parse_message(item, f"{label}.messages[{i}]", config_dir) for i, item in enumerate(messages_raw)))
+    return Target(name=name, messages=tuple(_parse_message(item, f"{label}.messages[{i}]", config_dir) for i, item in enumerate(messages_raw)), enabled=enabled)
 
 
 def _parse_message(raw: Any, label: str, config_dir: Path) -> Message:
@@ -152,14 +159,14 @@ def _parse_message(raw: Any, label: str, config_dir: Path) -> Message:
         return Message(type="image", path=path.resolve())
     if message_type in {"douyin_sticker", "sticker"}:
         return Message(type="douyin_sticker", sticker=_non_empty_string(raw.get("sticker", value), f"{label}.value"))
-    if message_type == "random":
+    if message_type in {"random", "rotation"}:
         choices = raw.get("choices")
         if not isinstance(choices, list) or not choices:
             raise ConfigError(f"{label}.choices 必须是非空数组")
         parsed = tuple(_parse_message(item, f"{label}.choices[{i}]", config_dir) for i, item in enumerate(choices))
-        if any(item.type == "random" for item in parsed):
+        if any(item.type in {"random", "rotation"} for item in parsed):
             raise ConfigError(f"{label} 不支持嵌套 random")
-        return Message(type="random", choices=parsed)
+        return Message(type=message_type, choices=parsed)
     raise ConfigError(f"{label}.type 不支持: {message_type!r}")
 
 

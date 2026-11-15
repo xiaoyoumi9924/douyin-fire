@@ -23,11 +23,15 @@ import subprocess
 import sys
 import threading
 import uuid
+import xml.etree.ElementTree as ET
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 from xml.sax.saxutils import escape as xml_escape
+from dotenv import dotenv_values
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -42,9 +46,18 @@ os.environ.setdefault("DOUYIN_DATA_DIR", str(DATA_ROOT))
 os.environ.setdefault("DOUYIN_ENV_FILE", str(DATA_ROOT / ".env"))
 
 from app.accounts import Account, AccountPaths, account_paths, load_account_records, validate_account_id
-from app.config import ConfigError, load_task
-from app.history import History, message_id
+from app.config import ConfigError, load_task, parse_task
+from app.contacts import CACHE_NAME, merge_contacts
+from app.history import AlreadyRunningError, History, message_id, run_lock
+from app.run_records import records_from_backup, merge_records
+from app.review import find_review, review_state
+from app.rules import names as friend_names, rule_for, preserve_today, rotation_choice, upcoming_dates, validate_holidays
+from app.holidays import VALID_UNTIL as HOLIDAY_CALENDAR_UNTIL
+from app.health import CACHE_NAME as HEALTH_CACHE, credential_revision, report as health_report
 from app.models import Settings
+from app import alerts
+from app.groups import groups_for, apply_batch
+from app.streaks import snapshot as streak_snapshot, view_progress, rename_progress
 
 PYTHON = Path(sys.executable) if getattr(sys, "frozen", False) else ROOT / ".venv" / "bin" / "python"
 PACKAGED = bool(getattr(sys, "frozen", False))
@@ -93,7 +106,7 @@ def load_config(path: Path = CONFIG) -> dict:
     return config if isinstance(config, dict) else {}
 
 
-def message_state(config: dict) -> dict:
+def _message_state(config: dict) -> dict:
     messages = config.get("messages") or []
     if not isinstance(messages, list):
         return {"mode": "unknown", "texts": [], "images": [], "raw": messages}
@@ -101,19 +114,34 @@ def message_state(config: dict) -> dict:
     if len(messages) == 1 and isinstance(messages[0], dict):
         first = messages[0]
         if first.get("type") == "text":
-            return {"mode": "single", "texts": [str(first.get("value", ""))], "images": []}
+            return {"mode": "single", "texts": [str(first.get("content", first.get("value", "")))], "images": []}
         if first.get("type") == "image":
             value = str(first.get("value", first.get("path", "")))
             return {"mode": "single", "texts": [], "images": [value] if value else []}
-        if first.get("type") == "random":
+        if first.get("type") in {"random", "rotation"}:
             choices = first.get("choices") or []
-            texts = [str(item.get("value", "")) for item in choices if isinstance(item, dict) and item.get("type") == "text"]
+            texts = [str(item.get("content", item.get("value", ""))) for item in choices if isinstance(item, dict) and item.get("type") == "text"]
             images = [str(item.get("value", item.get("path", ""))) for item in choices if isinstance(item, dict) and item.get("type") == "image"]
             images = [value for value in images if value]
-            return {"mode": "random" if len(texts) + len(images) > 1 else "single", "texts": texts, "images": images}
-    texts = [str(item.get("value", "")) for item in messages if isinstance(item, dict) and item.get("type") == "text"]
+            return {"mode": first.get("type") if len(texts) + len(images) > 1 else "single", "texts": texts, "images": images}
+    texts = [str(item.get("content", item.get("value", ""))) for item in messages if isinstance(item, dict) and item.get("type") == "text"]
     images = [str(item.get("value", item.get("path", ""))) for item in messages if isinstance(item, dict) and item.get("type") == "image"]
     return {"mode": "sequence", "texts": texts, "images": [value for value in images if value]}
+
+
+def message_state(config: dict) -> dict:
+    result = _message_state(config)
+    images = []
+    for value in result.get("images", []):
+        candidate = Path(value)
+        if candidate.is_absolute():
+            try:
+                value = candidate.relative_to(DATA_ROOT).as_posix()
+            except ValueError:
+                continue
+        images.append(value)
+    result["images"] = images
+    return result
 
 
 def image_suffix_from_bytes(data: bytes, filename: str) -> str | None:
@@ -129,6 +157,25 @@ def image_suffix_from_bytes(data: bytes, filename: str) -> str | None:
     if not valid:
         return None
     return ".jpg" if suffix == ".jpeg" else suffix
+
+
+def default_message_state(config: dict) -> dict:
+    result = message_state(config)
+    rows = config.get("messages") or []
+    strategy = "random"
+    if isinstance(rows, list) and len(rows) == 1 and isinstance(rows[0], dict) and rows[0].get("type") in {"random", "rotation"}:
+        strategy = rows[0]["type"]
+        candidates = rows[0].get("choices", [])
+    else:
+        candidates = rows
+        if isinstance(rows, list) and len(rows) > 1:
+            strategy = "sequence"
+    editable = isinstance(candidates, list) and all(isinstance(row, dict) and row.get("type") in {"text", "image"} for row in candidates)
+    if editable:
+        order = [row["type"] for row in candidates]
+        editable = not any(kind == "image" and "text" in order[index + 1:] for index, kind in enumerate(order))
+        editable = editable and all("\n" not in str(row.get("content", row.get("value", ""))) and "\r" not in str(row.get("content", row.get("value", ""))) for row in candidates if row["type"] == "text")
+    return {**result, "editable": editable, "editorStrategy": strategy, "preference": config.get("message_preference", "random")}
 
 
 def plist_schedule() -> dict:
@@ -150,6 +197,8 @@ def run_command(mode: str, *args: str) -> list[str]:
         return [*BACKEND_PREFIX, mode, *args]
     if mode == "login":
         return [str(PYTHON), str(ROOT / "scripts" / "login_mac.py"), *args]
+    if mode in {"sync-friends", "health-check"}:
+        return [str(PYTHON), str(ROOT / "scripts" / "sync_friends.py"), *(["--health-check"] if mode == "health-check" else []), *args]
     return [str(PYTHON), "run.py", *args]
 
 
@@ -326,8 +375,11 @@ def _apply_linux_schedule(hour: int, minute: int) -> None:
     if browser_path:
         environment += f" PLAYWRIGHT_BROWSERS_PATH={shlex.quote(browser_path)}"
     command = " ".join(shlex.quote(part) for part in scheduled_run_command(hour, minute))
-    # 每 30 分钟轻量检查一次：到点执行，错过（睡眠/关机）则在恢复后的下一个整半点补跑。
-    retained.append(f"*/30 * * * * {environment} {command} >> {shlex.quote(str(ARTIFACTS / 'scheduled.log'))} 2>&1 # douyin-fire-local-schedule")
+    invocation = f"{environment} {command} >> {shlex.quote(str(ARTIFACTS / 'scheduled.log'))} 2>&1 # douyin-fire-local-schedule"
+    # 准点触发 + 每 30 分钟补跑检查；整点/半点已由周期任务覆盖，避免同时启动两次。
+    if minute not in (0, 30):
+        retained.append(f"{minute} {hour} * * * {invocation}")
+    retained.append(f"*/30 * * * * {invocation}")
     installed = subprocess.run([crontab, "-"], input="\n".join(retained) + "\n", capture_output=True, text=True, timeout=15)
     if installed.returncode:
         raise RuntimeError((installed.stderr or installed.stdout).strip() or "写入 crontab 失败")
@@ -449,6 +501,7 @@ def last_run(paths: AccountPaths | None = None) -> dict | None:
     return {
         "finishedAt": finished,
         "dryRun": bool(payload.get("dry_run")),
+        **({"messageScoped": True} if payload.get("message_scoped") else {}),
         "ok": len(ok),
         "failed": len(failed),
         "unknown": len(unknown),
@@ -555,7 +608,7 @@ def metrics_timing(paths: AccountPaths | None, finished_at: str) -> tuple[str | 
     return (str(started) if isinstance(started, str) else None, float(duration) if duration is not None else None)
 
 
-def run_history(limit: int = 20, paths: AccountPaths | None = None) -> list[dict]:
+def run_history(limit: int | None = 20, paths: AccountPaths | None = None) -> list[dict]:
     records: list[dict] = []
     history_path = paths.artifacts_dir / "run-history.jsonl" if paths else RUN_HISTORY
     try:
@@ -579,7 +632,7 @@ def run_history(limit: int = 20, paths: AccountPaths | None = None) -> list[dict
 
     output: list[dict] = []
     log_timings: list[tuple[datetime, float]] | None = None
-    for record in reversed(records[-limit:]):
+    for record in reversed(records[-limit:] if limit is not None else records):
         results = [item for item in record["results"] if isinstance(item, dict)]
         finished_at = str(record.get("finished_at") or "")
         started_at = record.get("started_at")
@@ -598,6 +651,7 @@ def run_history(limit: int = 20, paths: AccountPaths | None = None) -> list[dict
             "startedAt": str(started_at) if isinstance(started_at, str) else None,
             "durationSeconds": float(duration) if isinstance(duration, (int, float)) and not isinstance(duration, bool) else None,
             "dryRun": bool(record.get("dry_run")),
+            **({"messageScoped": True} if record.get("message_scoped") else {}),
             "results": [{
                 "target": str(item.get("target") or "未知好友"),
                 "status": str(item.get("status") or "unknown"),
@@ -630,11 +684,71 @@ def stamp_targets(run: dict | None, friends: list[str] | None = None) -> list[in
     return sorted(indices)
 
 
-def credential_state(path: Path | None = STATE_FILE) -> dict:
-    if path is None or not path.exists():
-        return {"present": False, "updatedAt": None}
-    stat = path.stat()
-    return {"present": True, "updatedAt": datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(timespec="seconds")}
+def credential_state(path: Path | None = STATE_FILE, env_path: Path | None = None, artifacts_dir: Path = ARTIFACTS) -> dict:
+    env_path = env_path or DATA_ROOT / ".env"
+    source = path if path and path.is_file() else None
+    if source is None and env_path.is_file() and dotenv_values(env_path).get("DOUYIN_COOKIE"):
+        source = env_path
+    if source is None:
+        return {"present": False, "updatedAt": None, "health": "missing"}
+    stat = source.stat()
+    result = {"present": True, "updatedAt": datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(timespec="seconds"), "health": "unchecked"}
+    saved = read_json(artifacts_dir / HEALTH_CACHE, {})
+    saved = saved if isinstance(saved, dict) else {}
+    if saved.get("revision") == credential_revision(path, env_path or DATA_ROOT / ".env"):
+        result.update({key: saved[key] for key in ("checkedAt", "detail") if key in saved})
+        result["health"] = saved.get("status", "unchecked")
+        try:
+            if (datetime.now().astimezone() - datetime.fromisoformat(saved["checkedAt"])).total_seconds() > 86400:
+                result.update(health="unchecked", detail="上次检查已超过一天，请重新检查登录")
+        except (KeyError, TypeError, ValueError):
+            result["health"] = "unchecked"
+    return result
+
+
+def scheduler_health():
+    schedule = current_schedule()
+    if not schedule.get("present"):
+        return {"status": "missing", "detail": "尚未保存每日运行时间"}
+    try:
+        if sys.platform == "darwin":
+            payload = plistlib.loads(PLIST.read_bytes())
+            if str((payload.get("EnvironmentVariables") or {}).get("DOUYIN_DATA_DIR")) != str(DATA_ROOT):
+                return {"status": "different_install", "detail": "现有系统任务属于另一份安装；在当前应用保存时间前，请先确认使用哪份数据"}
+            command = ["launchctl", "print", f"gui/{os.getuid()}/{LABEL}"]
+        elif os.name == "nt":
+            command = ["schtasks", "/Query", "/TN", "DouyinAutoFire", "/XML"]
+        else:
+            executable = shutil.which("crontab")
+            if not executable:
+                return {"status": "missing", "detail": "系统没有可用的定时任务工具，请检查安装"}
+            command = [executable, "-l"]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=5)
+        if result.returncode:
+            return {"status": "missing", "detail": "未找到已注册的系统任务，请重新保存运行时间"}
+        if sys.platform == "darwin" and payload.get("ProgramArguments") != scheduled_run_command(schedule["hour"], schedule["minute"]):
+            return {"status": "mismatch", "detail": "系统任务指向的程序或时间已变化，请重新保存时间"}
+        if os.name == "nt":
+            tree = ET.fromstring(result.stdout)
+            command_node = tree.find(".//{*}Command")
+            enabled_node = tree.find(".//{*}Settings/{*}Enabled")
+            wrapper = DATA_ROOT / "run-scheduled.cmd"
+            expected = subprocess.list2cmdline(scheduled_run_command(schedule["hour"], schedule["minute"]))
+            if command_node is None or str(wrapper).casefold() not in (command_node.text or "").casefold() or (enabled_node is not None and enabled_node.text == "false") or expected not in wrapper.read_text(encoding="utf-8"):
+                return {"status": "mismatch", "detail": "系统任务被停用或命令已变化，请重新保存时间"}
+        if sys.platform.startswith("linux"):
+            rows = [line for line in result.stdout.splitlines() if "# douyin-fire-local-schedule" in line]
+            expected = " ".join(shlex.quote(part) for part in scheduled_run_command(schedule["hour"], schedule["minute"]))
+            if not rows or not any(line.startswith("*/30 * * * * ") for line in rows) or any(expected not in line or str(DATA_ROOT) not in line for line in rows):
+                return {"status": "mismatch", "detail": "系统任务命令与当前设置不一致，请重新保存时间"}
+            minute, hour = schedule["minute"], schedule["hour"]
+            if minute not in (0, 30) and not any(line.startswith(f"{minute} {hour} * * * ") for line in rows):
+                return {"status": "mismatch", "detail": "系统任务缺少准点触发，请重新保存时间"}
+        if not schedule_command_matches(schedule["hour"], schedule["minute"]):
+            return {"status": "mismatch", "detail": "系统任务指向旧位置，请重新保存时间"}
+        return {"status": "ok", "detail": "已找到系统任务；电脑关机或断网时仍无法发送"}
+    except (OSError, ValueError, ET.ParseError, subprocess.TimeoutExpired):
+        return {"status": "unknown", "detail": "暂时无法读取系统任务状态，请稍后刷新检查"}
 
 
 def normalize_imported_cookie_state(payload: object) -> dict:
@@ -713,7 +827,8 @@ def build_state(account_id: str | None = None) -> dict:
         ))
     except ConfigError:
         # The panel must remain usable while a new account has no friends or messages yet.
-        if config.get("messages") or config.get("targets"):
+        empty_friend_list = config.get("friends") == [] and not config.get("targets")
+        if (config.get("messages") or config.get("targets")) and not empty_friend_list:
             raise
 
     if task is None:
@@ -744,13 +859,13 @@ def build_state(account_id: str | None = None) -> dict:
                 for index, message in enumerate(target.messages)
             ]
             delivery_status = history.target_status(keys)
-            status = {"success": "sent", "failed": "failed", "unknown": "unknown", "pending": "pending"}[delivery_status]
+            status = "paused" if not target.enabled else {"success": "sent", "failed": "failed", "unknown": "unknown", "pending": "pending"}[delivery_status]
             friend_statuses.append(status)
             if status in {"pending", "failed"}:
                 pending_targets.append(target.name)
             elif status == "unknown":
                 unknown_targets.append(target.name)
-        all_targets_complete = bool(friends) and not pending_targets and not unknown_targets
+        all_targets_complete = any(target.enabled for target in task.targets) and not pending_targets and not unknown_targets
     schedule = current_schedule()
     schedule_matches = schedule_command_matches(int(schedule["hour"]), int(schedule["minute"])) if schedule.get("present") else False
     run = last_run(paths)
@@ -760,18 +875,23 @@ def build_state(account_id: str | None = None) -> dict:
         "accountEnabled": account.enabled if account else True,
         "friends": friends,
         "friendStatuses": friend_statuses,
+        "friendStreaks": streak_snapshot(read_json(artifacts_dir / CACHE_NAME, {}), friends, timezone=config.get("timezone", "Asia/Shanghai"), progress=view_progress(artifacts_dir)),
         "pendingTargets": pending_targets,
         "unknownTargets": unknown_targets,
+        "reviewCount": len(unknown_targets),
         "allTargetsComplete": all_targets_complete,
         "sendQueueReady": task is not None,
-        "message": message_state(config),
+        "message": default_message_state(config),
+        "friendGroups": groups_for(config),
+        "friendRules": {name: public_rule(config, name, task) for name in friends},
+        "dispatchPreview": [{"name": target.name, "message": dispatch_message_state(task, target, history, run_date)} for target in task.targets if target.enabled] if task else [],
         "schedule": {
             **schedule,
             "next": next_run_text(schedule["hour"], schedule["minute"]),
             "commandMatches": schedule_matches,
             "unstableLocation": app_location_unstable(),
         },
-        "credential": credential_state(paths.storage_state if paths else STATE_FILE),
+        "credential": credential_state(paths.storage_state if paths else STATE_FILE, DATA_ROOT / account.env_file if account else DATA_ROOT / ".env", artifacts_dir),
         "lastRun": run,
         "runHistory": run_history(paths=paths),
         "stamped": [index for index, status in enumerate(friend_statuses) if status == "sent"],
@@ -802,6 +922,98 @@ def account_for(account_id: str | None, *, allow_legacy: bool = True) -> Account
 def account_paths_for(account_id: str | None) -> AccountPaths:
     account = account_for(account_id)
     return account_paths(account, DATA_ROOT)
+
+
+def dispatch_message_state(task, target, history, run_date):
+    messages = []
+    for index, message in enumerate(target.messages):
+        key = history.key(task.task_id, run_date, target.name, message_id(index, message))
+        entry = history.entries.get(key)
+        selected = entry.get("selected_choice") if isinstance(entry, dict) else None
+        if message.type in {"random", "rotation"} and type(selected) is int and 0 <= selected < len(message.choices):
+            message = message.choices[selected]
+        else:
+            message = rotation_choice(message, run_date, target.name)
+        messages.append(asdict(message))
+    return message_state({"messages": json.loads(json.dumps(messages, default=str))})
+
+
+def public_rule(config, name, task=None):
+    rule = rule_for(config, name)
+    frozen = config.get("daily_messages", {})
+    today = datetime.now(ZoneInfo(config.get("timezone", "Asia/Shanghai"))).date().isoformat()
+    messages = rule.get("messages", [])
+    basic_sequence = all(message.get("type") in {"text", "image"} for message in messages)
+    order = [message.get("type") for message in messages]
+    basic_sequence = basic_sequence and not any(order[index] == "image" and "text" in order[index + 1:] for index in range(len(order)))
+    basic_random = len(messages) == 1 and messages[0].get("type") in {"random", "rotation"} and all(choice.get("type") in {"text", "image"} for choice in messages[0].get("choices", []))
+    return {"mode": rule.get("mode", "inherit"), "enabled": rule.get("enabled", True), "editable": basic_sequence or basic_random,
+            "message": message_state({"messages": rule.get("messages", [])}), "holidayEnabled": rule.get("holiday_enabled", True),
+            "holidayGreetings": rule.get("holiday_greetings", {}),
+            "upcoming": upcoming_dates({**rule, "holiday_enabled": True}, datetime.fromisoformat(today).date()),
+            "calendarUntil": HOLIDAY_CALENDAR_UNTIL,
+            "deferred": frozen.get("date") == today and name in frozen.get("targets", {})}
+
+
+def save_task_config(paths, config):
+    try:
+        old_task, history = review_context(paths)
+    except ConfigError:
+        old_task = None
+    if old_task is not None:
+        config = preserve_today(old_task, history, config)
+    if friend_names(config) and (config.get("messages") or config.get("targets") or any(rule.get("mode") == "custom" for rule in config.get("friend_rules", {}).values())):
+        parse_task(config, Settings(paths.task_config, None, None, True, None, paths.artifacts_dir, False))
+    if old_task is not None and history.entries:
+        # Persist trusted legacy mappings before the config mtime changes.
+        history._save()
+    write_json(paths.task_config, config)
+
+
+def configured_messages(body, account_id=None):
+    texts = body.get("texts", [])
+    images = body.get("images", [])
+    strategy = body.get("strategy", "random")
+    if not isinstance(texts, list) or any(not isinstance(text, str) for text in texts) or len(texts) > 50:
+        raise ConfigError("文字候选格式不正确，最多 50 条")
+    texts = [text.strip() for text in texts if text.strip()]
+    if any(len(text) > 500 for text in texts):
+        raise ConfigError("单条消息不要超过 500 字")
+    if not isinstance(images, list) or len(images) > 10:
+        raise ConfigError("图片列表格式不正确，最多 10 张")
+    choices = [{"type": "text", "value": text} for text in texts]
+    for image in images:
+        if not isinstance(image, str):
+            raise ConfigError("图片路径格式不正确")
+        candidate = (DATA_ROOT / image).resolve()
+        try:
+            candidate.relative_to((DATA_ROOT / "images").resolve())
+        except ValueError as exc:
+            raise ConfigError("只能选择已上传的图片") from exc
+        if account_id and candidate.parent != (DATA_ROOT / "images").resolve():
+            try:
+                candidate.relative_to((DATA_ROOT / "images" / account_id).resolve())
+            except ValueError as exc:
+                raise ConfigError("只能选择当前账户上传的图片") from exc
+        if not candidate.is_file() or candidate.suffix.lower() not in IMAGE_SUFFIXES:
+            raise ConfigError("图片文件不存在或格式不支持")
+        choices.append({"type": "image", "value": candidate.relative_to(DATA_ROOT).as_posix()})
+    if not choices or strategy not in {"single", "random", "rotation", "sequence"}:
+        raise ConfigError("请添加消息并选择有效发送规则")
+    if strategy == "single" and len(choices) != 1:
+        raise ConfigError("固定发送只支持一条文字或一张图片，请改用随机或依次发送")
+    return [{"type": strategy, "choices": choices}] if strategy in {"random", "rotation"} and len(choices) > 1 else choices
+
+
+def review_context(paths: AccountPaths):
+    task = load_task(Settings(paths.task_config, None, None, True, None, paths.artifacts_dir, False))
+    history = History(paths.artifacts_dir / "history.json")
+    history.merge_legacy_run_history(
+        paths.artifacts_dir / "run-history.jsonl", task.task_id,
+        history.run_date(task.timezone), task.timezone, task.targets,
+        config_path=paths.task_config,
+    )
+    return task, history
 
 
 def _write_private(path: Path, content: str) -> None:
@@ -843,21 +1055,30 @@ def account_overview() -> dict:
     for account in records:
         try:
             paths = account_paths(account, DATA_ROOT)
-            config = load_config(paths.task_config)
+            config = read_json(paths.task_config)
+            if not isinstance(config, dict):
+                raise ConfigError("账户配置文件缺失或格式无效")
             run = last_run(paths)
-            credential = credential_state(paths.storage_state)
+            credential = credential_state(paths.storage_state, DATA_ROOT / account.env_file, paths.artifacts_dir)
             friend_count = len(config.get("friends") or config.get("targets") or [])
             raw_messages = config.get("messages")
             # 消息可能是文字、图片或表情，这里只统计配置条目；是否可启用与
             # /api/accounts/update 的校验保持一致，只看 messages 是否非空。
             message_count = len(raw_messages) if isinstance(raw_messages, list) else (1 if raw_messages else 0)
+            try:
+                configured_task, _ = review_context(paths)
+                configured = bool(configured_task.targets)
+                if not raw_messages:
+                    message_count = sum(len(target.messages) for target in configured_task.targets)
+            except ConfigError:
+                configured = False
             items.append({
                 "id": account.id,
                 "name": account.display_name,
                 "enabled": account.enabled,
                 "friendCount": friend_count,
                 "messageCount": message_count,
-                "configured": bool(friend_count and raw_messages),
+                "configured": configured,
                 "lastRun": run,
                 "credential": credential,
             })
@@ -920,7 +1141,7 @@ class Runner:
             else:
                 try:
                     account = account_for(account_id)
-                    if not account.enabled and action != "login":
+                    if not account.enabled and action not in {"login", "sync-friends", "health-check"}:
                         return False, f"账号 {account_id} 已停用"
                     account_id = account.id
                     paths = account_paths(account, DATA_ROOT)
@@ -929,10 +1150,19 @@ class Runner:
                 legacy_mode = account_records() is None
                 if action == "login":
                     command = run_command("login", *([] if legacy_mode else ["--account", account_id]))
+                    (paths.artifacts_dir / CACHE_NAME).unlink(missing_ok=True)
+                elif action in {"sync-friends", "health-check"}:
+                    command = run_command(action, *([] if legacy_mode else ["--account", account_id]), *(extra_args or []))
+                    if action == "sync-friends":
+                        (paths.artifacts_dir / CACHE_NAME).unlink(missing_ok=True)
+                    else:
+                        (paths.artifacts_dir / HEALTH_CACHE).unlink(missing_ok=True)
                 else:
                     run_args = [] if legacy_mode else ["--account", account_id]
                     if action == "dry-run":
                         run_args.append("--dry-run")
+                    if action == "review-retry":
+                        run_args.extend(extra_args or [])
                     command = run_command("run", *run_args)
                 run_account_id = account_id
 
@@ -1152,6 +1382,99 @@ class Handler(BaseHTTPRequestHandler):
                 except (ValueError, OSError) as exc:
                     self.fail(f"账号配置读取失败：{exc}", 400)
             return
+        if route == "/api/history":
+            try:
+                account_id = query.get("accountId", [None])[0]
+                if not account_id:
+                    raise ValueError("缺少当前账号 ID")
+                paths = account_paths_for(account_id)
+                mode = query.get("mode", ["all"])[0]
+                status = query.get("status", ["all"])[0]
+                start = query.get("start", [""])[0]
+                end = query.get("end", [""])[0]
+                page = int(query.get("page", ["1"])[0])
+                if mode not in {"all", "send", "dry"} or status not in {"all", "success", "failed", "unknown"} or page < 1:
+                    raise ValueError("历史筛选参数不正确")
+                for value in (start, end):
+                    if value and (not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) or datetime.strptime(value, "%Y-%m-%d").strftime("%Y-%m-%d") != value):
+                        raise ValueError("请选择有效日期")
+                if start and end and start > end:
+                    raise ValueError("开始日期不能晚于结束日期")
+                records = run_history(limit=None, paths=paths)
+                records.sort(key=lambda row: row["finishedAt"], reverse=True)
+                selected = []
+                for row in records:
+                    try:
+                        day = datetime.fromisoformat(row["finishedAt"]).astimezone(ZoneInfo("Asia/Shanghai")).date().isoformat()
+                    except ValueError:
+                        day = ""
+                    statuses = {item["status"] for item in row["results"]}
+                    if start and (not day or day < start) or end and (not day or day > end):
+                        continue
+                    if status != "all" and (status not in statuses or (status == "success" and statuses - {"success", "skipped", "duplicate"})):
+                        continue
+                    selected.append(row)
+                counts = {"all": len(selected), "dry": sum(row["dryRun"] for row in selected), "send": sum(not row["dryRun"] for row in selected)}
+                selected = [row for row in selected if mode == "all" or row["dryRun"] == (mode == "dry")]
+                total = len(selected)
+                pages = max(1, (total + 9) // 10)
+                page = min(page, pages)
+                exporting = query.get("export", ["0"])[0] == "1"
+                return self.send_json({"version": 1, "accountId": account_id, "total": total, "page": page, "pages": pages,
+                                       "counts": counts, "items": selected if exporting else selected[(page - 1) * 10:page * 10]})
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
+        if route == "/api/notifications":
+            try:
+                account_id = query.get("accountId", [None])[0]
+                if not account_id:
+                    raise ValueError("缺少当前账号 ID")
+                return self.send_json(alerts.public_settings(account_paths_for(account_id).artifacts_dir))
+            except (ValueError, OSError):
+                return self.fail("通知设置读取失败，请检查当前账户", 400)
+        if route == "/api/health":
+            try:
+                account_id = query.get("accountId", [None])[0]
+                if not account_id:
+                    return self.fail("缺少当前账号 ID")
+                account = account_for(account_id)
+                paths = account_paths(account, DATA_ROOT)
+                try:
+                    state = build_state(account_id)
+                except (ConfigError, ValueError):
+                    state = {"accountEnabled": account.enabled, "friends": friend_names(load_config(paths.task_config)), "sendQueueReady": False,
+                             "credential": credential_state(paths.storage_state, DATA_ROOT / account.env_file, paths.artifacts_dir)}
+                state["catchUp"] = read_json(paths.artifacts_dir / "catch-up.json", {})
+                if not isinstance(state["catchUp"], dict):
+                    state["catchUp"] = {}
+                result = health_report(state, scheduler_health())
+                result["credential"] = state["credential"]
+                result["running"] = RUNNER.snapshot(account_id)
+                result["catchUp"] = state["catchUp"]
+                return self.send_json(result)
+            except (ValueError, OSError) as exc:
+                return self.fail(f"暂时无法检查当前账户：{exc}", 400)
+        if route == "/api/review":
+            try:
+                account_id = query.get("accountId", [None])[0]
+                if not account_id:
+                    return self.fail("缺少当前账号 ID")
+                task, history = review_context(account_paths_for(account_id))
+                return self.send_json(review_state(task, history))
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
+        if route == "/api/friends/sync":
+            try:
+                account_id = query.get("accountId", [None])[0]
+                paths = account_paths_for(account_id)
+                running = RUNNER.snapshot(account_id)
+                self.send_json({
+                    "running": bool(running and running.get("action") == "sync-friends"),
+                    "result": read_json(paths.artifacts_dir / CACHE_NAME),
+                })
+            except (ConfigError, OSError) as exc:
+                self.fail(f"无法读取聊天列表：{exc}", 400)
+            return
         if route.startswith("/api/images/"):
             filename = unquote(route.removeprefix("/api/images/"))
             if not filename:
@@ -1234,6 +1557,38 @@ class Handler(BaseHTTPRequestHandler):
         if request_length > MAX_POST_BODY_BYTES:
             return self.fail("上传内容超过 12 MB 限制", 413)
         body = self.read_body()
+        if route in {"/api/notifications", "/api/notifications/test"}:
+            try:
+                account_id = body.get("accountId")
+                if not account_id:
+                    raise ValueError("缺少当前账号 ID")
+                folder = account_paths_for(account_id).artifacts_dir
+                folder.mkdir(parents=True, exist_ok=True)
+                with run_lock(folder / "notification.lock"):
+                    if route.endswith("/test"):
+                        result = alerts.attempt(folder, alerts.settings(folder), account_id, {}, test=True)
+                        return self.send_json(result, 200 if result["status"] == "submitted" else 502)
+                    return self.send_json(alerts.save_settings(folder, body))
+            except AlreadyRunningError:
+                return self.fail("通知正在处理，请稍后再试", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc) if isinstance(exc, ValueError) else "通知设置保存失败", 400)
+
+        if route == "/api/history/restore":
+            try:
+                account_id = body.get("accountId")
+                if not account_id:
+                    raise ValueError("缺少当前账号 ID")
+                paths = account_paths_for(account_id)
+                records = records_from_backup(body.get("backup"), account_id)
+                with run_lock(paths.artifacts_dir / "run.lock"):
+                    result = merge_records(paths.artifacts_dir / "run-history.jsonl", records, commit=body.get("confirm") is True)
+                return self.send_json(result)
+            except AlreadyRunningError:
+                return self.fail("当前账户正在运行，请结束后再恢复记录", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
+
 
         def scoped_account(require_enabled: bool = False) -> tuple[Account, AccountPaths]:
             account = account_for(body.get("accountId"))
@@ -1285,7 +1640,14 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 records = account_records()
                 if records is None:
-                    return self.fail("旧单账号模式无需更新账号信息", 400)
+                    # Reuse the existing add-account migration for legacy account edits.
+                    legacy_name = body.get("name", "主账号")
+                    legacy_enabled = body.get("enabled", True)
+                    if account_id != "main" or not isinstance(legacy_name, str) or not 1 <= len(legacy_name.strip()) <= 40 or not isinstance(legacy_enabled, bool):
+                        return self.fail("账号名称或启用状态格式不正确", 400)
+                    if body.get("enabled") is True:
+                        review_context(account_paths_for("main"))
+                    records = ensure_registry_for_add()
                 account_id = validate_account_id(account_id)
                 updated = []
                 found = False
@@ -1298,11 +1660,13 @@ class Handler(BaseHTTPRequestHandler):
                     enabled = body.get("enabled", item.enabled)
                     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 40 or not isinstance(enabled, bool):
                         return self.fail("账号名称或启用状态格式不正确")
-                    if enabled:
+                    if enabled and "enabled" in body:
                         paths = account_paths(item, DATA_ROOT)
                         config = load_config(paths.task_config)
-                        if not (config.get("friends") or config.get("targets")) or not config.get("messages"):
-                            return self.fail("先为账号添加至少一位好友和一条消息，再启用账号")
+                        try:
+                            review_context(paths)
+                        except ConfigError:
+                            return self.fail("先配置好友与默认或专属消息，再启用账号")
                     updated.append({"id": item.id, "name": name.strip(), "enabled": enabled, "env_file": item.env_file.as_posix()})
                 if not found:
                     return self.fail(f"不存在账号 {account_id}", 404)
@@ -1355,6 +1719,75 @@ class Handler(BaseHTTPRequestHandler):
             temporary.replace(image_path)
             return self.send_json({"path": f"images/{account.id}/{saved_name}", "name": filename, "size": len(image_data)})
 
+        if route == "/api/friends/batch":
+            try:
+                if not body.get("accountId"):
+                    return self.fail("缺少当前账号 ID")
+                account, paths = scoped_account()
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再批量修改", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        config = apply_batch(load_config(paths.task_config), body.get("names"), body.get("operation"), body.get("group"))
+                        save_task_config(paths, config)
+                return self.send_json(build_state(account.id))
+            except AlreadyRunningError:
+                return self.fail("系统任务正在运行，请结束后再修改", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
+
+        if route == "/api/friends/rule":
+            try:
+                if not body.get("accountId"):
+                    return self.fail("缺少当前账号 ID")
+                account, paths = scoped_account()
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再修改消息规则", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        config = load_config(paths.task_config)
+                        name, mode, enabled = body.get("name"), body.get("mode"), body.get("enabled")
+                        if name not in friend_names(config) or mode not in {"inherit", "custom"} or not isinstance(enabled, bool):
+                            return self.fail("好友或消息规则格式不正确")
+                        rule = {"mode": mode, "enabled": enabled}
+                        previous_rule = rule_for(config, name)
+                        holiday_enabled = body.get("holidayEnabled", previous_rule.get("holiday_enabled", True))
+                        if not isinstance(holiday_enabled, bool):
+                            return self.fail("节日祝福开关格式不正确")
+                        rule["holiday_enabled"] = holiday_enabled
+                        greetings = body.get("holidayGreetings", previous_rule.get("holiday_greetings", {}))
+                        rule["holiday_greetings"] = greetings
+                        validate_holidays(rule)
+                        rule["holiday_greetings"] = {day: text.strip() for day, text in greetings.items()}
+                        if mode == "inherit" and enabled and not config.get("messages"):
+                            return self.fail("请先在消息管理中配置默认消息，再选择沿用默认")
+                        if mode == "custom":
+                            rule["messages"] = rule_for(config, name).get("messages", []) if body.get("preserveMessages") else configured_messages(body, account.id)
+                        config.setdefault("friend_rules", {})[name] = rule
+                        save_task_config(paths, config)
+                return self.send_json(build_state(account.id))
+            except AlreadyRunningError:
+                return self.fail("系统任务正在运行，请结束后再修改", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
+
+        if route == "/api/friends/import":
+            try:
+                account, paths = scoped_account()
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再添加好友", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        cache = read_json(paths.artifacts_dir / CACHE_NAME, {})
+                        config, added = merge_contacts(load_config(paths.task_config), cache, body.get("names"), body.get("scanId"))
+                        if added:
+                            save_task_config(paths, config)
+                        return self.send_json({"state": build_state(account.id), "added": added})
+            except AlreadyRunningError:
+                return self.fail("系统任务正在运行，请结束后再添加", 409)
+            except (ConfigError, OSError) as exc:
+                return self.fail(str(exc), 400)
+
         if route == "/api/friends":
             friends = body.get("friends")
             if not isinstance(friends, list):
@@ -1376,10 +1809,59 @@ class Handler(BaseHTTPRequestHandler):
                 _, paths = scoped_account()
             except ConfigError as exc:
                 return self.fail(str(exc), 400)
-            config = load_config(paths.task_config)
-            config["friends"] = cleaned
-            write_json(paths.task_config, config)
-            return self.send_json(build_state(body.get("accountId")))
+            try:
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再修改配置", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        config = load_config(paths.task_config)
+                        old_names = friend_names(config)
+                        original_groups = groups_for(config)
+                        renamed_from, renamed_to = body.get("renamedFrom"), body.get("renamedTo")
+                        if renamed_from is not None:
+                            if renamed_from not in old_names or renamed_to not in cleaned or [renamed_to if name == renamed_from else name for name in old_names] != cleaned:
+                                return self.fail("好友名单已变化，请刷新后重试", 409)
+                            rules = config.get("friend_rules", {})
+                            if renamed_from in rules:
+                                rules[renamed_to] = rules.pop(renamed_from)
+                            frozen = config.get("daily_messages", {}).get("targets", {})
+                            if renamed_from in frozen:
+                                frozen[renamed_to] = frozen.pop(renamed_from)
+                            try:
+                                task, history = review_context(paths)
+                                today = history.run_date(task.timezone)
+                                for target in task.targets:
+                                    if target.name == renamed_from:
+                                        for index, message in enumerate(target.messages):
+                                            old_key = history.key(task.task_id, today, renamed_from, message_id(index, message))
+                                            if old_key in history.entries:
+                                                history.entries[history.key(task.task_id, today, renamed_to, message_id(index, message))] = history.entries[old_key]
+                                history._save()
+                            except ConfigError:
+                                pass
+                        if isinstance(config.get("targets"), list):
+                            existing = {row["name"]: row for row in config["targets"]}
+                            if renamed_from in existing:
+                                existing[renamed_to] = {**existing.pop(renamed_from), "name": renamed_to}
+                            config["targets"] = [existing.get(name, {"name": name, "messages": config.get("messages", [])}) for name in cleaned]
+                        else:
+                            config["friends"] = cleaned
+                        config["friend_rules"] = {name: rule for name, rule in config.get("friend_rules", {}).items() if name in cleaned}
+                        for name in cleaned:
+                            if name not in old_names and name != renamed_to:
+                                config["friend_rules"].setdefault(name, {"mode": "inherit", "enabled": True})
+                        groups = original_groups
+                        if renamed_from in groups:
+                            groups[renamed_to] = groups.pop(renamed_from)
+                        config["friend_groups"] = {name: group for name, group in groups.items() if name in cleaned}
+                        save_task_config(paths, config)
+                        if renamed_from and renamed_to:
+                            rename_progress(paths.artifacts_dir, renamed_from, renamed_to)
+                        return self.send_json(build_state(body.get("accountId")))
+            except AlreadyRunningError:
+                return self.fail("系统任务正在运行，请结束后再修改", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
 
         if route == "/api/message":
             texts = body.get("texts")
@@ -1419,13 +1901,23 @@ class Handler(BaseHTTPRequestHandler):
 
             choices = [{"type": "text", "value": item} for item in cleaned]
             choices.extend({"type": "image", "value": item} for item in clean_images)
-            config = load_config(paths.task_config)
-            if len(choices) == 1:
-                config["messages"] = choices
-            else:
-                config["messages"] = [{"type": "random", "choices": choices}]
-            write_json(paths.task_config, config)
-            return self.send_json(build_state(account.id))
+            try:
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再修改配置", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        config = load_config(paths.task_config)
+                        preference = body.get("preference", config.get("message_preference", "random"))
+                        if not isinstance(preference, str) or preference not in {"random", "text_first", "image_first"}:
+                            return self.fail("默认发送规则格式不正确")
+                        config["message_preference"] = preference
+                        config["messages"] = configured_messages({"texts": cleaned, "images": clean_images, "strategy": body.get("strategy", "random")}, account.id)
+                        save_task_config(paths, config)
+                        return self.send_json(build_state(account.id))
+            except AlreadyRunningError:
+                return self.fail("系统任务正在运行，请结束后再修改", 409)
+            except (ValueError, OSError) as exc:
+                return self.fail(str(exc), 400)
 
         if route == "/api/schedule":
             if body.get("accountId"):
@@ -1446,6 +1938,38 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(f"定时任务设置失败：{exc}", 500)
             return self.send_json(build_state(body.get("accountId")) if body.get("accountId") else account_overview())
 
+        if route in {"/api/review/resolve", "/api/review/retry"}:
+            try:
+                if not body.get("accountId"):
+                    return self.fail("缺少当前账号 ID")
+                account, paths = scoped_account()
+                with RUNNER.guard:
+                    if RUNNER.active():
+                        return self.fail("请等当前任务结束后再核对或补发", 409)
+                    with run_lock(paths.artifacts_dir / "run.lock"):
+                        task, history = review_context(paths)
+                        key, _, index, target, _ = find_review(task, history, body.get("id"))
+                        if route.endswith("/resolve"):
+                            history.review(key, body.get("id"), body.get("decision"), target=target.name, message_number=index + 1)
+                        else:
+                            entry = history.entries.get(key)
+                            if not isinstance(entry, dict) or entry.get("review_decision") != "not_sent":
+                                return self.fail("请先确认这条消息未发送，再单独补发", 409)
+                            if not account.enabled:
+                                return self.fail("账号已停用，请先启用后补发", 409)
+                            if not target.enabled:
+                                return self.fail("这位好友已暂停，请恢复后再补发", 409)
+                if route.endswith("/retry"):
+                    started, reason = RUNNER.start("review-retry", account.id, ["--review-message", body["id"]])
+                    if not started:
+                        return self.fail(reason, 409)
+                    return self.send_json({"started": "review-retry"})
+                return self.send_json({"review": review_state(task, history), "state": build_state(account.id)})
+            except (AlreadyRunningError, ValueError) as exc:
+                return self.fail(str(exc), 409)
+            except OSError:
+                return self.fail("核对记录保存失败，请稍后重试", 500)
+
         if route == "/api/action":
             action = body.get("action")
             account_id = body.get("accountId")
@@ -1460,7 +1984,7 @@ class Handler(BaseHTTPRequestHandler):
                         if not isinstance(not_before, str) or not re.fullmatch(r"[0-2]?\d:[0-5]\d", not_before):
                             return self.fail("notBefore 需要 HH:MM 格式")
                         extra_args += ["--not-before", not_before]
-            elif action not in {"send", "dry-run", "login"}:
+            elif action not in {"send", "dry-run", "login", "sync-friends", "health-check"}:
                 return self.fail("未知动作")
             elif account_id is None:
                 return self.fail("缺少当前账号 ID")
@@ -1468,20 +1992,25 @@ class Handler(BaseHTTPRequestHandler):
                 if action != "send-all":
                     selected = account_for(account_id)
                     # 新账号默认停用，必须先扫码登录才能进入配置；只有发信动作要求已启用。
-                    if not selected.enabled and action != "login":
+                    if not selected.enabled and action not in {"login", "sync-friends", "health-check"}:
                         return self.fail(f"账号 {account_id} 已停用", 409)
             except ConfigError as exc:
                 return self.fail(str(exc), 400)
+            scan_id = uuid.uuid4().hex if action in {"sync-friends", "health-check"} else None
+            if scan_id:
+                extra_args = ["--scan-id", scan_id]
             started, reason = RUNNER.start(action, account_id, extra_args)
             if not started:
                 return self.fail(reason, 409)
-            return self.send_json({"started": action})
+            return self.send_json({"started": action, "scanId": scan_id})
 
         if route == "/api/action/stop":
             RUNNER.stop()
             return self.send_json({"stopped": True})
 
         if route == "/api/credential/import":
+            if RUNNER.active():
+                return self.fail("请等当前任务结束后再更换登录凭证", 409)
             try:
                 _, paths = scoped_account()
             except ConfigError as exc:
@@ -1494,18 +2023,44 @@ class Handler(BaseHTTPRequestHandler):
                 return self.fail(str(exc), 400)
             paths.storage_state.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             write_json(paths.storage_state, storage_state)
+            (paths.artifacts_dir / CACHE_NAME).unlink(missing_ok=True)
             return self.send_json(build_state(body.get("accountId")))
 
         if route == "/api/credential/clear":
+            if RUNNER.active():
+                return self.fail("请等当前任务结束后再清除登录凭证", 409)
             try:
                 _, paths = scoped_account()
             except ConfigError as exc:
                 return self.fail(str(exc), 400)
             if paths.storage_state and paths.storage_state.exists():
                 paths.storage_state.unlink()
+            (paths.artifacts_dir / CACHE_NAME).unlink(missing_ok=True)
             return self.send_json(build_state(body.get("accountId")))
 
         self.fail("没有这个地址", 404)
+
+
+def notification_worker(stop):
+    # The local web service runs independently of browser tabs. Opt-in only.
+    while not stop.wait(60):
+        try:
+            accounts = account_records()
+            if accounts is None:
+                accounts = [Account("main", True, Path(".env"), "主账号")]
+            for account in accounts:
+                if not account.enabled:
+                    continue
+                try:
+                    paths = account_paths(account, DATA_ROOT)
+                    if not alerts.settings(paths.artifacts_dir)["enabled"]:
+                        continue
+                    alerts.poll(paths.artifacts_dir, build_state(account.id))
+                except Exception:
+                    # One account or unavailable channel must not stop the worker.
+                    continue
+        except Exception:
+            continue
 
 
 def main() -> int:
@@ -1530,6 +2085,8 @@ def main() -> int:
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     PORT = server.server_port
     server.daemon_threads = True
+    notification_stop = threading.Event()
+    threading.Thread(target=notification_worker, args=(notification_stop,), daemon=True).start()
     print(f"抖音自动续火花 · 控制面板  http://{HOST}:{PORT}")
     print(f"LISTENING http://{HOST}:{PORT}", flush=True)
     print("按 Ctrl+C 停止")
@@ -1538,6 +2095,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\n已停止")
     finally:
+        notification_stop.set()
         server.server_close()
     return 0
 

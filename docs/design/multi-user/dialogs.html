@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>续火花 · 多用户弹层</title>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="mock.css">
+<style>
+  body{overflow:hidden;background:var(--bg)}
+  .dlg-row{display:grid;grid-template-columns:330px 500px 482px;gap:30px;align-items:start;padding:30px 34px}
+  .switch-pop{position:static;width:100%;box-shadow:0 14px 34px rgba(16,22,32,.10)}
+</style>
+</head>
+<body>
+<svg class="svg-sprite" aria-hidden="true">
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="10.5" rx="2.2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/><path d="M12 14v3"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8.2" cy="8.2" r="3.7"/><path d="m10.9 10.9 7.6 7.6m-3-3 2.2-2.2m-4.4-.2 2.1-2.1"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.4v5.2m0 3.6h.01"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.35" fill="currentColor" stroke="none"/></symbol>
+</svg>
+
+<div class="dlg-row">
+
+  <!-- 切换用户 -->
+  <div class="dlg-cell">
+    <p class="dlg-cell__label"><b>切换用户</b><span>侧栏底部入口，列出可以切换的成员</span></p>
+    <div class="switch-pop">
+      <div class="switch-pop__head"><span>切换用户</span><b>共 4 人</b></div>
+      <button class="switch-item is-current" type="button">
+        <span class="avatar" aria-hidden="true">悠</span>
+        <span class="switch-item__copy"><b>小悠米</b><small>管理员 · 今天 09:12</small></span>
+        <span class="now">当前</span>
+      </button>
+      <button class="switch-item" type="button">
+        <span class="avatar" aria-hidden="true">澈</span>
+        <span class="switch-item__copy"><b>阿澈</b><small>成员 · 昨天 22:40</small></span>
+        <svg class="i lock" aria-hidden="true"><use href="#i-lock"/></svg>
+      </button>
+      <button class="switch-item" type="button">
+        <span class="avatar" aria-hidden="true">满</span>
+        <span class="switch-item__copy"><b>林小满</b><small>成员 · 从未登录</small></span>
+        <svg class="i lock" aria-hidden="true"><use href="#i-lock"/></svg>
+      </button>
+      <button class="switch-item" type="button">
+        <span class="avatar" aria-hidden="true">屿</span>
+        <span class="switch-item__copy"><b>陈屿</b><small>已停用 · 无法切换</small></span>
+      </button>
+      <div class="switch-pop__foot">
+        <a href="#">管理成员<svg class="i"><use href="#i-arrow-right"/></svg></a>
+        <span>切换需输入密码</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加成员 -->
+  <div class="dlg-cell">
+    <p class="dlg-cell__label"><b>添加成员</b><span>创建独立工作区，不自动切换</span></p>
+    <div class="dlg">
+      <div class="dialog-head">
+        <div>
+          <p class="dlg-eyebrow">管理员操作</p>
+          <h2>添加成员</h2>
+          <p>新成员有自己的抖音账号、好友和记录，看不到你的数据。</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="关闭"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="dialog-body">
+        <div class="f-field">
+          <label class="f-label" for="newName">昵称</label>
+          <div class="f-input"><input id="newName" type="text" value="小满"></div>
+        </div>
+        <div class="f-field">
+          <label class="f-label" for="newPass">登录密码 <small>至少 6 位</small></label>
+          <div class="f-input is-focus">
+            <svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="newPass" type="password" value="mima-2026" aria-label="登录密码">
+          </div>
+          <p class="f-hint">成员登录后可以自己修改，管理员也能重置。</p>
+        </div>
+        <div class="f-field">
+          <label class="f-label" for="newPass2">确认密码</label>
+          <div class="f-input">
+            <svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>
+            <input id="newPass2" type="password" value="mima-2026" aria-label="确认密码">
+          </div>
+        </div>
+        <div class="switch-row">
+          <div class="switch-row__copy">
+            <b>允许使用自动任务</b>
+            <small>关闭后该成员只能手动「立即发送」</small>
+          </div>
+          <span class="toggle is-on" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn btn--quiet" type="button">取消</button>
+        <button class="btn btn--primary" type="button">创建成员</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除成员 -->
+  <div class="dlg-cell">
+    <p class="dlg-cell__label"><b>删除成员</b><span>输入名字确认 + 选择数据处理方式</span></p>
+    <div class="dlg">
+      <div class="dialog-head">
+        <div>
+          <p class="dlg-eyebrow">危险操作</p>
+          <h2>删除成员「林小满」</h2>
+          <p>删除后对方无法再登录这台电脑上的续火花。</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="关闭"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="dialog-body">
+        <div class="f-field">
+          <label class="f-label" for="delName">输入成员名字以确认</label>
+          <div class="f-input is-focus">
+            <input id="delName" type="text" value="林小满" aria-label="成员名字">
+          </div>
+        </div>
+        <div class="f-field">
+          <span class="f-label">这台电脑上的数据</span>
+          <div class="choice is-on">
+            <span class="choice__radio" aria-hidden="true"></span>
+            <span class="choice__copy">
+              <b>保留数据（推荐）</b>
+              <small>文件夹留在 users/ 下，以后可以手动找回</small>
+            </span>
+          </div>
+          <div class="choice">
+            <span class="choice__radio" aria-hidden="true"></span>
+            <span class="choice__copy">
+              <b>一并删除</b>
+              <small>好友、消息、登录凭证、运行记录全部移除，无法恢复</small>
+            </span>
+          </div>
+        </div>
+        <p class="dialog-note">只移除本机的登录入口，不会注销对方的抖音账号，也不会影响已经发出的消息。</p>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn btn--quiet" type="button">取消</button>
+        <button class="btn btn--danger" type="button">删除成员</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

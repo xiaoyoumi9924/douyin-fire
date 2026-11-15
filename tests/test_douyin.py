@@ -261,12 +261,12 @@ def _chat_page(
     page = MagicMock()
     empty = _locator_group([])
     header_name_node = MagicMock()
-    header_name_node.inner_text = AsyncMock(return_value=f" {header_name} ")
+    header_name_node.evaluate = AsyncMock(return_value=f" {header_name} ")
     header_name_node.is_visible = AsyncMock(return_value=name_visible)
     nodes = [header_name_node]
     if stale_name is not None:
         stale_node = MagicMock()
-        stale_node.inner_text = AsyncMock(return_value=f" {stale_name} ")
+        stale_node.evaluate = AsyncMock(return_value=f" {stale_name} ")
         stale_node.is_visible = AsyncMock(return_value=False)
         nodes.append(stale_node)
     exact_names = _locator_group(nodes)

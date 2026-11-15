@@ -61,7 +61,9 @@ crontab -l | grep douyin-fire-local-schedule
 */30 * * * * DOUYIN_DATA_DIR=/home/you/.local/share/douyin-fire ... HEADLESS=true /home/you/Applications/DouyinFire.AppImage --scheduled-run --catch-up --not-before 07:30 >> .../artifacts/scheduled.log 2>&1 # douyin-fire-local-schedule
 ```
 
-含义：每 30 分钟检查一次，到点或当天错过时执行；`HEADLESS=true` 保证后台不弹浏览器窗口。
+含义：每天在设定时间执行，并每 30 分钟检查当天是否需要补跑；`HEADLESS=true` 保证后台不弹浏览器窗口。设定时间在整点或半点时，一条周期任务即可覆盖；其他分钟会额外生成一条每日准点任务，例如 08:05 对应 `5 8 * * *`。
+
+从旧版本升级后，需要在「自动任务」里重新点一次「保存时间」，替换已有的定时条目。
 
 > 如果你的 cron 环境没有图形会话（常见于从 cron 直接拉起图形程序），日志里可能出现与 `DISPLAY` 相关的报错。
 > 这时改用下面的「方式 B」，它不依赖图形环境。
