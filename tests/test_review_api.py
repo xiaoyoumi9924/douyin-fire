@@ -54,7 +54,8 @@ def test_review_rejects_active_process_and_cross_account_tokens(server, http_req
 
 
 @pytest.mark.parametrize("width,height", [(1320, 900), (390, 844)])
-async def test_ui_review_requires_confirmation_and_keeps_unsent_held(page, server, width, height):
+@pytest.mark.parametrize("outcome", ["success", "unknown"])
+async def test_ui_not_sent_retries_once_and_reports_outcome(page, server, width, height, outcome):
     token = seed(server)
     state = server.build_state("main")
     data = server.review_state(*server.review_context(server.account_paths_for("main")))
@@ -74,6 +75,12 @@ async def test_ui_review_requires_confirmation_and_keeps_unsent_held(page, serve
             return await request_route.fulfill(json={"review": data, "state": state})
         if "/api/review/retry" in url:
             posted.append(request_route.request.post_data_json)
+            if outcome == "success":
+                data["items"] = []
+            else:
+                data["items"][0]["decision"] = None
+                data["items"][0]["id"] = "after-retry"
+            data["audit"] = [{"action": "retry", "target": "原有好友", "messageNumber": 1, "outcome": outcome}]
             return await request_route.fulfill(json={"started": "review-retry"})
         if "/api/review" in url:
             return await request_route.fulfill(json=data)
@@ -83,18 +90,15 @@ async def test_ui_review_requires_confirmation_and_keeps_unsent_held(page, serve
     await page.goto("http://review.test/#/accounts/main/friends")
     await page.locator("#welcomeDialog").evaluate("e => e.close()")
     await page.get_by_role("button", name="核对结果", exact=True).click()
-    await page.get_by_role("button", name="我确认未发送", exact=True).click()
-    assert posted == []
-    await page.get_by_role("button", name="确认保存判断", exact=True).click()
-    await expect(page.locator("#reviewList")).to_contain_text("仍暂停自动重发")
-    assert len(posted) == 1 and posted[0]["decision"] == "not_sent"
+    await expect(page.get_by_text("人工处理记录", exact=True)).to_have_count(0)
+    await page.get_by_role("button", name="未发送，补发", exact=True).click()
+    assert posted[0]["decision"] == "not_sent"
     assert await page.locator("#reviewDialog").evaluate("e => e.scrollWidth <= e.clientWidth")
     capture_dir = os.environ.get("DOUYIN_UI_CAPTURE_DIR")
     if capture_dir:
         Path(capture_dir).mkdir(parents=True, exist_ok=True)
         await page.screenshot(path=str(Path(capture_dir) / f"review-{width}.png"))
-    await page.get_by_role("button", name="只补发这条", exact=True).click()
-    assert len(posted) == 1
-    await page.get_by_role("button", name="确认补发这条", exact=True).click()
-    await expect(page.locator("#reviewDialog")).not_to_be_visible()
+    await expect(page.locator("#reviewDialog")).to_be_visible()
+    await expect(page.locator("#reviewStatus")).to_contain_text("已成功补发" if outcome == "success" else "尚未确认送达")
+    assert len(posted) == 2
     assert posted[-1] == {"accountId": "main", "id": "new-token"}

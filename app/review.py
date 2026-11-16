@@ -4,13 +4,21 @@ from pathlib import Path
 from app.history import History, message_id
 
 
-def message_preview(message) -> dict:
+def message_preview(message, data_root: Path | None = None) -> dict:
     if message.type == "text":
         return {"type": "text", "text": message.content}
     if message.type == "image":
-        return {"type": "image", "text": f"图片：{Path(message.path).name}"}
+        preview = {"type": "image", "text": "图片消息"}
+        if data_root is not None and message.path is not None:
+            path = Path(message.path).resolve()
+            try:
+                path.relative_to((data_root / "images").resolve())
+                preview["image"] = path.relative_to(data_root.resolve()).as_posix()
+            except ValueError:
+                pass
+        return preview
     if message.type in {"random", "rotation"}:
-        return {"type": "random", "text": "按日期轮换的候选，请以聊天记录为准" if message.type == "rotation" else "随机候选，原先实际选择未记录", "choices": [message_preview(item) for item in message.choices[:20]]}
+        return {"type": "random", "text": "按日期轮换的候选，请以聊天记录为准" if message.type == "rotation" else "随机候选，原先实际选择未记录", "choices": [message_preview(item, data_root) for item in message.choices[:20]]}
     return {"type": "sticker", "text": f"抖音表情：{message.sticker}"}
 
 
@@ -22,7 +30,7 @@ def current_messages(task, history: History):
             yield key, target_index, index, target, message
 
 
-def review_state(task, history: History) -> dict:
+def review_state(task, history: History, data_root: Path | None = None) -> dict:
     items = []
     mapped = set()
     for key, _, index, target, message in current_messages(task, history):
@@ -40,7 +48,7 @@ def review_state(task, history: History) -> dict:
         items.append({
             "id": history.review_token(key), "target": target.name, "messageNumber": index + 1,
             "recordedAt": entry.get("started_at") or entry.get("finished_at"),
-            "decision": entry.get("review_decision"), "message": message_preview(message),
+            "decision": entry.get("review_decision"), "message": message_preview(message, data_root),
             "legacy": bool(entry.get("migrated_from_legacy")),
             "paused": not target.enabled,
         })

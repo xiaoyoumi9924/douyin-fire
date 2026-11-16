@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -81,6 +82,9 @@ async def open_douyin(settings: Settings) -> AsyncIterator[BrowserSession]:
     try:
         playwright = await async_playwright().start()
         launch_args = {"headless": settings.headless}
+        # This affects only this automation browser, never system networking.
+        if os.environ.get("DOUYIN_BROWSER_PROXY_MODE") == "direct":
+            launch_args["args"] = ["--no-proxy-server"]
         if settings.browser_path:
             launch_args["executable_path"] = settings.browser_path
         browser = await playwright.chromium.launch(**launch_args)

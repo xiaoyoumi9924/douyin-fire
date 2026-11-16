@@ -644,19 +644,31 @@
   .sync-dialog{width:min(640px,calc(100vw - 32px))}
   .sync-dialog .dialog-empty{color:var(--ink-2)}
   .sync-dialog .dialog-empty[data-tone="error"]{color:var(--red)}
-  .review-dialog{width:min(700px,calc(100vw - 32px))}
-  .review-list{display:grid;gap:22px;list-style:none;margin:0;padding:0}
+  .review-dialog{width:min(640px,calc(100vw - 32px))}
+  .review-dialog .dialog-head{padding:20px 24px 16px}
+  .review-dialog .dialog-head h2{font-size:22px}
+  .review-dialog .dialog-body{padding:16px 24px 20px;gap:16px}
+  .review-dialog .dialog-foot{padding:14px 24px;background:var(--surface)}
+  .review-dialog .btn{min-height:38px;font-size:14px;padding:8px 14px}
+  .review-intro{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .review-intro .text-link{font-size:14px;white-space:nowrap}
+  .review-list{display:grid;gap:20px;list-style:none;margin:0;padding:0}
   .review-item{padding-bottom:20px;border-bottom:1px solid var(--line)}
   .review-item:last-child{padding-bottom:0;border-bottom:0}
-  .review-item h3{margin:0;font-size:16px;overflow-wrap:anywhere}
-  .review-meta{margin:4px 0 12px;color:var(--ink-2);font-size:12px}
-  .review-message{margin:0 0 12px;padding:12px 14px;border-radius:11px;background:var(--surface-2);color:var(--ink-2);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .review-content{display:flex;align-items:flex-start;gap:16px}
+  .review-copy{flex:1;min-width:0}
+  .review-item h3{margin:0;font-size:17px;overflow-wrap:anywhere}
+  .review-meta{margin:5px 0 8px;color:var(--ink-2);font-size:12px}
+  .review-message{margin:0;color:var(--ink-2);font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .review-thumbnail{width:100px;height:100px;flex:none;object-fit:contain;background:var(--surface-2);border-radius:10px}
+  .review-image-link{display:block;flex:none;line-height:0;outline-offset:4px}
+  .review-state{font-size:13px;color:var(--ink-2);margin:8px 0 0}
   .review-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .review-item .dialog-note{margin-top:12px}
-  .review-audit{font-size:12px;color:var(--ink-2)}
-  .review-audit summary{cursor:pointer;padding:8px 0;font-weight:600}
-  .review-audit ol{margin:8px 0 0;padding-left:20px;display:grid;gap:10px}
-  .review-dialog .dialog-empty{color:var(--ink-2)}
+  .review-item .dialog-note{margin:14px 0 0;font-size:13px;padding:12px 14px}
+  .review-dialog .dialog-empty{color:var(--ink-2);border:0;background:transparent;padding:0;margin:0;font-size:13px}
+  #reviewStatus[data-tone="error"]{color:var(--red)}
+  #reviewStatus[data-tone="success"]{color:var(--green)}
+  @media(max-width:600px){.review-dialog .dialog-head,.review-dialog .dialog-foot{padding:16px}.review-dialog .dialog-body{padding:12px 16px 18px}.review-intro{align-items:flex-start;flex-direction:column;gap:8px}.review-thumbnail{width:76px;height:76px}.review-content{gap:12px}.review-dialog .dialog-head h2{font-size:20px}}
   .rule-fields{display:grid;gap:12px}
   #friendRuleDialog .dialog-body{gap:16px}
   #friendRuleTexts{min-height:116px;height:116px;font-family:inherit;font-size:14px}
@@ -3041,19 +3053,18 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
 <dialog class="send-dialog review-dialog" id="reviewDialog" aria-labelledby="reviewTitle" aria-describedby="reviewLead">
   <div class="dialog-sheet">
     <header class="dialog-head">
-      <h2 id="reviewTitle">核对发送结果</h2>
+      <h2 id="reviewTitle">处理未确认消息</h2>
       <button class="icon-btn" id="closeReview" type="button" aria-label="关闭结果核对"><svg class="i"><use href="#i-x"/></svg></button>
     </header>
     <div class="dialog-body">
-      <p class="dialog-hint" id="reviewLead">先打开抖音，查看对应好友的聊天记录，再确认消息是否发出。不确定时保留待核对，程序不会自动重发。</p>
-      <a class="text-link" href="https://www.douyin.com/chat" target="_blank" rel="noopener noreferrer">打开抖音聊天记录 <svg class="i"><use href="#i-arrow-right"/></svg></a>
+      <div class="review-intro"><p class="dialog-hint" id="reviewLead">先查看聊天记录。选择“未发送，补发”会立即发送这条消息。</p>
+      <a class="text-link" href="https://www.douyin.com/chat" target="_blank" rel="noopener noreferrer">查看抖音聊天 <svg class="i"><use href="#i-arrow-right"/></svg></a></div>
       <p class="dialog-empty" id="reviewStatus" role="status" aria-live="polite">正在读取…</p>
       <ul class="review-list" id="reviewList" aria-label="待核对消息"></ul>
-      <details class="review-audit" id="reviewAudit"><summary>人工处理记录</summary><ol id="reviewAuditList"></ol></details>
     </div>
     <footer class="dialog-foot">
       <button class="btn btn--ghost" id="refreshReview" type="button"><svg class="i"><use href="#i-refresh"/></svg>刷新记录</button>
-      <button class="btn btn--primary" id="finishReview" type="button">完成核对</button>
+      <button class="btn btn--ghost" id="finishReview" type="button">关闭</button>
     </footer>
   </div>
 </dialog>
@@ -4647,7 +4658,9 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
   let reviewAccount = null;
   let reviewEpoch = 0;
   let reviewBusy = false;
-  let reviewArmed = null;
+  let reviewNotice = "";
+  let reviewNoticeTone = "";
+  let reviewRetryTimer = null;
 
   function reviewPreview(message) {
     if (message?.type === "random") return `${message.text}\n${(message.choices || []).map(row => `• ${reviewPreview(row)}`).join("\n")}`;
@@ -4659,24 +4672,51 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
     list.replaceChildren();
     const items = reviewData?.items || [];
     const status = $("reviewStatus");
-    status.dataset.tone = "";
-    status.textContent = !reviewData ? "正在读取…" : items.length
-      ? `今天有 ${items.length} 条消息需要处理。确认未发送后仍会暂停，需再次确认才能单独补发。`
-      : "今天没有需要处理的消息。人工确认不会修改原始运行记录，可在下方回看处理结果。";
+    status.dataset.tone = reviewNoticeTone;
+    status.textContent = reviewNotice || (!reviewData ? "正在读取…" : items.length
+      ? `${items.length} 条待处理 · 未确认的消息不会自动重发`
+      : "没有待处理的消息。");
     if (reviewData?.unmapped) status.textContent += ` 另有 ${reviewData.unmapped} 条旧配置记录无法对应当前消息，请在抖音中核实；不会提供自动补发。`;
     const disabled = reviewBusy || Boolean(state?.running);
     items.forEach(item => {
       const li = document.createElement("li");
       li.className = "review-item";
+      li.dataset.reviewTarget = item.target;
+      li.dataset.messageNumber = item.messageNumber;
       const title = document.createElement("h3");
-      title.textContent = `${item.target} · 第 ${item.messageNumber} 条消息`;
+      title.textContent = item.target;
       const meta = document.createElement("p");
       meta.className = "review-meta";
-      meta.textContent = item.recordedAt ? `记录时间：${formatWhen(item.recordedAt)}` : "历史记录 · 原发送时间不详";
+      meta.textContent = `${item.recordedAt ? formatWhen(item.recordedAt) : "原发送时间不详"} · 第 ${item.messageNumber} 条`;
       const preview = document.createElement("p");
       preview.className = "review-message";
       preview.textContent = reviewPreview(item.message);
-      li.append(title, meta, preview);
+      const content = document.createElement("div");
+      content.className = "review-content";
+      const copy = document.createElement("div");
+      copy.className = "review-copy";
+      if (item.message?.image) {
+        const link = document.createElement("a");
+        link.className = "review-image-link";
+        link.href = imageUrl(item.message.image);
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.setAttribute("aria-label", `查看发给${item.target}的图片`);
+        const image = document.createElement("img");
+        image.className = "review-thumbnail";
+        image.src = link.href;
+        image.alt = "待核对图片";
+        image.addEventListener("error", () => { link.hidden = true; preview.textContent = "图片预览不可用，请对照聊天记录"; });
+        link.append(image);
+        content.append(link);
+      }
+      copy.append(title, meta, preview);
+      const itemState = document.createElement("p");
+      itemState.className = "review-state";
+      itemState.textContent = item.paused ? "好友已暂停，请先恢复后再补发" : item.decision === "not_sent" ? "已确认未发送 · 可单独补发" : "尚未确认是否送达";
+      copy.append(itemState);
+      content.append(copy);
+      li.append(content);
       const actions = document.createElement("div");
       actions.className = "review-actions";
       const button = (text, handler, primary = false) => {
@@ -4688,51 +4728,26 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
         node.addEventListener("click", handler);
         actions.append(node);
       };
-      if (reviewArmed?.id === item.id) {
-        const note = document.createElement("p");
-        note.className = "dialog-note";
-        note.textContent = reviewArmed.action === "retry"
-          ? `将向「${item.target}」补发上面这一条消息。请确认抖音记录中没有这条消息；不会发送其他消息或联系其他好友。`
-          : reviewArmed.action === "sent"
-            ? "确认抖音记录中已经发出这条消息？标记后，今天将跳过这条消息，不会再次发送。"
-            : "确认抖音记录中没有发出这条消息？本次只保存判断，不会发送，也不会恢复自动重发。";
-        li.append(note);
-        button("返回", () => { reviewArmed = null; renderReview(); });
-        button(reviewArmed.action === "retry" ? "确认补发这条" : "确认保存判断", () => submitReview(item, reviewArmed.action), true);
-      } else {
         if (item.decision === "not_sent") {
-          const note = document.createElement("p");
-          note.className = "dialog-note";
-          note.textContent = item.paused ? "已人工确认未发送。这位好友已暂停，请先在消息规则中恢复后再补发。" : "已人工确认未发送，仍暂停自动重发。需要时可单独补发这条。";
-          li.append(note);
-          button("改为已发送", () => { reviewArmed = {id: item.id, action: "sent"}; renderReview(); });
-          if (!item.paused) button("只补发这条", () => { reviewArmed = {id: item.id, action: "retry"}; renderReview(); }, true);
+          if (!item.paused) button("立即补发", () => submitReview(item, "retry"), true);
+          button("改为已发送", () => submitReview(item, "sent"));
         } else {
-          button("我确认未发送", () => { reviewArmed = {id: item.id, action: "not_sent"}; renderReview(); });
-          button("我确认已发送", () => { reviewArmed = {id: item.id, action: "sent"}; renderReview(); }, true);
+          button("已发送", () => submitReview(item, "sent"));
+          button(item.paused ? "未发送" : "未发送，补发", () => submitReview(item, "not_sent"), !item.paused);
         }
-      }
       li.append(actions);
       list.append(li);
     });
     $("refreshReview").disabled = reviewBusy;
     reviewDialog.setAttribute("aria-busy", String(reviewBusy));
-    $("reviewAuditList").replaceChildren();
-    $("reviewAudit").hidden = !reviewData?.audit?.length;
-    (reviewData?.audit || []).forEach(event => {
-      const li = document.createElement("li");
-      const outcome = event.outcome || event.currentStatus;
-      const action = event.action === "sent" ? "人工确认已发送" : event.action === "not_sent" ? "人工确认未发送，保持暂停" : outcome === "success" ? "单条补发已确认成功" : outcome === "failed" ? "单条补发失败" : "已发起单条补发，结果仍待核对";
-      li.textContent = `${formatWhen(event.at)} · ${event.target || "好友"} · 第 ${event.messageNumber || "—"} 条 · ${action}`;
-      $("reviewAuditList").append(li);
-    });
   }
 
   async function loadReview() {
     const epoch = ++reviewEpoch;
     const accountId = reviewAccount;
     reviewBusy = true;
-    reviewArmed = null;
+    reviewNotice = "";
+    reviewNoticeTone = "";
     renderReview();
     try {
       const data = await api(`/api/review?accountId=${encodeURIComponent(accountId)}`);
@@ -4761,22 +4776,33 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
     if (reviewBusy || reviewAccount !== activeAccountId) return;
     const epoch = reviewEpoch;
     const accountId = reviewAccount;
+    reviewNotice = "";
+    reviewNoticeTone = "";
     reviewBusy = true;
     renderReview();
     try {
-      const response = await api(action === "retry" ? "/api/review/retry" : "/api/review/resolve", {accountId, id: item.id, ...(action === "retry" ? {} : {decision: action})});
+      let response = await api(action === "retry" ? "/api/review/retry" : "/api/review/resolve", {accountId, id: item.id, ...(action === "retry" ? {} : {decision: action})});
       if (epoch !== reviewEpoch || accountId !== activeAccountId) return;
-      if (action === "retry") {
-        reviewDialog.close();
-        flash("已开始单条补发，其他消息不会跟随发送", "quiet", 5000);
-        refreshState();
+      if (action === "not_sent" && !item.paused) {
+        state = response.state;
+        reviewData = response.review;
+        const updated = reviewData.items.find(row => row.target === item.target && row.messageNumber === item.messageNumber);
+        if (!updated || updated.decision !== "not_sent") throw new Error("记录已变化，请刷新后重试");
+        response = await api("/api/review/retry", {accountId, id: updated.id});
+        if (epoch !== reviewEpoch || accountId !== activeAccountId) return;
+      }
+      if (action === "retry" || (action === "not_sent" && !item.paused)) {
+        reviewNotice = `正在向「${item.target}」补发，请稍候…`;
+        renderReview();
+        pollReviewRetry(item, epoch, accountId);
       } else {
         state = response.state;
         reviewData = response.review;
-        reviewArmed = null;
         reviewBusy = false;
         render();
         renderReview();
+        const nextItem = [...$("reviewList").children].find(row => row.dataset.reviewTarget === item.target && Number(row.dataset.messageNumber) === item.messageNumber);
+        (nextItem?.querySelector("button") || $("finishReview")).focus();
       }
     } catch (error) {
       if (epoch !== reviewEpoch) return;
@@ -4787,10 +4813,38 @@ body:has(.page-shell[data-page]) .account-picker select{font-size:15px}
     }
   }
 
+  async function pollReviewRetry(item, epoch, accountId) {
+    reviewRetryTimer = setTimeout(async () => {
+      if (epoch !== reviewEpoch || accountId !== activeAccountId || !reviewDialog.open) return;
+      try {
+        const freshState = await api(`/api/state?accountId=${encodeURIComponent(accountId)}`);
+        if (epoch !== reviewEpoch || accountId !== activeAccountId) return;
+        if (freshState.running) return pollReviewRetry(item, epoch, accountId);
+        const data = await api(`/api/review?accountId=${encodeURIComponent(accountId)}`);
+        if (epoch !== reviewEpoch || accountId !== activeAccountId) return;
+        state = freshState;
+        reviewData = data;
+        const outcome = data.audit?.find(event => event.action === "retry" && event.target === item.target && event.messageNumber === item.messageNumber);
+        const success = (outcome?.outcome || outcome?.currentStatus) === "success";
+        reviewNotice = success ? `已成功补发给「${item.target}」` : `「${item.target}」尚未确认送达，请查看抖音记录后再处理。`;
+        reviewNoticeTone = success ? "success" : "error";
+        reviewBusy = false;
+        render();
+        renderReview();
+      } catch (error) {
+        if (epoch !== reviewEpoch || accountId !== activeAccountId) return;
+        reviewBusy = false;
+        reviewNotice = `结果读取失败：${error.message}。请刷新记录查看，勿重复补发。`;
+        reviewNoticeTone = "error";
+        renderReview();
+      }
+    }, 1500);
+  }
+
   $("refreshReview").addEventListener("click", loadReview);
   $("closeReview").addEventListener("click", () => reviewDialog.close());
   $("finishReview").addEventListener("click", () => reviewDialog.close());
-  reviewDialog.addEventListener("close", () => { ++reviewEpoch; reviewBusy = false; reviewArmed = null; });
+  reviewDialog.addEventListener("close", () => { ++reviewEpoch; clearTimeout(reviewRetryTimer); reviewBusy = false; });
 
   // Chat-list sync is read-only until the user explicitly imports a selection.
   const syncDialog = $("syncFriendsDialog");

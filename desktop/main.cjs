@@ -13,6 +13,20 @@ const defaultDataDir = process.platform === "darwin"
     ? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Douyin Fire")
     : path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share"), "douyin-fire");
 const dataDir = process.env.DOUYIN_DATA_DIR || (isPackaged ? defaultDataDir : projectRoot);
+// An explicit connection keeps this desktop window on the existing Web service.
+// Never fall back to a separate data directory when that service is unavailable.
+function sharedPanelUrl() {
+  const settingsPath = path.join(defaultDataDir, "desktop-connection.json");
+  const configured = process.env.DOUYIN_PANEL_URL || (fs.existsSync(settingsPath)
+    ? JSON.parse(fs.readFileSync(settingsPath, "utf8")).panelUrl : "");
+  if (!configured) return null;
+  const url = new URL(configured);
+  if (url.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+      || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+    throw new Error("共享面板地址必须是本机 HTTP 服务地址，例如 http://127.0.0.1:8765/");
+  }
+  return url.origin;
+}
 const backendName = process.platform === "win32" ? "douyin-fire-backend.exe" : "douyin-fire-backend";
 const packagedBackend = path.join(process.resourcesPath, "backend", "douyin-fire-backend", backendName);
 const developmentBackend = path.join(projectRoot, "dist", "backend", "douyin-fire-backend", backendName);
@@ -164,6 +178,29 @@ function startBackend() {
   });
 }
 
+async function connectSharedPanel(url) {
+  try {
+    const response = await fetch(`${url}/api/state`, { signal: AbortSignal.timeout(8000), redirect: "error" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const state = await response.json();
+    if (!Array.isArray(state.accounts)) throw new Error("该地址不是续火花面板");
+    readyUrl = url;
+    if (scheduledRun) {
+      await requestScheduledRun(scheduledRunPayload(process.argv));
+      app.quit();
+      return;
+    }
+    mainWindow.loadURL(readyUrl);
+    if (pendingScheduledRun) {
+      const payload = pendingScheduledRun;
+      pendingScheduledRun = null;
+      await requestScheduledRun(payload);
+    }
+  } catch (error) {
+    showBackendFailure(`无法连接共用的 Web 服务：${url}\n${error.message}\n请先恢复 Web 服务后重新打开桌面端。`);
+  }
+}
+
 function startScheduledBackend() {
   if (!fs.existsSync(backendPath)) {
     showBackendFailure(`没有找到后端程序：${backendPath}`);
@@ -224,6 +261,12 @@ app.on("before-quit", () => {
 
 if (ownsLock) app.whenReady().then(() => {
   try {
+    const panelUrl = sharedPanelUrl();
+    if (panelUrl) {
+      if (!scheduledRun) createWindow();
+      connectSharedPanel(panelUrl);
+      return;
+    }
     if (scheduledRun) {
       startScheduledBackend();
       return;

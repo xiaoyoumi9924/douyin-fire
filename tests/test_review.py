@@ -8,7 +8,17 @@ from app.config import ConfigError
 from app.history import History, message_id
 from app.models import Message, Settings, Target, TaskConfig
 from app.review import find_review, review_state
+from app.review import message_preview
 import app.main as runner
+
+
+def test_image_preview_exposes_only_relative_image_path(tmp_path):
+    image = tmp_path / "images" / "main" / "image.png"
+    preview = message_preview(Message("image", path=image), tmp_path)
+    assert preview == {"type": "image", "text": "图片消息", "image": "images/main/image.png"}
+    outside = message_preview(Message("image", path=tmp_path / "private.png"), tmp_path)
+    assert "image" not in outside
+    assert str(tmp_path) not in str(outside)
 
 
 @pytest.fixture

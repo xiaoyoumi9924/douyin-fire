@@ -174,7 +174,11 @@ class _FakePage:
         self.timeout_calls = []
 
     def locator(self, selector):
-        if selector == LATEST_OUTGOING_MESSAGE:
+        if selector == f'{sender_module.IMAGE_OUTGOING_MESSAGE} [data-e2e="msg-item-content"] img[class*="MessageItemImageImage"]':
+            images = MagicMock()
+            images.evaluate_all = AsyncMock(return_value=[])
+            return images
+        if selector in {LATEST_OUTGOING_MESSAGE, sender_module.IMAGE_OUTGOING_MESSAGE}:
             return _MessageGroup(self._message)
         if "data-douyin-sender-anchor" in selector:
             return self._anchors
@@ -744,7 +748,7 @@ async def test_send_image_fails_when_retry_appears(monkeypatch) -> None:
     timeline = _Timeline([(True, False)])
     page = _FakePage(timeline, content_count=1)
     monkeypatch.setattr(sender_module, "_mark_latest_outgoing_message", AsyncMock(return_value=("anchor", "old")))
-    monkeypatch.setattr(sender_module, "_trigger_send", AsyncMock())
+    monkeypatch.setattr(sender_module, "_submit_image_and_wait", AsyncMock())
 
     with pytest.raises(PageOperationError, match="发送失败"):
         await sender_module.send_image(page, "image.png")
@@ -760,7 +764,7 @@ async def test_send_image_waits_for_terminal_state(monkeypatch) -> None:
     timeline = _Timeline([(False, True), (False, True), (False, False), (False, False)])
     page = _FakePage(timeline, content_count=1)
     monkeypatch.setattr(sender_module, "_mark_latest_outgoing_message", AsyncMock(return_value=("anchor", "old")))
-    monkeypatch.setattr(sender_module, "_trigger_send", AsyncMock())
+    monkeypatch.setattr(sender_module, "_submit_image_and_wait", AsyncMock())
 
     await sender_module.send_image(page, "image.png")  # must not raise
 
@@ -1090,7 +1094,7 @@ async def test_real_image_delayed_failure(monkeypatch, tmp_path) -> None:
         _patch_clock(monkeypatch, clock)
         page.wait_for_timeout = lambda ms: clock.wait_for_timeout(ms, page)
         monkeypatch.setattr(sender_module, "_mark_latest_outgoing_message", AsyncMock(return_value=("anchor", "old")))
-        monkeypatch.setattr(sender_module, "_trigger_send", AsyncMock())
+        monkeypatch.setattr(sender_module, "_submit_image_and_wait", AsyncMock())
 
         async def wf_fn(*a, **k):
             return True
@@ -1119,7 +1123,7 @@ async def test_real_image_pending_then_success(monkeypatch, tmp_path) -> None:
         _patch_clock(monkeypatch, clock)
         page.wait_for_timeout = lambda ms: clock.wait_for_timeout(ms, page)
         monkeypatch.setattr(sender_module, "_mark_latest_outgoing_message", AsyncMock(return_value=("anchor", "old")))
-        monkeypatch.setattr(sender_module, "_trigger_send", AsyncMock())
+        monkeypatch.setattr(sender_module, "_submit_image_and_wait", AsyncMock())
         page.wait_for_function = AsyncMock(side_effect=lambda *a, **k: True)
 
         await sender_module.send_image(page, img.as_posix())

@@ -222,6 +222,8 @@ def plist_body(hour: int, minute: int) -> str:
         f"    <key>PLAYWRIGHT_BROWSERS_PATH</key>\n    <string>{xml_escape(browser_path)}</string>\n"
         if browser_path else ""
     )
+    if os.environ.get("DOUYIN_BROWSER_PROXY_MODE") == "direct":
+        browser_environment += "    <key>DOUYIN_BROWSER_PROXY_MODE</key>\n    <string>direct</string>\n"
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -1460,7 +1462,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not account_id:
                     return self.fail("缺少当前账号 ID")
                 task, history = review_context(account_paths_for(account_id))
-                return self.send_json(review_state(task, history))
+                return self.send_json(review_state(task, history, DATA_ROOT))
             except (ValueError, OSError) as exc:
                 return self.fail(str(exc), 400)
         if route == "/api/friends/sync":
@@ -1964,7 +1966,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not started:
                         return self.fail(reason, 409)
                     return self.send_json({"started": "review-retry"})
-                return self.send_json({"review": review_state(task, history), "state": build_state(account.id)})
+                return self.send_json({"review": review_state(task, history, DATA_ROOT), "state": build_state(account.id)})
             except (AlreadyRunningError, ValueError) as exc:
                 return self.fail(str(exc), 409)
             except OSError:

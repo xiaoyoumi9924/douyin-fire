@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 import random
 import secrets
+import json
 from contextvars import ContextVar
 from urllib.parse import urlsplit
 
 from playwright.async_api import Locator, Page
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from app.douyin import DouyinChat, PageOperationError, RecipientIdentityError, first_visible
 from app.models import Message, Sticker
@@ -40,6 +42,90 @@ SEND_BUTTONS = (
     'button[aria-label*="发送"]',
     '[role="button"][aria-label*="发送"]',
 )
+IMAGE_SEND_DIALOG = '[class*="MsgInputSendFileModalbox"]'
+IMAGE_DIALOG_SEND = '[class*="MsgInputSendFileModalbtnSure"]'
+IMAGE_DIALOG_CANCEL = '[class*="MsgInputSendFileModalbtnCancle"]'
+
+
+async def _trigger_image_send(page: Page) -> None:
+    dialog = page.locator(IMAGE_SEND_DIALOG).first
+    try:
+        await dialog.wait_for(state="visible", timeout=5_000)
+    except PlaywrightTimeoutError:
+        # Older Douyin pages stage the image in the normal composer.
+        await _trigger_send(page)
+        return
+    await _verify_recipient()
+    button = dialog.locator(IMAGE_DIALOG_SEND).first
+    if not await button.count() or not await button.is_visible() or not await button.is_enabled():
+        raise PageOperationError("图片确认窗口的发送按钮尚未就绪")
+    try:
+        await button.click(timeout=5_000)
+    except Exception as exc:
+        raise SendOutcomeUnknownError("图片确认发送已触发或状态不明；为避免重复不会自动重试") from exc
+
+
+async def _cancel_image_dialog(page: Page) -> None:
+    dialog = page.locator(IMAGE_SEND_DIALOG).first
+    if await dialog.count() and await dialog.is_visible():
+        await dialog.locator(IMAGE_DIALOG_CANCEL).first.click(timeout=3_000)
+        await dialog.wait_for(state="hidden", timeout=3_000)
+
+
+async def _submit_image_and_wait(page: Page) -> None:
+    # The bubble can appear while upload/send is still in flight. Keep the
+    # browser alive until Douyin has actually answered the message-send request.
+    try:
+        async with page.expect_response(
+            lambda response: urlsplit(response.url).path == "/v1/message/send"
+            and response.request.method == "POST", timeout=30_000,
+        ) as receipt:
+            await _trigger_image_send(page)
+        response = await receipt.value
+        await response.finished()
+        if not response.ok:
+            raise SendOutcomeUnknownError("图片发送请求未完成，请核对聊天记录")
+        body = await response.body()
+        if "json" in response.headers.get("content-type", ""):
+            code = json.loads(body).get("status_code")
+        else:
+            # Douyin's observed protobuf receipt stores status in field 3.
+            # Missing/malformed status is uncertain, never implicit success.
+            position = 0
+            code = None
+            def varint():
+                nonlocal position
+                value = shift = 0
+                while position < len(body) and shift < 70:
+                    byte = body[position]
+                    position += 1
+                    value |= (byte & 127) << shift
+                    if byte < 128:
+                        return value
+                    shift += 7
+                raise ValueError("invalid receipt")
+            while position < len(body):
+                tag = varint()
+                field, wire = tag >> 3, tag & 7
+                if wire == 0:
+                    value = varint()
+                    if field == 3:
+                        code = value
+                elif wire == 2:
+                    size = varint()
+                    position += size
+                elif wire in {1, 5}:
+                    position += 8 if wire == 1 else 4
+                else:
+                    raise ValueError("invalid receipt")
+                if position > len(body):
+                    raise ValueError("truncated receipt")
+        if type(code) is not int or code != 0:
+            raise SendOutcomeUnknownError("抖音未确认接受图片消息，请核对聊天记录")
+    except (SendOutcomeUnknownError, RecipientIdentityError):
+        raise
+    except Exception as exc:
+        raise SendOutcomeUnknownError("尚未收到抖音的图片发送回执，请核对聊天记录") from exc
 
 
 _recipient_guard = ContextVar("recipient_guard", default=None)
@@ -86,6 +172,10 @@ async def _publish_ready(page: Page) -> bool:
 LATEST_OUTGOING_MESSAGE = (
     '.messageMessageListlist [data-index="0"] '
     '.messageMessageBoxmessageBox:has(.messageMessageBoxcontentBox.messageMessageBoxisFromMe)'
+)
+IMAGE_OUTGOING_MESSAGE = (
+    '.messageMessageListlist .messageMessageBoxmessageBox'
+    ':has(.messageMessageBoxcontentBox.messageMessageBoxisFromMe)'
 )
 MESSAGE_CONFIRM_ANCHOR = "data-douyin-sender-anchor"
 
@@ -196,7 +286,12 @@ async def send_text(chat: DouyinChat, content: str) -> None:
 
 
 async def send_image(page: Page, image_path: str) -> None:
-    before = await _mark_latest_outgoing_message(page)
+    # Avatars and old text bubbles are not evidence of an image being sent.
+    # React can remount an old bubble (losing our DOM anchor) during upload.
+    image_selector = f'{IMAGE_OUTGOING_MESSAGE} [data-e2e="msg-item-content"] img[class*="MessageItemImageImage"]'
+    before_images = await page.locator(image_selector).evaluate_all(
+        "nodes => nodes.map(img => (img.getAttribute('src') || '').split('?')[0])"
+    )
     file_input = None
     for selector in IMAGE_INPUTS:
         candidate = page.locator(selector).first
@@ -206,31 +301,43 @@ async def send_image(page: Page, image_path: str) -> None:
     if file_input is None:
         raise PageOperationError("找不到图片上传控件")
     await _verify_recipient()
-    await file_input.set_input_files(image_path)
-    await page.wait_for_timeout(1_500)
-
+    submission_started = False
     try:
-        await _trigger_send(page)
+        await file_input.set_input_files(image_path)
+        await page.wait_for_timeout(1_500)
+        submission_started = True
+        await _submit_image_and_wait(page)
         # The image bubble appearing is only the *start* of confirmation: the
         # send may still be in flight or already failed. Anchor on the latest
         # outgoing message (the freshly inserted image bubble) and wait for it
         # to reach a real terminal state, exactly as text/sticker does. A mere
         # bubble count increase is not success (Issue #11).
         await page.wait_for_function(
-            """([selector, anchor]) => {
-                const message = document.querySelector(selector);
-                if (!message) return false;
-                return message.getAttribute('data-douyin-sender-anchor') !== anchor;
+            """([selector, previous]) => {
+                const images = [...document.querySelectorAll(selector)];
+                return images.some(img => {
+                    const src = (img.getAttribute('src') || '').split('?')[0];
+                    if (!src) return false;
+                    if (!img.complete || img.naturalWidth === 0) return false;
+                    return !previous.includes(src) || images.filter(i => (i.getAttribute('src') || '').split('?')[0] === src).length > previous.filter(p => p === src).length;
+                });
             }""",
-            arg=[LATEST_OUTGOING_MESSAGE, before[0]],
-            timeout=15_000,
+            arg=[image_selector, before_images],
+            timeout=30_000,
         )
-        latest = page.locator(LATEST_OUTGOING_MESSAGE).first
+        latest = page.locator(IMAGE_OUTGOING_MESSAGE).first
         await _await_send_terminal_state(page, latest, "图片")
-    except (SendRejectedError, SendOutcomeUnknownError):
+    except (SendRejectedError, SendOutcomeUnknownError, RecipientIdentityError):
         raise
     except Exception as exc:
+        if not submission_started:
+            raise
         raise SendOutcomeUnknownError("图片消息已触发发送，但无法确认是否发送成功；为避免重复不会自动重试") from exc
+    finally:
+        try:
+            await _cancel_image_dialog(page)
+        except Exception as exc:
+            raise SendOutcomeUnknownError("图片确认窗口未能关闭，已停止后续好友操作，请人工核对", stop_all=True) from exc
 
 async def _restore_composer(page: Page, timeout_ms: int = 10_000) -> None:
     try:
